@@ -1,0 +1,131 @@
+@page "/"
+@using AppTiemposV3.SharedClases.Contracts
+@using AppTiemposV3.SharedClases.DTOs
+@using static AppTiemposV3.SharedClases.DTOs.ServiceResponse
+@using AppTiemposV3.Web.Authentication
+@using Microsoft.AspNetCore.Components.Authorization
+
+@layout MainLayout
+@inject IJSRuntime Js
+@inject NavigationManager Router
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthContract AuthService
+
+<PageTitle>Login</PageTitle>
+
+<div class="d-flex flex-column align-items-center justify-content-center bg-white p-5 rounded-md shadow-lg">
+	<div class="d-flex flex-column justify-content-center align-items-center gap-3">
+		<img src="img/logo.png" alt="logo" />
+		<h3 class="text-muted">
+			Sign in to your account
+		</h3>
+	</div>
+
+	@if (isError)
+	{
+		<div class="alert alert-danger d-flex align-items-center alert-dismissible fade show" role="alert">
+			<i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+			<div>
+				@messageError
+			</div>
+			<button type="button" class="btn-close" @onclick="() => { isError = false; StateHasChanged(); }" data-bs-dismiss="alert" aria-label="Close"></button>
+		</div>
+	}
+
+	<EditForm Enhance Model=@login class="w-100" novalidate OnValidSubmit=@SendLogin FormName="LoginForm">
+        <DataAnnotationsValidator />
+        <div class="w-100 pt-3 form-group">
+            <label for="email">Email</label>
+            <InputText type="email" @bind-Value=login.Email required id="email" autocomplete="off" name="email" class="form-control" placeholder="jhon.doe@example.com" />
+            <ValidationMessage For="() => login.Email" />
+        </div>
+        <div class="w-100 pt-3 form-group">
+            <label for="password">Password</label>
+            <InputText type="password" @bind-Value=login.Password required autocomplete="off" id="password" name="password" class="form-control" placeholder="*********" />
+            <ValidationMessage For="() => login.Password" />
+        </div>
+        <div class="pt-2 d-flex justify-content-between align-items-center gap-3">
+            <div>
+                <label for="remember" class="user-select-none cursor-pointer">
+                    <InputCheckbox @bind-Value=login.RememberMe type="checkbox" id="remember" name="remember" class="cursor-pointer" />
+                    Remember me
+                </label>
+            </div>
+            <div>
+                <a href="forgot-password" class="text-decoration-none text-danger">Forgot your password?</a>
+            </div>
+        </div>
+        <div class="pt-4">
+            @* <button type="submit" @onkeydown="@((e) => { EnterKeyPressed = e.Key == "Enter"; })" @onkeydown:preventDefault="EnterKeyPressed" class="w-100 btn btn-danger">Sign In</button> *@
+            <button type="submit"
+                    disabled="@isLoading"
+                    class="w-100 btn btn-danger d-flex justify-content-center align-items-center gap-2"
+            >
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span>Logging in...</span>
+                }
+                else
+                {
+	                <span>
+		                <i class="bi bi-box-arrow-in-right me-2"></i>
+		                Sign In
+	                </span>
+                }
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+	private bool isLoading = false;
+	bool isError = false;
+	MarkupString messageError;
+	
+	LoginDto login = new LoginDto();
+
+	private async Task SendLogin(){
+		try
+		{
+			 await Js.InvokeVoidAsync("console.log", $"Email: {login.Email}, Password: {login.Password}");
+			 await Js.InvokeVoidAsync("console.log", "Login function called!");
+
+			 isLoading = true;
+			 StateHasChanged();
+			
+			LoginResponse? response = await AuthService.Login(login);
+
+			bool flag = response!.Flag;
+			string? message = response.Message;
+
+			if(flag && response?.Token != null)
+			{
+				TokenDto token = response.Token;
+				
+				bool rememberMe = login.RememberMe;
+				string tokenLogin = token.AccessToken;
+				login = new();
+
+				CustomAuthenticationProvider? customAuthStateProvider = (CustomAuthenticationProvider)AuthStateProvider;
+				await customAuthStateProvider.UpdateAuthenticationState(tokenLogin, rememberMe);
+				Router.NavigateTo("/app");
+			
+			}
+			else
+			{
+				isError = true;
+				messageError = ((MarkupString)message!.Replace("\n", "<br />"));
+			}
+			
+			
+
+			return;
+		}
+		finally
+		{
+			isLoading = false;
+			StateHasChanged();
+		}
+	}
+}

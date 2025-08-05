@@ -1,0 +1,27 @@
+﻿@using AppTiemposV3.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using AppTiemposV3.Web.Pages
+@inherits LayoutComponentBase
+@inject NavigationManager Router
+
+<div class="d-flex flex-column align-items-center justify-content-center pg-body h-screen ">
+    @* @Body *@
+    <AuthorizeView>
+        <Authorized>
+            <RedirectToApp />
+        </Authorized>
+        <NotAuthorized>
+            @Body
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+<div id="blazor-error-ui">
+    Se ha producido un error.
+    <a href="" class="reload">Recargar</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    private bool IsLoginPage => Router.Uri.EndsWith("/");
+}

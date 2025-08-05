@@ -1,0 +1,22 @@
+﻿@page "/app"
+@using AppTiemposV3.SharedClases.Constants
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>Dashboard</PageTitle>
+<h3>Home</h3>
+<div class="card">
+    <div class="card-body">
+        <AuthorizeView Roles="Admin">
+            <button type="button" class="btn btn-danger">Admin can click!</button>
+        </AuthorizeView>
+        <AuthorizeView Roles="User, Admin">
+            <button type="button" class="btn btn-primary">User and Admin can click!</button>
+        </AuthorizeView>
+    </div>
+    <div class="card-footer">
+        <AuthorizeView>
+            <h3>You are authenticated</h3>
+            <h4>Your Role is @context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.Role)!.Value</h4>
+        </AuthorizeView>
+    </div>
+</div>
