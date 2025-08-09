@@ -18,9 +18,7 @@ services.AddCascadingAuthenticationState();
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-string apiUrl = builder.Configuration.GetSection("ApiUrl").Get<string>()!;
-Console.WriteLine($"[DEBUG] API URL: {apiUrl}");
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiUrl) });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7260") });
 services.AddBlazoredLocalStorage();
 services.AddBlazoredSessionStorage();
 services.AddAuthorizationCore();
