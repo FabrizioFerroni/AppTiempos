@@ -1,0 +1,147 @@
+@page "/unirme"
+
+@layout MainLayout
+
+<PageTitle>Unirme | TimeTracker Pro</PageTitle>
+
+@if (isSubmitted)
+{
+    <Card Class="w-full max-w-md bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-gray-200 dark:border-gray-700 shadow-xl">
+        <CardHeader Class="space-y-1 text-center">
+            <div class="flex justify-center mb-4">
+                <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center">
+                    <CheckCircleBig class="w-8 h-8 text-white" />
+                </div>
+            </div>
+            <CardTitle Class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                Solicitud Enviada
+            </CardTitle>
+            <CardDescription class="text-gray-600 dark:text-gray-300 font-medium">
+                Tu solicitud ha sido procesada correctamente
+            </CardDescription>
+        </CardHeader>
+
+        <CardContent Class="space-y-4">
+            <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <p class="text-sm font-medium text-green-800 dark:text-green-200 text-center">
+                    Hemos enviado tu solicitud de invitación para <strong class="font-semibold">@invite.Email</strong>
+                </p>
+            </div>
+
+            <div class="text-center space-y-2">
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Un administrador revisará tu solicitud y te contactará pronto.
+                </p>
+            </div>
+
+            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <Enlace Href="/" Class="font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-transparent flex justify-center items-center">
+                    <ArrowLeft class="w-4 h-4 mr-2" />
+                    Volver al inicio de sesión
+                </Enlace>
+            </div>
+        </CardContent>
+    </Card>
+}
+else
+{
+    <Card Class="w-full max-w-md bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-gray-200 dark:border-gray-700 shadow-xl">
+        <CardHeader Class="space-y-1 text-center">
+            <div class="flex justify-center mb-4">
+                <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center"> 
+                    <Send Class="w-8 h-8 text-white" />
+                </div>
+            </div>
+            <CardTitle Class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                Solicitar Invitación
+            </CardTitle>
+            <CardDescription Class="text-gray-600 dark:text-gray-300 font-medium">
+                Completa el formulario con tus datos para poder a acceder al sistema
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            @if (isError)
+            {
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                    <div class="block sm:inline">
+                        @messageError
+                    </div>
+                    <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
+                        <Close Class="h-6 w-6 text-red-500" />
+                    </button>
+                </div>
+            }
+
+            <EditForm Enhance Model=@invite class="space-y-4" novalidate OnValidSubmit=@SendInvite FormName="InviteForm">
+                <DataAnnotationsValidator/>
+                <div class="space-y-2">
+                    <Label For="name" Id="emailLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Nombre</Label>
+                    <div class="relative">
+                        <Input
+                            Type="text"
+                            @bind-Value="invite.Name"
+                            Id="name"
+                            Name="name"
+                            Placeholder="Jhon Doe"
+                            Autocomplete="off"
+                            Required
+                            Autofocus
+                            Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        <User Class="absolute right-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <ValidationMessage For="() => invite.Email" class="text-xs text-red-600"/>
+                </div>
+                <div class="space-y-2">
+                    <Label For="email" Id="emailLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Correo electrónico</Label>
+                    <div class="relative">
+                        <Input
+                            Type="email"
+                            @bind-Value="invite.Email"
+                            Id="email"
+                            Name="email"
+                            Placeholder="jhon.doe@example.com"
+                            Autocomplete="off"
+                            Required
+                            Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        <Mail Class="absolute right-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <ValidationMessage For="() => invite.Email" class="text-xs text-red-600"/>
+                </div>
+                <div class="space-y-2">
+                    <Label For="message" Id="emailLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Mensaje (opcional)</Label>
+                    <div class="relative">
+                        <TextArea
+                            @bind-Value="invite.Mensaje"
+                            Id="message"
+                            Name="message"
+                            Placeholder="Cuéntanos por qué quieres acceder a la plataforma..."
+                            Autocomplete="off"
+                            Required
+                            Class="pr-10  min-h-[100px] bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl resize-none"
+                        ></TextArea>
+                        <MessageSquare Class="absolute right-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <ValidationMessage For="() => invite.Email" class="text-xs text-red-600"/>
+                </div>
+                <Button Type="submit"
+                        Disabled="@(isLoading || (invite.Email == "" || invite.Name == ""))"
+                        Class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-2.5 cursor-pointer">
+
+                    @if (isLoading)
+                    {
+                        <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                        <span>Enviando solicitud<span class="animate-pulse">...</span></span>
+                    }
+                    else
+                    {
+                        <Send Class="me-2 size-5" />
+                        <span>Enviar Solicitud</span>
+                    }
+                </Button>
+            </EditForm>
+        </CardContent>
+    </Card>
+}

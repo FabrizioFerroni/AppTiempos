@@ -1,0 +1,65 @@
+@page "/2fa"
+
+@layout MainLayout
+    
+<PageTitle>Verificación en 2 pasos | TimeTracker Pro</PageTitle>
+
+<Card Class="w-full max-w-md shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm">
+    <CardHeader Class="text-center space-y-4">
+        <div class="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600  rounded-2xl flex items-center justify-center">
+            <Shield Class="w-8 h-8 text-white"/>
+        </div>
+        <div>
+            <CardTitle Class="text-2xl font-bold text-gray-900 dark:text-white pb-1">Verificación 2FA</CardTitle>
+            <CardDescription Class="text-gray-600 dark:text-gray-400">
+                Ingresa el código de 6 dígitos que ha llegado a tu correo electrónico.
+            </CardDescription>
+        </div>
+    </CardHeader>
+    <CardContent Class="space-y-6"> 
+        @if (IsError)
+        {
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative" role="alert">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                <div class="block sm:inline">
+                    @messageError
+                </div>
+                <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { IsError = false; StateHasChanged(); }">
+                    <Close Class="h-6 w-6 text-red-500" />
+                </button>
+            </div>
+        }
+        <EditForm Enhance Model=@twoFactorDto class="space-y-4" novalidate OnValidSubmit=@SendTwoFactor FormName="LoginForm">
+                <div class="text-center text-sm text-gray-600 dark:text-gray-400">
+                    Verificando acceso para: <strong>@twoFactorDto.Email</strong>
+                </div>
+
+            <div class="flex justify-center gap-4">
+                <Input2Fa
+                    @bind-Code="codeValue"
+                    Disabled="@IsLoading"
+                    Autofocus
+                    Class="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    MaxLength="1"
+                    Min="1"/>
+            </div>
+            <ValidationMessage For="() => twoFactorDto.Code" class="text-xs text-red-600"/>
+
+            <Button Type="submit"
+                    Disabled="@(IsLoading)"
+                    Class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-2.5 cursor-pointer mt-4">
+
+                @if (IsLoading)
+                {
+                    <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                    <span>Verificando código ...</span>
+                }
+                else
+                {
+                    <LogIn Class="me-2 size-5" />
+                    <span>Verificar Código</span>
+                }
+            </Button>
+        </EditForm>
+    </CardContent>
+</Card>

@@ -1,0 +1,180 @@
+@page "/unirme/{Token}"
+
+@layout MainLayout
+
+<PageTitle>Completar Registracion | TimeTracker Pro</PageTitle>
+
+@if (IsCreated)
+{
+    <Card Class="w-full max-w-md shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+        <CardHeader Class="space-y-1 text-center pb-8">
+            <div class="flex justify-center mb-4">
+                <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center">
+                    <CheckCircleBig Class="w-8 h-8 text-white" />
+                </div>
+            </div>
+            <CardTitle Class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                ¡Cuenta Creada!
+            </CardTitle>
+            <CardDescription Class="text-lg text-gray-600 dark:text-gray-400">
+                Ya puedes acceder a la plataforma
+            </CardDescription>
+        </CardHeader>
+        <CardContent Class="space-y-6 text-center">
+            <div class="space-y-4">
+                <p class="text-gray-600 dark:text-gray-400">
+                    Tu cuenta ha sido creada exitosamente. Ya puedes iniciar sesión y comenzar a usar la plataforma.
+                </p>
+                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <p class="text-sm text-green-800 dark:text-green-200">
+                        <strong>¡Bienvenido @register!.FullName!</strong>
+                        <br />
+                        Tu email: @register!.Email
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 text-center border-t border-gray-200 dark:border-gray-700">
+                <Enlace Href="/" Class="font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-transparent flex justify-center items-center pt-4">
+                    <LogIn class="w-4 h-4 mr-2" />
+                    Iniciar de sesión
+                </Enlace>
+            </div>
+        </CardContent>
+    </Card>
+}
+else
+{
+    <Card Class="w-full max-w-md shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+        <CardHeader Class="space-y-1 text-center pb-8">
+            <div class="flex justify-center mb-4">
+                <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                    <UserPlus Class="w-8 h-8 text-white" />
+                </div>
+            </div>
+            <CardTitle Class="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                Completar Registro
+            </CardTitle>
+            <CardDescription Class="text-lg text-gray-600 dark:text-gray-400">
+                Crea tu cuenta para @register!.Email
+            </CardDescription>
+        </CardHeader>
+
+        <CardContent Class="space-y-6">
+            <EditForm Enhance Model=@register class="space-y-4" novalidate OnValidSubmit=@SendRegister FormName="RegisterForm">
+                <DataAnnotationsValidator/>
+                <div class="space-y-2">
+                    <Label For="fullname" Id="fullNameLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Nombre completo</Label>
+                    <div class="relative">
+                        <Input
+                            Type="text"
+                            @bind-Value="register!.FullName"
+                            Id="fullname"
+                            Name="fullname"
+                            Placeholder="Jhon Doe"
+                            Autocomplete="off"
+                            Autofocus
+                            Required
+                            Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        <User Class="absolute right-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <ValidationMessage For="() => register.FullName" class="text-xs text-red-600"/>
+                </div>
+
+                <div class="space-y-2">
+                    <Label For="area" Id="areaLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Areá a que perteneces</Label>
+                    <div class="relative">
+                        <Input
+                            Type="text"
+                            @bind-Value="register!.Area"
+                            Id="area"
+                            Name="area"
+                            Placeholder="Desarrollador"
+                            Autocomplete="off"
+                            Required
+                            Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        <IdCardLanyard Class="absolute right-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <ValidationMessage For="() => register.Area" class="text-xs text-red-600"/>
+                </div>
+                <div class="space-y-2">
+                    <Label For="email" Id="emailLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Correo electrónico</Label>
+                    <div class="relative">
+                        <Input
+                            Type="email"
+                            @bind-Value="register.Email"
+                            Id="email"
+                            Name="email"
+                            Disabled="@(register.Email != "" ? true : false)"
+                            Placeholder="jhon.doe@example.com"
+                            Autocomplete="off"
+                            Required
+                            Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        <Mail Class="absolute right-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <ValidationMessage For="() => register.Email" class="text-xs text-red-600"/>
+                </div>
+                <div class="space-y-2">
+                    <Label For="password-hide" Id="password" Class="text-gray-700 dark:text-gray-300 mb-3 block">Contraseña</Label>
+                    <div class="relative">
+                        <Input
+                            Type="@(showPassword ? "text" : "password")"
+                            @bind-Value="register.Password"
+                            Id="@(showPassword ? "password-show" : "password-hide")"
+                            Name="password"
+                            Placeholder="****************"
+                            Autocomplete="off"
+                            Required
+                            Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+
+                        <ShowPassword @bind-IsVisible="showPassword"/>
+                    </div>
+                    <ValidationMessage For="() => register.Password" class="text-xs text-red-600"/>
+                </div>
+
+                <div class="space-y-2">
+                    <Label For="confirm-password-hide" Id="confirm-password" Class="text-gray-700 dark:text-gray-300 mb-3 block">Repetir Contraseña</Label>
+                    <div class="relative">
+                        <Input
+                            Type="@(showPasswordConfirm ? "text" : "password")"
+                            @bind-Value="register.ConfirmPassword"
+                            Id="@(showPasswordConfirm ? "confirm-password-show" : "confirm-password-hide")"
+                            Name="password"
+                            Placeholder="****************"
+                            Autocomplete="off"
+                            Required
+                            Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+
+                        <ShowPassword @bind-IsVisible="showPasswordConfirm"/>
+                    </div>
+                    <ValidationMessage For="() => register.ConfirmPassword" class="text-xs text-red-600"/>
+                </div>
+                <Button Type="submit"
+                        Disabled="@(isLoading || (register.FullName == "" || register.Area == "" ||  register.Email == "" || register.Password == "" || register.ConfirmPassword == ""))"
+                        Class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-md transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50  cursor-pointer">
+
+                    @if (isLoading)
+                    {
+                        <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                        <span>Creando cuenta <span class="animate-pulse">...</span></span>
+                    }
+                    else
+                    {
+                        <UserPlus Class="me-2 size-5" />
+                        <span>Crear Cuenta</span>
+                    }
+                </Button>
+            </EditForm>
+            <div class="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Al crear tu cuenta, aceptas nuestros términos de servicio y política de privacidad.
+                </p>
+            </div>
+        </CardContent>
+    </Card>
+}

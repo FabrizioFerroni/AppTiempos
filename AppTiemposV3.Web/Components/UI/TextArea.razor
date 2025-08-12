@@ -1,19 +1,14 @@
-<input 
-    type="@Type"
+<textarea
     class="@GetClasess()"
     id="@Id"
     name="@Name"
     placeholder="@Placeholder"
     disabled="@Disabled"
-    accept="@Accept"
     autocomplete="@Autocomplete"
     autocapitalize="@Autocapitalize"
     autofocus="@Autofocus"
     required="@Required"
-    value="@Value"
-    maxlength="@MaxLength"
-    min="@Min"
     @oninput="OnValueChanged"
     @onclick="OnClick"
-    @attributes="GetBooleanAttributes().Concat(AdditionalAttributes ?? new()).ToDictionary(k => k.Key, v => v.Value)"
-    />
+    @attributes="GetBooleanAttributes()"
+>@Value</textarea>

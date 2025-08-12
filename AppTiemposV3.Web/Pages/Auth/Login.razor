@@ -6,7 +6,7 @@
 
 <Card Class="w-full max-w-md shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm">
 	<CardHeader Class="text-center space-y-4">
-		<div class="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600  rounded-full flex items-center justify-center">
+		<div class="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600  rounded-2xl flex items-center justify-center">
 			<Clock Class="w-8 h-8 text-white"/>
 		</div>
 		<div>
@@ -81,13 +81,13 @@
 					</Label>
 				</div>
 				<Enlace
-					Href="forgot-password"
+					Href="olvide-contrasena"
 					Class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline">
 					¿Olvidaste tu contraseña?
 				</Enlace>
 			</div>
 			<Button Type="submit"
-			        Disabled="@isLoading"
+			        Disabled="@(isLoading || (login.Email == "" || login.Password == ""))"
 			        Class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-2.5 cursor-pointer">
 
 				@if (isLoading)
@@ -104,10 +104,10 @@
 				}
 			</Button>
 		</EditForm>
-		<div class="mt-6 text-center">
-			<p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+		<div class="mt-6  text-center border-t border-gray-200 dark:border-gray-700">
+			<p class="text-sm pt-4 font-medium text-gray-600 dark:text-gray-400">
 				¿No tienes una cuenta?
-				<Enlace Href="/invite" Class="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline">
+				<Enlace Href="/unirme" Class="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline">
 					Solicitar invitación
 				</Enlace>
 			</p>
