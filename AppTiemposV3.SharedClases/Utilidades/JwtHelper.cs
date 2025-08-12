@@ -9,9 +9,9 @@ public class JwtHelper
         var parts = token.Split('.');
         if (parts.Length < 2) return null;
 
-        var payload = parts[1];
-        var jsonBytes = ParseBase64WithoutPadding(payload);
-        var json = System.Text.Encoding.UTF8.GetString(jsonBytes);
+        string payload = parts[1];
+        byte[] jsonBytes = ParseBase64WithoutPadding(payload);
+        string json = System.Text.Encoding.UTF8.GetString(jsonBytes);
 
         return JsonSerializer.Deserialize<Dictionary<string, object>>(json);
     }

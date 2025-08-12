@@ -44,7 +44,7 @@ public partial class Input2Fa : ComponentBase
     
     private async Task OnValueChanged(int index, ChangeEventArgs e)
     {
-        var val = e.Value?.ToString() ?? "";
+        string val = e.Value?.ToString() ?? "";
         if (index >= 0 && index < Code.Count)
         {
             Code[index] = val;
