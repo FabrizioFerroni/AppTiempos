@@ -17,6 +17,7 @@ public partial class Enlace : ComponentBase
 
     private string GetClasses()
     {
+        
         string baseClasses =
             "";
 

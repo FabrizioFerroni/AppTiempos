@@ -1,0 +1,22 @@
+@for (int i = 0; i < Code.Count; i++)
+{
+    int index = i;
+    <input
+        type="text"
+        class="@GetClasess()"
+        id=@($"digit-{index}")
+        name=@($"digit-{index}")
+        placeholder=@($"{index + 1}")
+        disabled="@Disabled"
+        autocomplete="off"
+        autocapitalize="off"
+        autofocus="@Autofocus && i == 0"
+        required="@Required"
+        maxlength="@MaxLength ?? 1"
+        min="@Min"
+        value="@Code[index]"
+        @oninput="(e) => OnValueChanged(index, e)"
+        @onkeydown="(e) => HandleKeyDown(index, e)"
+        @attributes="GetBooleanAttributes().Concat(AdditionalAttributes ?? new()).ToDictionary(k => k.Key, v => v.Value)"
+    />
+}

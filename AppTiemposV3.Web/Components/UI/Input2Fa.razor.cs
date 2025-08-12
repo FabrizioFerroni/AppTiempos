@@ -1,21 +1,19 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using static AppTiemposV3.Web.Utils.CssHelper;
 
 namespace AppTiemposV3.Web.Components.UI;
 
-public partial class Input : ComponentBase
+public partial class Input2Fa : ComponentBase
 {
-    [Parameter] public string Id { get; set; } = string.Empty;
-    [Parameter] public string Name { get; set; } = string.Empty;
-    [Parameter] public string Placeholder { get; set; } = string.Empty;
-    [Parameter] public string Accept { get; set; } = string.Empty;
-    [Parameter] public string Autocomplete { get; set; } = string.Empty;
-    [Parameter] public string Autocapitalize { get; set; } = string.Empty;
-
+    [Inject] private IJSRuntime? Js { get; set; }
+    
+    [Parameter]
+    public List<string> Code { get; set; } = Enumerable.Repeat("", 6).ToList();
+    [Parameter]
+    public EventCallback<List<string>> CodeChanged { get; set; }
     [Parameter] public string? Class { get; set; }
-    [Parameter] public string? Type { get; set; } = "text";
-
     [Parameter] public int? MaxLength { get; set; }
     [Parameter] public int? Min { get; set; }
     
@@ -44,10 +42,19 @@ public partial class Input : ComponentBase
         return Cn(baseClasses, Class);
     }
     
-    private async Task OnValueChanged(ChangeEventArgs e)
+    private async Task OnValueChanged(int index, ChangeEventArgs e)
     {
-        Value = e.Value?.ToString();
-        await ValueChanged.InvokeAsync(Value);
+        string val = e.Value?.ToString() ?? "";
+        if (index >= 0 && index < Code.Count)
+        {
+            Code[index] = val;
+            await CodeChanged.InvokeAsync(Code);
+
+            if (!string.IsNullOrEmpty(val) && index < Code.Count - 1)
+            {
+                await FocusInput(index + 1);
+            }
+        }
     }
     
     private Dictionary<string, object> GetBooleanAttributes()
@@ -60,5 +67,43 @@ public partial class Input : ComponentBase
         if (Readonly) attrs["readonly"] = true;
 
         return attrs;
+    }
+    
+    
+    
+    private async void HandleInputChange(int index, ChangeEventArgs e)
+    {
+        if (index >= 0 && index < Code.Count)
+        {
+            Code[index] = e.Value?.ToString() ?? "";
+            
+            if (!string.IsNullOrEmpty(e.Value?.ToString()) && index < Code.Count - 1)
+            {
+                await FocusInput(index + 1);
+            }
+        }
+    }
+
+    private async void HandleKeyDown(int index, KeyboardEventArgs e)
+    {
+        if (index < 0 || index >= Code.Count) return;
+        
+        if (e.Key == "Backspace")
+        {
+            if (string.IsNullOrEmpty(Code[index]) && index > 0)
+            {
+                await FocusInput(index - 1);
+            }
+            else
+            {
+                Code[index] = ""; 
+            }
+        }
+    }
+    
+    private async Task FocusInput(int index)
+    {
+        await Js!.InvokeVoidAsync("document.getElementById", $"digit-{index}").AsTask();
+        await Js!.InvokeVoidAsync("eval", $"document.getElementById('digit-{index}').focus()");
     }
 }
