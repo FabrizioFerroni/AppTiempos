@@ -1,0 +1,130 @@
+@model AppTiemposV3.Api.Files.MailTemplates.Models.TwoFactorEmailModel
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Tu código de verificación - @Model?.AppName</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <style>
+        /* Responsive */
+        @("@")media only screen and (max-width: 600px) {
+        .inner-body { width: 100% !important; }
+        .footer { width: 100% !important; }
+        }
+
+        /* Paleta / estilo como tu última imagen */
+        .wrapper-tbl, .body { background-color: #edf2f7; }
+        .inner-body {
+            background-color: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 2px 0 rgba(0, 0, 150, 0.025), 2px 4px 0 rgba(0, 0, 150, 0.015);
+            width: 570px;
+        }
+        .heading-text { color: #3d4852; }
+        .muted { color: #718096; }
+        .hr {
+            border-top: 1px solid #e8e5ef;
+            margin: 20px 0 5px 0;
+        }
+
+        /* Token grande y claro */
+        .token {
+            font-size: 44px;
+            font-weight: 700;
+            letter-spacing: 10px;
+            text-align: center;
+            color: #5b7bb3;
+            padding: 12px 0;
+        }
+
+        /* Modo oscuro */
+        @("@")media (prefers-color-scheme: dark) {
+        body, .wrapper-tbl, .body { background-color: #1a202c !important; }
+        .inner-body { background-color: #2d3748 !important; }
+        .heading-text { color: #e2e8f0 !important; }
+        .muted, .footer-text, .content-cell { color: #a0aec0 !important; }
+        .token { color: #e2e8f0 !important; }
+        .hr { border-top-color: #4a5568 !important; }
+        a { color: #90cdf4 !important; }
+        }
+    </style>
+</head>
+
+<body style="
+      box-sizing:border-box;
+      font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color:#edf2f7; color:#718096; height:100%; margin:0; padding:0; width:100% !important;">
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" class="wrapper-tbl" style="margin:0; padding:0;">
+    <tr>
+        <td align="center">
+            <table class="content" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <!-- Header con logo -->
+                <tr>
+                    <td class="header" style="padding: 30px 0; text-align: center;">
+                        <a href="@Model?.UrlApp" target="_blank" style="text-decoration:none;">
+                            <img
+                                src="https://res.cloudinary.com/fabrizio-dev/image/upload/v1752635104/fabrizio-dev/logov8_du2iet.png"
+                                alt="@Model?.AppName Logo"
+                                style="height:auto; width:300px; border:none;"
+                            />
+                        </a>
+                    </td>
+                </tr>
+
+                <!-- Card -->
+                <tr>
+                    <td class="body" style="border: hidden !important; width:100%;">
+                        <table class="inner-body" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;">
+                            <tr>
+                                <td class="content-cell" style="padding: 32px;">
+                                    <h1 class="heading-text" style="font-size:22px; font-weight:700; margin:0 0 12px 0; text-align:left;">
+                                        Tu código de verificación
+                                    </h1>
+
+                                    <p class="muted" style="font-size:16px; line-height:1.5em; margin:0 0 18px 0; text-align:left;">
+                                        Usá este código para verificar tu identidad en <strong>@Model?.AppName</strong>.
+                                    </p>
+
+                                    <!-- TOKEN -->
+                                    <div class="token">@Model?.Token</div>
+
+                                    <div class="hr"></div>
+                                    
+                                    <p class="muted" style="font-size:14px; line-height:1.5em; text-align:center; margin: 8px 0 0 0; padding-top:  8px;">
+                                        Este código expira en <strong>@Model?.Minutes</strong> minutos y solo puede usarse una vez.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Footer sin redes -->
+                <tr>
+                    <td>
+                        <table class="footer" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation">
+                            <tr>
+                                <td class="content-cell" align="center" style="padding: 24px;">
+                                    <p class="footer-text" style="font-size:12px; color:#b0adc5; text-align:center; margin:0 0 6px 0;">
+                                        © @Model?.Year <strong>@Model?.AppName</strong>. Todos los derechos reservados.
+                                    </p>
+                                    <p class="footer-text" style="font-size:12px; color:#b0adc5; text-align:center; margin:0;">
+                                        Si no solicitaste este código, podés ignorar este correo o
+                                        escribirnos a <a href="mailto:@Model?.SupportEmail" style="text-decoration:none; color:#3869d4;">@Model?.SupportEmail</a>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

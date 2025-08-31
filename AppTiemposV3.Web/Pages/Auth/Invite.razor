@@ -80,7 +80,7 @@ else
                     <div class="relative">
                         <Input
                             Type="text"
-                            @bind-Value="invite.Name"
+                            @bind-Value="invite.FullName"
                             Id="name"
                             Name="name"
                             Placeholder="Jhon Doe"
@@ -111,10 +111,10 @@ else
                     <ValidationMessage For="() => invite.Email" class="text-xs text-red-600"/>
                 </div>
                 <div class="space-y-2">
-                    <Label For="message" Id="emailLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Mensaje (opcional)</Label>
+                    <Label For="message" Id="emailLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Mensaje</Label>
                     <div class="relative">
                         <TextArea
-                            @bind-Value="invite.Mensaje"
+                            @bind-Value="invite.Reason"
                             Id="message"
                             Name="message"
                             Placeholder="Cuéntanos por qué quieres acceder a la plataforma..."
@@ -127,7 +127,7 @@ else
                     <ValidationMessage For="() => invite.Email" class="text-xs text-red-600"/>
                 </div>
                 <Button Type="submit"
-                        Disabled="@(isLoading || (invite.Email == "" || invite.Name == ""))"
+                        Disabled="@(isLoading || (invite.Email == "" || invite.FullName == "" || invite.Reason == ""))"
                         Class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-2.5 cursor-pointer">
 
                     @if (isLoading)

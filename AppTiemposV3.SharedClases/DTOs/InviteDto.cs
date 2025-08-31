@@ -5,13 +5,15 @@ namespace AppTiemposV3.SharedClases.DTOs;
 public class InviteDto
 {
     [Required]
-    public string Name { get; set; } = string.Empty;
+    public required string FullName { get; set; }
     
     [Required]
     [EmailAddress]
     [DataType(DataType.EmailAddress)]
-    public string Email { get; set; } = string.Empty;
+    public required string Email { get; set; }
     
   
-    public string? Mensaje { get; set; } = string.Empty;
+    [Required, MinLength(15)]
+    [DataType(DataType.MultilineText)]
+    public required string Reason { get; set; }
 }

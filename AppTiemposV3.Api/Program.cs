@@ -117,6 +117,7 @@ services.AddDbContext<AppDbContext>(opt =>
         opt.EnableSensitiveDataLogging(); 
         opt.EnableDetailedErrors(); 
     }
+    opt.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
     
     
 });
@@ -125,8 +126,12 @@ services.AddDbContext<AppDbContext>(opt =>
 // Identity 
 services.AddIdentity<UserEntity, IdentityRole<Guid>>(config =>
     {
-        config.User.RequireUniqueEmail = true;
         config.Tokens.AuthenticatorIssuer = "JWT";
+        config.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider; //Esto se puede cambiar a Authenticator
+        config.Tokens.ChangeEmailTokenProvider = TokenOptions.DefaultEmailProvider;
+        config.Tokens.ChangePhoneNumberTokenProvider = TokenOptions.DefaultEmailProvider;
+        config.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
+        config.User.RequireUniqueEmail = true;
         config.SignIn.RequireConfirmedEmail = true;
         config.SignIn.RequireConfirmedAccount = true;
 
@@ -139,9 +144,11 @@ services.AddIdentity<UserEntity, IdentityRole<Guid>>(config =>
         config.Lockout.AllowedForNewUsers = true;
         config.Lockout.MaxFailedAccessAttempts = 3;
         config.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(30);
+        config.SignIn.RequireConfirmedPhoneNumber = false;
     })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddSignInManager()
+    .AddDefaultTokenProviders()
     .AddRoles<IdentityRole<Guid>>();
 
 //JWT Authentication
@@ -149,6 +156,7 @@ services.AddScoped<CustomJwtEvents>();
 services.AddAuthentication(opt =>
     {
         opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        opt.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
         opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     }).
     AddJwtBearer(conf =>
@@ -179,6 +187,7 @@ services.AddScoped<IRequerimentContract<RequerimentResponseDto>, RequerimentRepo
 services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryRepository>();
 services.AddScoped<IUserContract, UserContextService>();
 services.AddScoped<IGenericContract, GenericRepository>();
+services.AddScoped<IEmailService, EmailService>();
 // Ending Services and repositories
 
 string[] origins = builder.Configuration.GetSection("origins").Get<string[]>()!;
