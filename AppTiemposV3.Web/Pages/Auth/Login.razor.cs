@@ -32,7 +32,7 @@ public partial class Login : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-           LoginResponse? response = await AuthService!.Login(login);
+           LoginResponse? response = await AuthService!.Login(login, "");
 
             if (response?.Flag == true && response?.Token != null)
             {

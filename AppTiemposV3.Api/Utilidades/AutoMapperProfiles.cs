@@ -1,10 +1,12 @@
 ﻿using AppTiemposV3.Api.Entities;
+using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AutoMapper;
 using Tipo = AppTiemposV3.Api.Entities.Tipo;
+using UserDto = AppTiemposV3.SharedClases.DTOs.Requeriments.UserDto;
 
 namespace AppTiemposV3.Api.Utilidades
 {
@@ -16,6 +18,7 @@ namespace AppTiemposV3.Api.Utilidades
             MappingCategories();
             MappingActivities();
             MappingTraining();
+            MappingInvitations();
         }
 
         public void MappingRequeriments()
@@ -76,6 +79,11 @@ namespace AppTiemposV3.Api.Utilidades
             CreateMap<RequerimentsEntity, RequerimentDtoT>();
             CreateMap<CategoriesEntity, CategoryDtoT>();
             CreateMap<UserEntity, UserDtoT>();
+        }
+
+        public void MappingInvitations()
+        {
+            CreateMap<InviteDto, InvitationEntity>();
         }
     }
 }

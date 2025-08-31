@@ -16,24 +16,34 @@ public class AuthService: IAuthContract
         _httpClient = httpClient;
     }
 
-    public async Task<GeneralResponse> Register(UserDto dto)
+    public Task<GeneralResponse> Invite(InviteDto dto)
     {
-        HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/register", GenerateStringContent(SerializeObj(dto)));
+        throw new NotImplementedException();
+    }
+
+    public async Task<GeneralResponse> Register(string token, UserDto dto)
+    {
+        HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/register/{token}", GenerateStringContent(SerializeObj(dto)));
         
         if(!response.IsSuccessStatusCode)
-            return new GeneralResponse(false, "Error occured while register. Please try again later.");
+            return new GeneralResponse( false, "Error occured while register. Please try again later.");
         
         string apiResponse = await response.Content.ReadAsStringAsync();
         
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
-    public async Task<LoginResponse?> Login(LoginDto dto)
+    public Task<GeneralResponse> AcceptInvitation(Guid id, AcceptInviteDto dto)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<LoginResponse?> Login(LoginDto dto, string origin)
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/login", GenerateStringContent(SerializeObj(dto)));
         
         if(!response.IsSuccessStatusCode)
-            return new LoginResponse(false, null!, "Error occured while logging in. Please try again later.");
+            return new LoginResponse( false, null!, "Error occured while logging in. Please try again later.");
         
         string apiResponse = await response.Content.ReadAsStringAsync();
         
@@ -46,5 +56,25 @@ public class AuthService: IAuthContract
         }
 
         return result;
+    }
+
+    public Task<GeneralResponse> activate2FA(Activate2FA dto)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<LoginResponse?> Login2FA(Login2FA dto)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<GeneralResponse> ForgotPassword(ForgotPasswordDto dto)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<GeneralResponse> ResetPassword(string token,ResetPasswordDto dto)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -17,6 +17,8 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
     public DbSet<ActivitiesEntity> Activities { get; set; }
     
     public DbSet<TrainingEntity> Trainings { get; set; }
+    
+    public DbSet<InvitationEntity> Invitations { get; set; }
 
     public AppDbContext(DbContextOptions options) : base(options)
     {
@@ -37,6 +39,7 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
         builder.Entity<CategoriesEntity>(e => e.ToTable(name: "categories"));
         builder.Entity<ActivitiesEntity>(e => e.ToTable(name: "activities"));
         builder.Entity<TrainingEntity>(e => e.ToTable(name: "trainings"));
+        builder.Entity<InvitationEntity>(e => e.ToTable(name: "invitaciones"));
 
         Type[]? excludedTypes = new[] { typeof(CategoriesEntity)};
         
@@ -238,6 +241,30 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
                 .HasDefaultValueSql("En Progreso");
             
             
+        });
+
+        builder.Entity<InvitationEntity>(i =>
+        {
+            i.HasIndex(c => new { c.Email })
+                .HasDatabaseName("IX_Invitations_Email")
+                .IsUnique();
+
+            i.Property(c => c.CreatedAt)
+                .HasColumnType("timestamp")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            i.Property(r => r.DateReceived)
+                .HasColumnType("timestamp")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            i.Property(id => id.IsDeleted)
+                .HasDefaultValue(false);
+            
+            i.Property(id => id.Accepted)
+                .HasDefaultValue(false);
+            
+            i.Property(id => id.Finished)
+                .HasDefaultValue(false);
         });
     }
 

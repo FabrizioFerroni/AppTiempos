@@ -13,7 +13,12 @@ public partial class Invite : ComponentBase
     private MarkupString messageError = new MarkupString("");
     [Inject] private IJSRuntime? Js { get; set; }
     
-    private InviteDto invite = new InviteDto();
+    private InviteDto invite = new InviteDto
+    {
+        FullName = null,
+        Email = null,
+        Reason = null
+    };
 
     private async Task SendInvite()
     {
@@ -24,7 +29,7 @@ public partial class Invite : ComponentBase
         
         isSubmitted = true;
         isLoading = false;
-        string token = CrearToken(new { nombre = invite.Name, email = invite.Email });
+        string token = CrearToken(new { nombre = invite.FullName, email = invite.Email });
         Console.WriteLine(token);
         await Js!.InvokeVoidAsync("console.log", $"Token: {token}");
         StateHasChanged();

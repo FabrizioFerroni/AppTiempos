@@ -4,11 +4,14 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <PreserveCompilationContext>true</PreserveCompilationContext>
+        <CopyRefAssembliesToPublishDirectory>true</CopyRefAssembliesToPublishDirectory>
     </PropertyGroup>
 
       <ItemGroup>
     <PackageReference Include="AutoMapper" Version="14.0.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageReference Include="MailKit" Version="4.13.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.17" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.17" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.17" />
@@ -26,6 +29,7 @@
     <PackageReference Include="Nanoid" Version="3.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
+    <PackageReference Include="RazorLight" Version="2.3.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="8.0.3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.0" />
@@ -34,6 +38,15 @@
     <ItemGroup>
       <ProjectReference Include="..\AppTiemposV3.ServiceDefaults\AppTiemposV3.ServiceDefaults.csproj" />
       <ProjectReference Include="..\AppTiemposV3.SharedClases\AppTiemposV3.SharedClases.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Update="Files\MailTemplates\*.cshtml">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Update="Files\MailTemplates\sendInvitation.cshtml">
+          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
 </Project>
