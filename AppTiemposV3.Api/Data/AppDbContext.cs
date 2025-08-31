@@ -38,6 +38,7 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
         builder.Entity<RequerimentsEntity>(e => e.ToTable(name: "requeriments"));
         builder.Entity<CategoriesEntity>(e => e.ToTable(name: "categories"));
         builder.Entity<ActivitiesEntity>(e => e.ToTable(name: "activities"));
+        builder.Entity<TrainingEntity>(e => e.ToTable(name: "trainings"));
         builder.Entity<InvitationEntity>(e => e.ToTable(name: "invitaciones"));
 
         Type[]? excludedTypes = new[] { typeof(CategoriesEntity)};
