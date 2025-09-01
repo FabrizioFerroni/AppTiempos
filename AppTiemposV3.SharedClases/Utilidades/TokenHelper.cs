@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using AppTiemposV3.SharedClases.Exceptions;
 
 namespace AppTiemposV3.SharedClases.Utilidades;
 
@@ -14,9 +15,18 @@ public class TokenHelper
 
     public static T? LeerToken<T>(string token)
     {
-        byte[] bytes = Base64UrlDecode(token);
-        string json = Encoding.UTF8.GetString(bytes);
-        return JsonSerializer.Deserialize<T>(json);
+        try
+        {
+            byte[] bytes = Base64UrlDecode(token);
+
+            string json = Encoding.UTF8.GetString(bytes);
+
+            return JsonSerializer.Deserialize<T>(json);
+        }
+        catch
+        {
+            return default;
+        }
     }
 
     private static string Base64UrlEncode(byte[] bytes)

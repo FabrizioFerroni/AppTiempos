@@ -10,5 +10,5 @@ public class ServiceResponse
 
     public record class DataAResponse<T>( bool Success, List<T> Data, HttpStatusCode Status);
 
-    public record class LoginResponse(bool Flag, TokenDto Token, string? Message);
+    public record class LoginResponse(bool Flag, bool TwoFa, TokenDto Token, string? Message);
 }

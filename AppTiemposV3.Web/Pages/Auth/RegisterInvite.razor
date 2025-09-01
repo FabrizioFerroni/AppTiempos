@@ -27,9 +27,9 @@
                 </p>
                 <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                     <p class="text-sm text-green-800 dark:text-green-200">
-                        <strong>¡Bienvenido @register!.FullName!</strong>
+                        <strong>¡Bienvenido @Nombre!</strong>
                         <br />
-                        Tu email: @register!.Email
+                        Tu email: @Email
                     </p>
                 </div>
             </div>
@@ -42,6 +42,38 @@
             </div>
         </CardContent>
     </Card>
+}
+else if (IsTokenInvalid)
+{
+        <Card Class="w-full max-w-md shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+            <CardHeader Class="text-center space-y-4">
+                <div class="mx-auto w-16 h-16 bg-gradient-to-r from-red-500 to-orange-600 rounded-full flex items-center justify-center">
+                    <AlertCircle Class="w-8 h-8 text-white" />
+                </div>
+                <div>
+                    <CardTitle Class="text-2xl font-bold text-gray-800 dark:text-gray-300">Token Inválido</CardTitle>
+                    <CardDescription class="text-gray-600 dark:text-gray-400 pt-2">
+                        El enlace de invitación no es válido o ha expirado
+                    </CardDescription>
+                </div>
+            </CardHeader>
+            <CardContent Class="space-y-4">
+                <div class="text-center text-gray-600 dark:text-gray-400">
+                    <p>El enlace de invitación que utilizaste no es válido o ha expirado.</p>
+                    <p class="text-sm mt-2">Por favor, solicita una nueva invitación al administrador.</p>
+                </div>
+                <div class="mt-6 text-center border-t border-gray-200 dark:border-gray-700">
+                    <Enlace
+                        Href="/"
+                       
+                        Class="font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-transparent flex justify-center items-center pt-4"
+                    >
+                        <ArrowLeft class="w-4 h-4 mr-2" />
+                        Volver al inicio de sesión
+                    </Enlace>
+                </div>
+            </CardContent>
+        </Card>
 }
 else
 {

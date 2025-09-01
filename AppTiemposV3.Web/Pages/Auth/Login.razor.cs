@@ -1,8 +1,10 @@
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.Web.Authentication;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
@@ -14,36 +16,57 @@ public partial class Login : ComponentBase
     [Inject] private NavigationManager? Router { get; set; }
     [Inject] private AuthenticationStateProvider? AuthStateProvider { get; set; }
     [Inject] private IAuthContract? AuthService { get; set; }
+    [Inject] private ISessionStorageService _sessionStorageService { get; set; } = default!;
     
     private bool isLoading = false;
     private bool isError = false;
     private bool showPassword = false;
     private MarkupString messageError;
-
+    private readonly string key =  "email";
+    
     private LoginDto login = new LoginDto();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        bool containEmail = await _sessionStorageService.ContainKeyAsync(key);
+        if (containEmail)
+        {
+            await _sessionStorageService.RemoveItemAsync(key);
+        }
+        bool containRemember = await _sessionStorageService.ContainKeyAsync("remember");
+        if (containRemember)
+        {
+            await _sessionStorageService.RemoveItemAsync("remember");
+        }
+            
+    }
     
     private async Task SendLogin()
     {
         try
         {
-            await Js!.InvokeVoidAsync("console.log", $"Email: {login.Email}, Password: {login.Password}");
-            await Js!.InvokeVoidAsync("console.log", "Login function called!");
-
             isLoading = true;
             StateHasChanged();
 
-           LoginResponse? response = await AuthService!.Login(login, "");
+            LoginResponse? response = await AuthService!.Login(login, "");
 
-            if (response?.Flag == true && response?.Token != null)
+            bool rememberMe = login.RememberMe;
+            if (response?.Flag == true && response.TwoFa == false && response?.Token != null)
             {
                 TokenDto? token = response.Token;
-                bool rememberMe = login.RememberMe;
                 string tokenLogin = token.AccessToken;
                 login = new();
 
-                CustomAuthenticationProvider? customAuthStateProvider = (CustomAuthenticationProvider)AuthStateProvider!;
+                CustomAuthenticationProvider? customAuthStateProvider =
+                    (CustomAuthenticationProvider)AuthStateProvider!;
                 await customAuthStateProvider.UpdateAuthenticationState(tokenLogin, rememberMe);
                 Router!.NavigateTo("/app");
+            }
+            else if (response?.Flag == true && response.TwoFa == true)
+            {
+                await _sessionStorageService.SetItemAsync(key, login.Email);
+                await _sessionStorageService.SetItemAsync("remember", rememberMe);
+                Router!.NavigateTo("/2fa");
             }
             else
             {
@@ -56,5 +79,16 @@ public partial class Login : ComponentBase
             isLoading = false;
             StateHasChanged();
         }
+    }
+    
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        // Regex simple de email
+        return Regex.IsMatch(email,
+            @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+            RegexOptions.IgnoreCase);
     }
 }

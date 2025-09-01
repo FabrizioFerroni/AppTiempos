@@ -1,10 +1,17 @@
+using System.Text.RegularExpressions;
+using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
 namespace AppTiemposV3.Web.Pages.Auth;
 
 public partial class ForgotPassword : ComponentBase
 {
+    [Inject] private IJSRuntime? Js { get; set; }
+    [Inject] private IAuthContract? AuthService { get; set; }
+    
     private bool isSubmitted = false;
     private bool isLoading = false;
     private bool isError = false;
@@ -14,15 +21,46 @@ public partial class ForgotPassword : ComponentBase
     
     private async Task SendForgotPassword()
     {
-        isLoading = true;
-        StateHasChanged();
-        
-        await Task.Delay(5000); // Espera 5 segundos
-        
-        isSubmitted = true;
-        isLoading = false;
-        StateHasChanged();
-        
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            GeneralResponse? response = await AuthService!.ForgotPassword(forgotPwd);
+            
+            if (response?.Flag == true)
+            {
+                forgotPwd = new();
+                isSubmitted = true;
+            }
+            else
+            {
+                isError = true;
+                messageError = (MarkupString)(response?.Message?.Replace("\n", "<br />") ?? "Error desconocido");
+            }
+        }
+        catch (Exception ex)
+        {
+            isError = true;
+            this.messageError = new MarkupString(ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+
+    }
+    
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        // Regex simple de email
+        return Regex.IsMatch(email,
+            @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+            RegexOptions.IgnoreCase);
     }
     
 }
