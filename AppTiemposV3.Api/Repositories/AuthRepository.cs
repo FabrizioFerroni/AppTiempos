@@ -312,25 +312,6 @@ public class AuthRepository : IAuthContract
     public async Task<LoginResponse?> Login2FA(Login2FA dto)
     {
         UserEntity? user = await _userManager.FindByEmailAsync(dto.Email);
-        
-       /* SignInResult? signIn = await _signInManager.TwoFactorSignInAsync("Email", dto.Code, false, false);
-        
-        Console.WriteLine(JsonConvert.SerializeObject(signIn));
-        
-        if (signIn.Succeeded)
-        {
-            IList<string> userRole = await _userManager.GetRolesAsync(user!);
-
-            UserSession? userSession = new UserSession(user!.Id, user.FullName, user.Area, user.Email,
-                userRole.First(), user.LastPasswordChange);
-
-            TokenDto token = GenerateToken(userSession);
-
-            return new LoginResponse(true,  true, token, "Te has logueado con éxito");
-        }
-        
-        _logger.LogWarning($"El usuario {user!.UserName} fue bloqueado o mando un codigo invalido");
-        throw new BadRequestException($"El usuario {user.UserName} fue bloqueado o mando un codigo invalido");*/
        
        bool isValid = await _userManager.VerifyTwoFactorTokenAsync(user!, "Email", dto.Code);
 
