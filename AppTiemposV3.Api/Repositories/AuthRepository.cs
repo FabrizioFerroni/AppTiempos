@@ -51,7 +51,15 @@ public class AuthRepository : IAuthContract
         if (user is not null)
             throw new BadRequestException("El usuario ya se encuentra registrado. Prueba con otro");
         
+        
         InvitationEntity invitation = _iMapper.Map<InvitationEntity>(dto);
+        
+        object data = new
+            { nombre = invitation.FullName, email = invitation.Email, expired = DateTime.Now.AddMinutes(300) };
+
+        string token = CrearToken(data);
+        
+        invitation.Token = token;
             
         await _dbContext.Invitations.AddAsync(invitation);
 
@@ -238,7 +246,7 @@ public class AuthRepository : IAuthContract
                 await Send2FaCode(user.Email!, code, user.UserName!, user.FullName);
                 
                 _logger.LogInformation($"Se ha enviado el codigo al email {user.Email} para que pueda iniciar sesión");
-                return new LoginResponse(true, null!, $"Se te ha enviado el codigo al email {user.Email} para que puedas iniciar sesión");
+                return new LoginResponse(true, true, null!, $"Se te ha enviado el codigo al email {user.Email} para que puedas iniciar sesión");
                 
             }
 
@@ -257,7 +265,7 @@ public class AuthRepository : IAuthContract
 
                 TokenDto token = GenerateToken(userSession);
 
-                return new LoginResponse(true, token, "Te has logueado con éxito");
+                return new LoginResponse(true, false, token, "Te has logueado con éxito");
             }
             else if (result.IsNotAllowed)
             {
@@ -305,7 +313,9 @@ public class AuthRepository : IAuthContract
     {
         UserEntity? user = await _userManager.FindByEmailAsync(dto.Email);
         
-        SignInResult? signIn = await _signInManager.TwoFactorSignInAsync("Email", dto.Code, false, false);
+       /* SignInResult? signIn = await _signInManager.TwoFactorSignInAsync("Email", dto.Code, false, false);
+        
+        Console.WriteLine(JsonConvert.SerializeObject(signIn));
         
         if (signIn.Succeeded)
         {
@@ -316,11 +326,25 @@ public class AuthRepository : IAuthContract
 
             TokenDto token = GenerateToken(userSession);
 
-            return new LoginResponse(true, token, "Te has logueado con éxito");
+            return new LoginResponse(true,  true, token, "Te has logueado con éxito");
         }
         
         _logger.LogWarning($"El usuario {user!.UserName} fue bloqueado o mando un codigo invalido");
-        throw new BadRequestException($"El usuario {user.UserName} fue bloqueado o mando un codigo invalido");
+        throw new BadRequestException($"El usuario {user.UserName} fue bloqueado o mando un codigo invalido");*/
+       
+       bool isValid = await _userManager.VerifyTwoFactorTokenAsync(user!, "Email", dto.Code);
+
+       if (!isValid)
+           throw new BadRequestException("Código inválido");
+
+       IList<string> userRole = await _userManager.GetRolesAsync(user!);
+
+       UserSession userSession = new UserSession(user!.Id, user!.FullName, user!.Area, user!.Email,
+           userRole.First(), user!.LastPasswordChange);
+
+       TokenDto token = GenerateToken(userSession);
+
+       return new LoginResponse(true, true, token, "Te has logueado con éxito");
     }
 
     public async Task<GeneralResponse> ForgotPassword(ForgotPasswordDto dto)

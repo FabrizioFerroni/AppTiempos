@@ -29,9 +29,9 @@
                 </button>
             </div>
         }
-        <EditForm Enhance Model=@twoFactorDto class="space-y-4" novalidate OnValidSubmit=@SendTwoFactor FormName="LoginForm">
+        <EditForm Enhance Model=@login2FA class="space-y-4" novalidate OnValidSubmit=@SendTwoFactor FormName="LoginForm">
                 <div class="text-center text-sm text-gray-600 dark:text-gray-400">
-                    Verificando acceso para: <strong>@twoFactorDto.Email</strong>
+                    Verificando acceso para: <strong>@login2FA.Email</strong>
                 </div>
 
             <div class="flex justify-center gap-4">
@@ -43,7 +43,7 @@
                     MaxLength="1"
                     Min="1"/>
             </div>
-            <ValidationMessage For="() => twoFactorDto.Code" class="text-xs text-red-600"/>
+            <ValidationMessage For="() => login2FA.Code" class="text-xs text-red-600"/>
 
             <Button Type="submit"
                     Disabled="@(IsLoading)"

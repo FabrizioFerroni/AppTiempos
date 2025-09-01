@@ -1,5 +1,7 @@
+using System.Text.RegularExpressions;
+using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
-using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -7,9 +9,11 @@ namespace AppTiemposV3.Web.Pages.Auth;
 
 public partial class Invite : ComponentBase
 {
+    [Inject] private IAuthContract? AuthService { get; set; }
     private bool isSubmitted = false;
     private bool isLoading = false;
     private bool isError = false;
+    private string Email { get; set; } = string.Empty;
     private MarkupString messageError = new MarkupString("");
     [Inject] private IJSRuntime? Js { get; set; }
     
@@ -22,17 +26,52 @@ public partial class Invite : ComponentBase
 
     private async Task SendInvite()
     {
-        isLoading = true;
-        StateHasChanged();
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            GeneralResponse? response = await AuthService!.Invite(invite);
+            
+            if (response?.Flag == true)
+            {
+                Email  = invite.Email;
+                invite = new()
+                {
+                    FullName = null,
+                    Email = null,
+                    Reason = null
+                };
+                isSubmitted = true;
+                isLoading = false;
+            }
+            else
+            {
+                isError = true;
+                messageError = (MarkupString)(response?.Message?.Replace("\n", "<br />") ?? "Error desconocido");
+            }
+        }
+        catch (Exception ex)
+        {
+            isError = true;
+            this.messageError = new MarkupString(ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
         
-        await Task.Delay(5000); // Espera 5 segundos
-        
-        isSubmitted = true;
-        isLoading = false;
-        string token = CrearToken(new { nombre = invite.FullName, email = invite.Email });
-        Console.WriteLine(token);
-        await Js!.InvokeVoidAsync("console.log", $"Token: {token}");
-        StateHasChanged();
-        
+    }
+    
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        // Regex simple de email
+        return Regex.IsMatch(email,
+            @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+            RegexOptions.IgnoreCase);
     }
 }

@@ -16,9 +16,16 @@ public class AuthService: IAuthContract
         _httpClient = httpClient;
     }
 
-    public Task<GeneralResponse> Invite(InviteDto dto)
+    public async Task<GeneralResponse> Invite(InviteDto dto)
     {
-        throw new NotImplementedException();
+        HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/invite", GenerateStringContent(SerializeObj(dto)));
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse( false, "Error occured while invite. Please try again later.");
+        
+        string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
     public async Task<GeneralResponse> Register(string token, UserDto dto)
@@ -33,9 +40,16 @@ public class AuthService: IAuthContract
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
-    public Task<GeneralResponse> AcceptInvitation(Guid id, AcceptInviteDto dto)
+    public async Task<GeneralResponse> AcceptInvitation(Guid id, AcceptInviteDto dto)
     {
-        throw new NotImplementedException();
+        HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/accept-invite/{id}", GenerateStringContent(SerializeObj(dto)));
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse( false, "Error occured while accept invite. Please try again later.");
+        
+        string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
     public async Task<LoginResponse?> Login(LoginDto dto, string origin)
@@ -43,7 +57,7 @@ public class AuthService: IAuthContract
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/login", GenerateStringContent(SerializeObj(dto)));
         
         if(!response.IsSuccessStatusCode)
-            return new LoginResponse( false, null!, "Error occured while logging in. Please try again later.");
+            return new LoginResponse( false, false, null!, "Error occured while logging in. Please try again later.");
         
         string apiResponse = await response.Content.ReadAsStringAsync();
         
@@ -58,23 +72,59 @@ public class AuthService: IAuthContract
         return result;
     }
 
-    public Task<GeneralResponse> activate2FA(Activate2FA dto)
+    public async Task<GeneralResponse> activate2FA(Activate2FA dto)
     {
-        throw new NotImplementedException();
+        HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/activatetwofactor", GenerateStringContent(SerializeObj(dto)));
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse( false, "Error occured while activate2fa. Please try again later.");
+        
+        string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
-    public Task<LoginResponse?> Login2FA(Login2FA dto)
+    public async Task<LoginResponse?> Login2FA(Login2FA dto)
     {
-        throw new NotImplementedException();
+        HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/login/2fa", GenerateStringContent(SerializeObj(dto)));
+        
+        if(!response.IsSuccessStatusCode)
+            return new LoginResponse( false,  false, null!, "Error occured while logging in 2fa. Please try again later.");
+        
+        string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        LoginResponse? result =  DeserializeJsonString<LoginResponse>(apiResponse);
+
+        if (result?.Token != null)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", result.Token.AccessToken);
+        }
+
+        return result;
     }
 
-    public Task<GeneralResponse> ForgotPassword(ForgotPasswordDto dto)
+    public async Task<GeneralResponse> ForgotPassword(ForgotPasswordDto dto)
     {
-        throw new NotImplementedException();
+        HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/forgotpassword", GenerateStringContent(SerializeObj(dto)));
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse( false, "Error occured while forgot password. Please try again later.");
+        
+        string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
-    public Task<GeneralResponse> ResetPassword(string token,ResetPasswordDto dto)
+    public async Task<GeneralResponse> ResetPassword(string token, ResetPasswordDto dto)
     {
-        throw new NotImplementedException();
+        HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/resetpassword/{token}", GenerateStringContent(SerializeObj(dto)));
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse( false, "Error occured while reset password. Please try again later.");
+        
+        string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 }

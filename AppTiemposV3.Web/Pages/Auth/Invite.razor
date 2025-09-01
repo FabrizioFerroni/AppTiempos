@@ -24,7 +24,7 @@
         <CardContent Class="space-y-4">
             <div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <p class="text-sm font-medium text-green-800 dark:text-green-200 text-center">
-                    Hemos enviado tu solicitud de invitación para <strong class="font-semibold">@invite.Email</strong>
+                    Hemos enviado tu solicitud de invitación para <strong class="font-semibold">@Email</strong>
                 </p>
             </div>
 
@@ -91,7 +91,7 @@ else
                         />
                         <User Class="absolute right-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
                     </div>
-                    <ValidationMessage For="() => invite.Email" class="text-xs text-red-600"/>
+                    <ValidationMessage For="() => invite.FullName" class="text-xs text-red-600"/>
                 </div>
                 <div class="space-y-2">
                     <Label For="email" Id="emailLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Correo electrónico</Label>
@@ -124,10 +124,10 @@ else
                         ></TextArea>
                         <MessageSquare Class="absolute right-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
                     </div>
-                    <ValidationMessage For="() => invite.Email" class="text-xs text-red-600"/>
+                    <ValidationMessage For="() => invite.Reason" class="text-xs text-red-600"/>
                 </div>
                 <Button Type="submit"
-                        Disabled="@(isLoading || (invite.Email == "" || invite.FullName == "" || invite.Reason == ""))"
+                        Disabled="@(isLoading || (!IsValidEmail(invite.Email) || invite.FullName == "" || invite.Reason == ""))"
                         Class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-2.5 cursor-pointer">
 
                     @if (isLoading)
@@ -142,6 +142,12 @@ else
                     }
                 </Button>
             </EditForm>
+            <div class="mt-6 text-center border-t border-gray-200 dark:border-gray-700">
+                <Enlace Href="/" Class="font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-transparent flex justify-center items-center pt-4">
+                    <ArrowLeft class="w-4 h-4 mr-2" />
+                    Volver al inicio de sesión
+                </Enlace>
+            </div>
         </CardContent>
     </Card>
 }
