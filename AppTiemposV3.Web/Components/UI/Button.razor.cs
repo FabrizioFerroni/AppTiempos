@@ -23,7 +23,7 @@ public partial class Button : ComponentBase
             "destructive" => "bg-red-600 text-white hover:bg-red-700",
             "outline" => "border border-gray-300 bg-white hover:bg-gray-100",
             "secondary" => "bg-gray-100 text-black hover:bg-gray-200",
-            "ghost" => "hover:bg-gray-100",
+            "ghost" => "hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-0 ring-0 outline-none",
             "link" => "text-blue-500 underline hover:no-underline",
             _ => ""
         };
@@ -37,7 +37,7 @@ public partial class Button : ComponentBase
             _ => ""
         };
 
-        string baseClasses = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none";
+        string baseClasses = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none";
 
         return Cn(baseClasses, variantClasses, sizeClasses, Class);
     }

@@ -1,0 +1,29 @@
+@using AppTiemposV3.SharedClases.GenericModels
+<Popover>
+    <PopoverTrigger>
+        <Button Class="relative cursor-pointer" Size="sm" Variant="ghost">
+            <Palette Class="h-4 w-4" />
+            <span class="sr-only">Cambiar color</span>
+        </Button>
+    </PopoverTrigger>
+    <PopoverContent Class="w-64">
+        <Card>
+            <CardHeader Class="pb-3">
+                <div class="flex items-center justify-between">
+                    <CardTitle Class="text-sm">Esquema de Colores</CardTitle>
+                </div>
+            </CardHeader>
+            <CardContent Class="space-y-2">
+                @foreach (ColorModel color in Colors)
+                {
+                    <div id="@color.Id">
+                        <Button OnClick="() => SetColor(color.Name)" Class="@GetButtonClass(color)" Size="sm" Variant="@(color.Name == ColorPrefer ? "default" : "outline")">
+                            <div class="w-4 h-4 rounded-full @(color.Gradient)"></div> 
+                            @color.Name
+                        </Button>
+                    </div>
+                }
+            </CardContent>
+        </Card>
+    </PopoverContent>
+</Popover>

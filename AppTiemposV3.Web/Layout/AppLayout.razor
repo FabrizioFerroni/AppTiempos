@@ -11,25 +11,25 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <AuthorizeView>
-                <Authorized>
-                    <div class="dropdown">
-                        <button class="btn btn-transparent dropdown-toggle drop-per" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Hola, <span class="text-danger">@context.User.Identity!.Name!.Split()[0]</span>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item ml-0" href="#">Profile</a></li>
-                            <li><hr class="dropdown-divider" /></li>
-                            <li><a class="dropdown-item ml-0" @onclick="Logout">
-                                <i class="bi bi-box-arrow-in-left"></i>
-                                Logout
-                            </a></li>
-                        </ul>
-                    </div>
-                </Authorized>
-            </AuthorizeView>
-        </div>
+        @* <div class="top-row px-4"> *@
+        @*     <AuthorizeView> *@
+        @*         <Authorized> *@
+        @*             <div class="dropdown"> *@
+        @*                 <button class="btn btn-transparent dropdown-toggle drop-per" type="button" data-bs-toggle="dropdown" aria-expanded="false"> *@
+        @*                     Hola, <span class="text-danger">@context.User.Identity!.Name!.Split()[0]</span> *@
+        @*                 </button> *@
+        @*                 <ul class="dropdown-menu"> *@
+        @*                     <li><a class="dropdown-item ml-0" href="#">Profile</a></li> *@
+        @*                     <li><hr class="dropdown-divider" /></li> *@
+        @*                     <li><a class="dropdown-item ml-0" @onclick="Logout"> *@
+        @*                         <i class="bi bi-box-arrow-in-left"></i> *@
+        @*                         Logout *@
+        @*                     </a></li> *@
+        @*                 </ul> *@
+        @*             </div> *@
+        @*         </Authorized> *@
+        @*     </AuthorizeView> *@
+        @* </div> *@
         <article class="content px-4">
             <AuthorizeView>
                 <Authorized>
