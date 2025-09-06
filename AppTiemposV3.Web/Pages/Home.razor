@@ -3,11 +3,21 @@
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>Dashboard</PageTitle>
+<Navbar Title="Dashboard" Subtitle="Resumen de tu actividad laboral">
+    <div class="text-right ">
+        <p class="text-sm text-gray-500 dark:text-gray-400">Semana actual</p>
+        <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">01/09/2025 - 06/09/2025</p>
+        <button @onclick="ChangeTheme"
+                class="rounded-md ...">
+            Toggle Dark/Light Mode
+        </button>
+    </div>
+</Navbar>
 <h3>Home</h3>
-<div class="card">
+<div class="card bg-gray-100 dark:bg-gray-800">
     <div class="card-body">
         <AuthorizeView Roles="Admin">
-            <button type="button" class="btn btn-danger">Admin can click!</button>
+            <button type="button" class="bg-red-600 dark:bg-blue-900/20 text-white">Admin can click!</button>
         </AuthorizeView>
         <AuthorizeView Roles="User, Admin">
             <button type="button" class="btn btn-primary">User and Admin can click!</button>

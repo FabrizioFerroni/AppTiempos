@@ -1,0 +1,92 @@
+@using AppTiemposV3.SharedClases.GenericModels
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
+
+<Popover>
+    <PopoverTrigger>
+        <Button Class="relative cursor-pointer focus:ring-0 ring-0" Size="sm" Variant="ghost">
+            <Bell Class="h-4 w-4" />
+            @if (UnreadCount > 0)
+            {
+                <Badge Variant="destructive" Class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-600 p-0 flex items-center justify-center text-xs">
+                    @(UnreadCount > 9 ? "9+" : UnreadCount.ToString())
+                </Badge>
+            }
+            <span class="sr-only">
+                Notificaciones
+            </span>
+        </Button>
+    </PopoverTrigger>
+    <PopoverContent Class="w-80">
+        <Card>
+            <CardHeader Class="pb-3">
+                <div class="flex items-center justify-between">
+                    <CardTitle Class="text-sm">Notificaciones</CardTitle>
+                    @if (UnreadCount > 0)
+                    {
+                        <Button Variant="ghost" Size="sm" OnClick="() => MarkAllAsRead()" Class="text-xs">
+                            Marcar todas como leidas
+                        </Button>
+                    }
+                </div>
+            </CardHeader>
+            <CardContent Class="space-y-2 max-h-96 overflow-y-auto">
+                @if (UnreadCount == 0)
+                {
+                    <div class="text-center py-6">
+                        <Bell Class="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p class="text-sm text-gray-500">
+                            No hay notificaciones
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    foreach (NotificationModel notif in Notifications)
+                    {
+                        <div id="@notif.Id" class="@GetNotificationClasses(notif)">
+                            <div class="flex items-start gap-3">
+                                <!-- Icono -->
+                                @GetNotificationIcon(notif.Type) 
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-center">
+                                        <h4 class="text-sm font-medium truncate">
+                                            @notif.Title
+                                        </h4>
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-xs text-gray-500 flex items-center gap-1">
+                                                <Clock Class="h-3 w-3" />
+                                                @FormatTimestamp(notif.Date)
+                                            </span>
+                                            <Button OnClick="() => RemoveNotification(notif.Id)"
+                                                    Class="h-6 w-6 p-0 text-gray-400 hover:text-red-600">
+                                                <Close Class="h-3 w-3" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mt-1">
+                                        @notif.Message
+                                    </p>
+                                    <div class="flex justify-between mt-2">
+                                        @if (!string.IsNullOrEmpty(notif.ActionUrl))
+                                        {
+                                            <Enlace Href="@notif.ActionUrl" Class="text-xs text-blue-600 hover:underline">
+                                                Ver más
+                                            </Enlace>
+                                        }
+                                        @if (!notif.IsRead)
+                                        {
+                                            <Button OnClick="() => MarkAsRead(notif.Id)" Class="ml-auto text-xs text-gray-600 hover:underline">
+                                                <Check Class="h-3 w-3 mr-1" /> 
+                                                Marcar como leída
+                                            </Button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </CardContent>
+        </Card>
+    </PopoverContent>
+</Popover>

@@ -1,0 +1,34 @@
+<Dropdown>
+    <DropdownTrigger Class="relative cursor-pointer focus:ring-0 ring-0 h-9 px-3 ">
+        @* <Button Class="relative cursor-pointer focus:ring-0 ring-0" Size="sm" Variant="ghost"> *@
+            @if (Theme == "light")
+            {
+                <Sun Class="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-gray-900 dark:text-white" />
+            }
+            else if (Theme == "dark")
+            {
+                <Moon Class="h-4 w-4 rotate-0 scale-100 transition-all dark:rotate-0 dark:scale-100 text-gray-900 dark:text-white" />
+            }
+            else
+            {
+                <Monitor Class="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-gray-900 dark:text-white" />
+            }
+            <span class="sr-only">Cambiar tema</span>
+        @* </Button> *@
+    </DropdownTrigger>
+
+    <DropdownContent>
+        <DropdownItem OnClick="@(() => ChangeTheme("light"))">
+            <Sun Class="mr-2 h-4 w-4 text-gray-900 dark:text-white" />
+            <span>Claro</span>
+        </DropdownItem>
+        <DropdownItem OnClick="@(() => ChangeTheme("dark"))">
+            <Moon Class="mr-2 h-4 w-4 text-gray-900 dark:text-white" />
+            <span>Oscuro</span>
+        </DropdownItem>
+        <DropdownItem OnClick="@(() => ChangeTheme("system"))">
+            <Monitor Class="mr-2 h-4 w-4 text-gray-900 dark:text-white"  />
+            <span>Sistema</span>
+        </DropdownItem>
+    </DropdownContent>
+</Dropdown>
