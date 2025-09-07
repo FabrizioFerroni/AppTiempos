@@ -62,7 +62,16 @@ public partial class ColorPicker : ComponentBase
         ColorPrefer = name;
     }
     
-    private string GetButtonClass(ColorModel color) =>
+    private string GetButtonClass2(ColorModel color) =>
         $"w-full justify-start gap-3 {(color.Name == ColorPrefer ? color.Gradient + " text-white" : "hover:bg-gray-50 dark:hover:bg-gray-800")}";
+    
+    private string GetButtonClass(ColorModel color) =>
+        $"rounded-md border cursor-pointer flex items-center gap-5 w-full px-4 py-2 text-sm " +
+        $"dark:text-gray-300 text-gray-500 dark:border-gray-700 " +
+        $"dark:focus:bg-white/5 dark:focus:text-white focus:outline-hidden " +
+        $"{(color.Name == ColorPrefer 
+            ? color.Gradient + " text-white" 
+            : " hover:bg-gray-300 dark:hover:bg-gray-700")}";
+
 
 }

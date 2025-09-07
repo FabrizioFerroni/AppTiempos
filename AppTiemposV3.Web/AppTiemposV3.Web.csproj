@@ -20,4 +20,11 @@
       <ProjectReference Include="..\AppTiemposV3.SharedClases\AppTiemposV3.SharedClases.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\lib\flowbite\flowbite.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\flowbite\flowbite.js.map" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\flowbite\flowbite.min.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\lib\flowbite\flowbite.min.js.map" />
+    </ItemGroup>
+
 </Project>

@@ -1,29 +1,15 @@
-// const colors = require('tailwindcss/colors');
-// module.exports = {
-//     darkMode: 'class',
-//     purge: {
-//         enabled: true,
-//         content: [
-//             './**/*.html',
-//             './**/*.razor'
-//         ]
-//     },
-//     theme: {
-//         extend: {}
-//     },
-//     plugins: []
-// }
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    darkMode: 'class',
     content: [
-        "./**/*.razor",
-        "./**/*.html",
-        "./**/*.cshtml",
+        "./wwwroot/index.html",
+        "./Layout/**/*.{razor,html,cshtml}",
+        "./Pages/**/*.{razor,html,cshtml}",
+       // "./node_modules/flowbite/dist/flowbite.min.js"
     ],
     theme: {
         extend: {},
     },
-    plugins: [],
+    plugins: [
+        //require('flowbite/plugin')
+    ],
 }

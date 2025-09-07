@@ -16,5 +16,6 @@ public class NotificationModel
     public NotificationType Type { get; set; } = NotificationType.Info;
     public DateTime Date { get; set; } = DateTime.Now;
     public bool IsRead { get; set; } = false;
+    public bool IsDelete { get; set; } = false;
     public string? ActionUrl { get; set; }
 }
