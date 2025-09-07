@@ -7,6 +7,7 @@ using AppTiemposV3.Web.Services;
 using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -25,4 +26,30 @@ services.AddAuthorizationCore();
 services.AddScoped<AuthenticationStateProvider, CustomAuthenticationProvider>();
 services.AddScoped<IAuthContract, AuthService>();
 
-await builder.Build().RunAsync();
+//await builder.Build().RunAsync();
+WebAssemblyHost? host = builder.Build();
+
+ILocalStorageService? localStorage = host.Services.GetRequiredService<ILocalStorageService>();
+string? theme = await localStorage.GetItemAsync<string>("color-theme");
+
+if (theme == "dark")
+{
+    await host.Services.GetRequiredService<IJSRuntime>()
+        .InvokeVoidAsync("eval", "document.documentElement.classList.add('dark')");
+}
+else
+{
+    await host.Services.GetRequiredService<IJSRuntime>()
+        .InvokeVoidAsync("eval", "document.documentElement.classList.remove('dark')");
+}
+
+IJSRuntime? js = host.Services.GetRequiredService<IJSRuntime>();
+
+await js.InvokeVoidAsync("eval", @"
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1';
+    script.type = 'module';
+    document.head.appendChild(script);
+");
+
+await host.RunAsync();

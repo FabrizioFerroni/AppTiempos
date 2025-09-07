@@ -18,9 +18,16 @@ public partial class Separator : ComponentBase
     
     private string GetClasses()
     {
+        // string baseClasses =
+        //     $"shrink-0 bg-red-600 {(Orientation == "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]")}";
+        //
+        // return Cn(baseClasses, Class);
+        
         string baseClasses =
-            $"shrink-0 bg-red-600 {(Orientation == "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]")}";
+            Orientation == "horizontal"
+                ? "h-px w-full bg-gray-700 dark:bg-gray-600"
+                : "w-px h-6 bg-gray-700 dark:bg-gray-600"; // Alto fijo de 1.5rem
 
-        return Cn(baseClasses, Class);
+        return Cn("shrink-0", baseClasses, Class);
     }
 }

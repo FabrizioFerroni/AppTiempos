@@ -1,36 +1,17 @@
-@using AppTiemposV3.Web.Authentication
 @using Microsoft.AspNetCore.Components.Authorization
 @using AppTiemposV3.Web.Pages
 @inject NavigationManager Router
 @inject AuthenticationStateProvider AuthStateProvider
+
 @inherits LayoutComponentBase
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+    @* <div class="sidebar"> *@
+    @*     <NavMenu /> *@
+    @* </div> *@
 
-    <main>
-        @* <div class="top-row px-4"> *@
-        @*     <AuthorizeView> *@
-        @*         <Authorized> *@
-        @*             <div class="dropdown"> *@
-        @*                 <button class="btn btn-transparent dropdown-toggle drop-per" type="button" data-bs-toggle="dropdown" aria-expanded="false"> *@
-        @*                     Hola, <span class="text-danger">@context.User.Identity!.Name!.Split()[0]</span> *@
-        @*                 </button> *@
-        @*                 <ul class="dropdown-menu"> *@
-        @*                     <li><a class="dropdown-item ml-0" href="#">Profile</a></li> *@
-        @*                     <li><hr class="dropdown-divider" /></li> *@
-        @*                     <li><a class="dropdown-item ml-0" @onclick="Logout"> *@
-        @*                         <i class="bi bi-box-arrow-in-left"></i> *@
-        @*                         Logout *@
-        @*                     </a></li> *@
-        @*                 </ul> *@
-        @*             </div> *@
-        @*         </Authorized> *@
-        @*     </AuthorizeView> *@
-        @* </div> *@
-        <article class="content px-4">
+    <main class="flex">
+        @* <article class="content px-4"> *@
             <AuthorizeView>
                 <Authorized>
                     @Body
@@ -45,7 +26,7 @@
                     </div>
                 </Authorizing>
             </AuthorizeView>
-        </article>
+        @* </article> *@
     </main>
 </div>
 
@@ -56,11 +37,3 @@
     <a class="dismiss">🗙</a>
 </div>
 
-@code {
-    private async Task Logout()
-    {
-        CustomAuthenticationProvider? customAuthStateProvider = (CustomAuthenticationProvider)AuthStateProvider;
-        await customAuthStateProvider.UpdateAuthenticationState(null!);
-        Router.NavigateTo("/");
-    }
-}

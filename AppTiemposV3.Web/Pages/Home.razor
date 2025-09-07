@@ -3,30 +3,33 @@
 @using Microsoft.AspNetCore.Components.Authorization
 
 <PageTitle>Dashboard</PageTitle>
-<Navbar Title="Dashboard" Subtitle="Resumen de tu actividad laboral">
-    <div class="text-right ">
-        <p class="text-sm text-gray-500 dark:text-gray-400">Semana actual</p>
-        <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">01/09/2025 - 06/09/2025</p>
-        <button @onclick="ChangeTheme"
-                class="rounded-md ...">
-            Toggle Dark/Light Mode
-        </button>
-    </div>
-</Navbar>
-<h3>Home</h3>
-<div class="card bg-gray-100 dark:bg-gray-800">
-    <div class="card-body">
-        <AuthorizeView Roles="Admin">
-            <button type="button" class="bg-red-600 dark:bg-blue-900/20 text-white">Admin can click!</button>
-        </AuthorizeView>
-        <AuthorizeView Roles="User, Admin">
-            <button type="button" class="btn btn-primary">User and Admin can click!</button>
-        </AuthorizeView>
-    </div>
-    <div class="card-footer">
-        <AuthorizeView>
-            <h3>You are authenticated</h3>
-            <h4>Your Role is @context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.Role)!.Value</h4>
-        </AuthorizeView>
-    </div>
+<div class="sidebar w-82 bg-red-700">
+    <NavMenu />
+</div>
+<div class="flex flex-col w-full">
+    <Navbar Title="Dashboard" Subtitle="Resumen de tu actividad laboral">
+        <div class="text-right">
+            <p class="text-sm text-gray-500 dark:text-gray-400">Semana actual</p>
+            <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">01/09/2025 - 06/09/2025</p>
+        </div>
+    </Navbar>
+    <article class="content px-4">
+        <h3 class="text-gray-800 dark:text-red-700">Home</h3>
+        <div class="card bg-gray-100 dark:bg-gray-800 ">
+            <div class="card-body">
+                <AuthorizeView Roles="Admin">
+                    <button type="button" class="bg-red-600 dark:bg-blue-900/20 text-white">Admin can click!</button>
+                </AuthorizeView>
+                <AuthorizeView Roles="User, Admin">
+                    <button type="button" class="btn btn-primary text-gray-800 dark:text-red-700">User and Admin can click!</button>
+                </AuthorizeView>
+            </div>
+            <div class="card-footer">
+                <AuthorizeView>
+                    <h3 class="text-gray-800 dark:text-red-700">You are authenticated</h3>
+                    <h4 class="text-gray-800 dark:text-red-700">Your Role is @context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.Role)!.Value</h4>
+                </AuthorizeView>
+            </div>
+        </div>
+    </article>
 </div>
