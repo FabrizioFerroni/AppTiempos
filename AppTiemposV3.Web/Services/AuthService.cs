@@ -20,10 +20,12 @@ public class AuthService: IAuthContract
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/invite", GenerateStringContent(SerializeObj(dto)));
         
-        if(!response.IsSuccessStatusCode)
-            return new GeneralResponse( false, "Error occured while invite. Please try again later.");
-        
         string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse(false, resultError?.Message!);
         
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
@@ -32,10 +34,12 @@ public class AuthService: IAuthContract
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/register/{token}", GenerateStringContent(SerializeObj(dto)));
         
-        if(!response.IsSuccessStatusCode)
-            return new GeneralResponse( false, "Error occured while register. Please try again later.");
-        
         string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse(false, resultError?.Message!);
         
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
@@ -44,10 +48,12 @@ public class AuthService: IAuthContract
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/accept-invite/{id}", GenerateStringContent(SerializeObj(dto)));
         
-        if(!response.IsSuccessStatusCode)
-            return new GeneralResponse( false, "Error occured while accept invite. Please try again later.");
-        
         string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse(false, resultError?.Message!);
         
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
@@ -56,10 +62,12 @@ public class AuthService: IAuthContract
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/login", GenerateStringContent(SerializeObj(dto)));
         
-        if(!response.IsSuccessStatusCode)
-            return new LoginResponse( false, false, null!, "Error occured while logging in. Please try again later.");
-        
         string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
+        
+        if(!response.IsSuccessStatusCode)
+            return new LoginResponse(false, false, null!, resultError.Message);
         
         LoginResponse? result =  DeserializeJsonString<LoginResponse>(apiResponse);
 
@@ -76,10 +84,12 @@ public class AuthService: IAuthContract
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/activatetwofactor", GenerateStringContent(SerializeObj(dto)));
         
-        if(!response.IsSuccessStatusCode)
-            return new GeneralResponse( false, "Error occured while activate2fa. Please try again later.");
-        
         string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse(false, resultError?.Message!);
         
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
@@ -88,10 +98,12 @@ public class AuthService: IAuthContract
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/login/2fa", GenerateStringContent(SerializeObj(dto)));
         
-        if(!response.IsSuccessStatusCode)
-            return new LoginResponse( false,  false, null!, "Error occured while logging in 2fa. Please try again later.");
-        
         string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
+        
+        if(!response.IsSuccessStatusCode)
+            return new LoginResponse(false, false, null!,resultError.Message);
         
         LoginResponse? result =  DeserializeJsonString<LoginResponse>(apiResponse);
 
@@ -108,10 +120,12 @@ public class AuthService: IAuthContract
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/forgotpassword", GenerateStringContent(SerializeObj(dto)));
         
-        if(!response.IsSuccessStatusCode)
-            return new GeneralResponse( false, "Error occured while forgot password. Please try again later.");
-        
         string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse(false, resultError?.Message!);
         
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
@@ -120,10 +134,12 @@ public class AuthService: IAuthContract
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/resetpassword/{token}", GenerateStringContent(SerializeObj(dto)));
         
-        if(!response.IsSuccessStatusCode)
-            return new GeneralResponse( false, "Error occured while reset password. Please try again later.");
-        
         string apiResponse = await response.Content.ReadAsStringAsync();
+        
+        ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
+        
+        if(!response.IsSuccessStatusCode)
+            return new GeneralResponse(false, resultError?.Message!);
         
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }

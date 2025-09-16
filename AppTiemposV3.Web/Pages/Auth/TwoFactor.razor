@@ -6,7 +6,7 @@
 
 <Card Class="w-full max-w-md shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm">
     <CardHeader Class="text-center space-y-4">
-        <div class="mx-auto w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600  rounded-2xl flex items-center justify-center">
+        <div class="mx-auto w-16 h-16 @ColorService.GetCurrentColor()!.Gradient  rounded-2xl flex items-center justify-center">
             <Shield Class="w-8 h-8 text-white"/>
         </div>
         <div>
@@ -47,7 +47,7 @@
 
             <Button Type="submit"
                     Disabled="@(IsLoading)"
-                    Class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-2.5 cursor-pointer mt-4">
+                    Class=@($"w-full {ColorService.GetCurrentColor()!.Gradient} {ColorService.GetCurrentColor()!.Hover} text-white font-medium py-2.5 cursor-pointer mt-4")>
 
                 @if (IsLoading)
                 {

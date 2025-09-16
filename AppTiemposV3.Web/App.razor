@@ -5,13 +5,13 @@
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.AppLayout)">
                 <Authorizing>
-                    <h2>Plesae wait...</h2>
+                    <h2>Please wait...</h2>
                 </Authorizing>
             </AuthorizeRouteView>
-            <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+            <FocusOnNavigate RouteData="@routeData" Selector="article"/>
         </Found>
         <NotFound>
-            <PageTitle>Not found</PageTitle>
+            <PageTitle>Página no encontrada</PageTitle>
             <LayoutView Layout="@typeof(ErrorLayout)">
                 <p role="alert">Sorry, there's nothing at this address.</p>
             </LayoutView>

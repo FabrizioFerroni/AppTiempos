@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
@@ -11,6 +12,7 @@ public partial class ForgotPassword : ComponentBase
 {
     [Inject] private IJSRuntime? Js { get; set; }
     [Inject] private IAuthContract? AuthService { get; set; }
+    [Inject] private ColorService ColorService { get; set; } = null!;
     
     private bool isSubmitted = false;
     private bool isLoading = false;
@@ -18,6 +20,16 @@ public partial class ForgotPassword : ComponentBase
     private MarkupString messageError = new MarkupString("");
     
     private ForgotPasswordDto forgotPwd = new ForgotPasswordDto();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        ColorService.OnColorChanged += HandleColorChanged;
+    }
+    
+    private async void HandleColorChanged()
+    {
+        await InvokeAsync(StateHasChanged); 
+    }
     
     private async Task SendForgotPassword()
     {
@@ -63,4 +75,8 @@ public partial class ForgotPassword : ComponentBase
             RegexOptions.IgnoreCase);
     }
     
+    public void Dispose()
+    {
+        ColorService.OnColorChanged -= HandleColorChanged; 
+    }
 }

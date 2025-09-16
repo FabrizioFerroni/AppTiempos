@@ -21,10 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\lib\flowbite\flowbite.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\flowbite\flowbite.js.map" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\flowbite\flowbite.min.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\lib\flowbite\flowbite.min.js.map" />
+      <_ContentIncludedByDefault Remove="wwwroot\data\colors.json" />
+      <_ContentIncludedByDefault Remove="Components\UI\SidebarProvider\Sidebar.razor" />
     </ItemGroup>
-
 </Project>

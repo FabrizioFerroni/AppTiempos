@@ -1,0 +1,183 @@
+@using AppTiemposV3.SharedClases.Constants
+@using Microsoft.AspNetCore.Components.Authorization
+<AuthorizeView>
+    <div class="border-r border-gray-200/50 dark:border-gray-700/50 flex flex-col h-full @(IsClosed ? "w-16" :"w-82") bg-white/80 dark:bg-gray-800/90">
+        <!-- Header -->
+        <div class="border-b border-gray-200/50 dark:border-gray-700/50 p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8  @ColorService.GetCurrentColor()!.Gradient rounded-lg flex items-center justify-center">
+                    <!-- Icono Clock -->
+                    <Clock Class="w-4 h-4 text-white"/>
+                </div>
+                @if (!IsClosed)
+                {
+                    <div>
+                        <h2 class="font-semibold text-gray-800 dark:text-gray-100">TimeTracker</h2>
+                        
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            <span>
+                                @(context.User.Claims.FirstOrDefault(u => u.Type == CustomClaimTypes.Role)!.Value == "Admin" ? "Admin" : "Pro")
+                            </span>
+                        </p>
+                        
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto p-2 space-y-4">
+            <!-- Navegación -->
+            <div>
+                @if (!IsClosed)
+                {
+                    <p class="text-gray-600 dark:text-gray-300 font-medium mb-2 duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0
+                group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0">Navegación</p>
+                }
+                @foreach (MenuItem? item in MenuItems)
+                {
+                    <Enlace Href="@item.Url"
+                            Class="@($"{GetItemClass(item.Url)} {(IsClosed ? "justify-center" : "")}")">
+                        <span>@item.Icon</span>
+                        @if (!IsClosed)
+                        {
+                            <span>@item.Title</span>
+                        }
+                    </Enlace>
+                }
+            </div>
+
+            @if (context.User.Claims.FirstOrDefault(u => u.Type == CustomClaimTypes.Role)!.Value == "Admin")
+            {
+                <div>
+                    @if (!IsClosed)
+                    {
+                        <p class="text-gray-600 dark:text-gray-300 font-medium mb-2 duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0
+                group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0">Administración</p>
+                    }
+                    @foreach (MenuItem? item in AdminMenuItems)
+                    {
+                        <Enlace Href="@item.Url"
+                                Class="@($"{GetItemClass(item.Url)} {(IsClosed ? "justify-center" : "")}")">
+                            <span>@item.Icon</span>
+                            @if (!IsClosed)
+                            {
+                                <span>@item.Title</span>
+                            }
+                        </Enlace>
+                    }
+                </div>
+            }
+
+            <!-- Acciones rápidas -->
+            <div>
+                @if (!IsClosed)
+                {
+                    <p class="text-gray-600 dark:text-gray-300 font-medium mb-2 duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0
+                group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0">Acciones Rápidas</p>
+                }
+                <button class="w-full flex items-center gap-2 px-3 py-2 text-sm border border-dashed rounded-lg cursor-pointer @ColorService.GetCurrentColor().Gradient hover:bg-gray-100 dark:hover:bg-gray-700  @(IsClosed ? "justify-center": "")"
+                        @onclick="() => Nav.NavigateTo(rutaAcciones)">
+                    <span>
+                        <Plus Class="h-4 w-4"/>
+                    </span>
+                    @if (!IsClosed)
+                    {
+                        <span>Nueva Actividad</span>
+                    }
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <!-- Progreso -->
+        @if (!IsClosed)
+        {
+            <div class="space-y-3 p-3 m-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200/50 dark:border-gray-700/50 mb-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <Clock Class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <div class="flex flex-col items-start">
+                            <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                Progreso Hoy
+                            </span>
+                            <span class="text-xs font-medium text-gray-700 dark:text-gray-400">
+                                @FechaHoy
+                            </span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            @(TodayHoursWorked)h / @(TodayHoursTarget)h
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            @if (TodayHoursTarget - TodayHoursWorked > 0)
+                            {
+                                @* <span>Faltan @((TodayHoursWorked - TodayHoursWorked).ToString("F1"))h</span> *@
+                                <span>Faltan @GetRemainingHours()</span>
+                            }
+                            else
+                            {
+                                <span>Meta completada</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <Progress Value="@(TodayHoursTarget > 0 ? (int)((TodayHoursWorked / TodayHoursTarget) * 100) : 0)" Class="h-2"></Progress>
+                    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                        <span>
+                            0h
+                        </span>
+                        <span class="@GetPercentageClass()">
+                            @(TodayHoursTarget > 0
+                                ? Math.Round((TodayHoursWorked / TodayHoursTarget) * 100)
+                                : 0)%
+                        </span>
+                        <span>@(TodayHoursTarget)h</span>
+                    </div>
+                </div>
+            </div>
+        }
+        
+        <div class="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
+            <!-- Perfil -->
+            @* <AuthorizeView> *@
+                <button class="flex items-center gap-3 mb-3 w-full @(IsClosed ? "" : "p-2") rounded-lg hover:bg-gray-100  cursor-pointer @ColorService!.GetCurrentColor()!.Hover"
+                        @onclick="() => Nav.NavigateTo(rutaProfile)">
+                    <div class="w-8 h-8 flex items-center justify-center rounded-full  @ColorService!.GetCurrentColor()!.Gradient  text-white">
+                        @GetInitials(@context.User.Claims.FirstOrDefault(u => u.Type == CustomClaimTypes.FullName)!.Value)
+                    </div>
+                    @if (!IsClosed)
+                    {
+                        <div class="flex-1 min-w-0 text-left">
+                            <p class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                                @context.User.Claims.FirstOrDefault(u => u.Type == CustomClaimTypes.FullName)!.Value
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                @context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.Area)!.Value
+                            </p>
+                        </div>
+                    }
+                </button>
+            @* </AuthorizeView> *@
+
+            <!-- Logout -->
+            <button class="w-full flex @(IsClosed ? "justify-center" : "p") items-center gap-2 px-3 py-2 text-sm rounded-lg 
+                           text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 cursor-pointer
+                           hover:bg-red-50 dark:hover:bg-red-900/20"
+                    @onclick="Logout">
+                <span>
+                    <LogOut Class="w-4 h-4"/>
+                </span>
+                @if (!IsClosed)
+                {
+                    <span>
+                        Cerrar Sesión
+                    </span>
+                }
+            </button>
+        </div>
+    </div>
+</AuthorizeView>

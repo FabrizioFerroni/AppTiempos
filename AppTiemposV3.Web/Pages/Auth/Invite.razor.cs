@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.Web.Services;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -10,6 +11,7 @@ namespace AppTiemposV3.Web.Pages.Auth;
 public partial class Invite : ComponentBase
 {
     [Inject] private IAuthContract? AuthService { get; set; }
+    [Inject] private ColorService ColorService { get; set; } = null!;
     private bool isSubmitted = false;
     private bool isLoading = false;
     private bool isError = false;
@@ -23,6 +25,16 @@ public partial class Invite : ComponentBase
         Email = null,
         Reason = null
     };
+    
+    protected override async Task OnInitializedAsync()
+    {
+        ColorService.OnColorChanged += HandleColorChanged;
+    }
+    
+    private async void HandleColorChanged()
+    {
+        await InvokeAsync(StateHasChanged); 
+    }
 
     private async Task SendInvite()
     {
@@ -73,5 +85,10 @@ public partial class Invite : ComponentBase
         return Regex.IsMatch(email,
             @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
             RegexOptions.IgnoreCase);
+    }
+    
+    public void Dispose()
+    {
+        ColorService.OnColorChanged -= HandleColorChanged; 
     }
 }

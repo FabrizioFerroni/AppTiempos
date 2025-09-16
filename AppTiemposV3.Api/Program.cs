@@ -21,6 +21,7 @@ using AppTiemposV3.Api.Middlewares;
 using AppTiemposV3.Api.Services;
 using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
+using AppTiemposV3.SharedClases.GenericModels;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -188,6 +189,7 @@ services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryRepository>()
 services.AddScoped<IUserContract, UserContextService>();
 services.AddScoped<IGenericContract, GenericRepository>();
 services.AddScoped<IEmailService, EmailService>();
+services.AddScoped<IGenericSContract<ColorModel>, GenericService>();
 // Ending Services and repositories
 
 string[] origins = builder.Configuration.GetSection("origins").Get<string[]>()!;

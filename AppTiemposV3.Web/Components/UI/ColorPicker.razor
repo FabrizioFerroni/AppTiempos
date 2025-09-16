@@ -9,7 +9,7 @@
         <div class="py-1">
             <span class="block px-4 py-2 text-sm dark:text-gray-300 dark:focus:bg-white/5 dark:focus:text-white focus:outline-hidden">Esquema de Colores</span>
             <div class="space-y-2">
-                @foreach (ColorModel color in Colors)
+                @foreach (ColorModel? color in ColorService.Colors)
                 {
                     <div id="@color.Id" class="px-2">
                         <a href="javascript:void(0);" @onclick="() => SetColor(color.Name)" class="@GetButtonClass(color)">

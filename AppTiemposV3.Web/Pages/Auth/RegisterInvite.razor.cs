@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.Web.Services;
 using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -14,7 +16,7 @@ public partial class RegisterInvite : ComponentBase
     public string Token { get; set; } = string.Empty;
     
     [Inject] private IAuthContract? AuthService { get; set; }
-    
+    [Inject] private ColorService ColorService { get; set; } = null!;
     public bool IsCreated { get; set; } = false;
     public bool IsTokenInvalid { get; set; } = false;
     private bool isLoading = false;
@@ -28,6 +30,11 @@ public partial class RegisterInvite : ComponentBase
     [Inject] private IJSRuntime? Js { get; set; }
     
     private UserDto? register = new UserDto();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        ColorService.OnColorChanged += HandleColorChanged;
+    }
     
     protected override async void OnInitialized()
     {
@@ -67,6 +74,11 @@ public partial class RegisterInvite : ComponentBase
         register!.Email = email;
     }
     
+    private async void HandleColorChanged()
+    {
+        await InvokeAsync(StateHasChanged); 
+    }
+    
     private async Task SendRegister()
     {
         try
@@ -100,5 +112,30 @@ public partial class RegisterInvite : ComponentBase
             StateHasChanged();
         }
         
+    }
+    
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        // Regex simple de email
+        return Regex.IsMatch(email,
+            @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+            RegexOptions.IgnoreCase);
+    }
+    
+    private bool IsValidPassword(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+            return false;
+        
+        return Regex.IsMatch(password,
+            @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$");
+    }
+    
+    public void Dispose()
+    {
+        ColorService.OnColorChanged -= HandleColorChanged; 
     }
 }
