@@ -1,13 +1,20 @@
-using AppTiemposV3.Web.Authentication;
+using AppTiemposV3.Web.Services;
+using Microsoft.AspNetCore.Components;
 
 namespace AppTiemposV3.Web.Layout;
 
 public partial class AppLayout 
 {
-    private async Task Logout()
+    [Inject] LayoutState State { get; set; } = default!;
+    
+    protected override async Task OnInitializedAsync()
     {
-        CustomAuthenticationProvider? customAuthStateProvider = (CustomAuthenticationProvider)AuthStateProvider;
-        await customAuthStateProvider.UpdateAuthenticationState(null!);
-        Router.NavigateTo("/");
+        State.OnSidebarChanged += StateHasChanged;
+        await State.InitializeAsync();
+    }
+
+    public void Dispose()
+    {
+        State.OnSidebarChanged -= StateHasChanged;
     }
 }

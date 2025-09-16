@@ -2,6 +2,7 @@ using System.Text.Json;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.Web.Authentication;
+using AppTiemposV3.Web.Services;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -24,6 +25,8 @@ public partial class TwoFactor : ComponentBase
     [Inject] private IJSRuntime? Js { get; set; } = default!;
     [Inject] private ISessionStorageService _sessionStorageService { get; set; } = default!;
     [Inject] private NavigationManager? Router { get; set; } = default!;
+    [Inject] private ColorService ColorService { get; set; } = null!;
+    
     private readonly string key =  "email";
     
     protected override async Task OnInitializedAsync()
@@ -40,6 +43,12 @@ public partial class TwoFactor : ComponentBase
             StateHasChanged();
         }
         
+        ColorService.OnColorChanged += HandleColorChanged;
+    }
+    
+    private async void HandleColorChanged()
+    {
+        await InvokeAsync(StateHasChanged); 
     }
     
 
@@ -64,7 +73,7 @@ public partial class TwoFactor : ComponentBase
                 CustomAuthenticationProvider? customAuthStateProvider =
                     (CustomAuthenticationProvider)AuthStateProvider!;
                 await customAuthStateProvider.UpdateAuthenticationState(tokenLogin, rememberMe);
-                Router!.NavigateTo("/app");
+                Router!.NavigateTo("/app/dashboard");
             }
             else
             {
@@ -92,4 +101,8 @@ public partial class TwoFactor : ComponentBase
         return String.Join("", codeValue);
     }
 
+    public void Dispose()
+    {
+        ColorService.OnColorChanged -= HandleColorChanged; 
+    }
 }

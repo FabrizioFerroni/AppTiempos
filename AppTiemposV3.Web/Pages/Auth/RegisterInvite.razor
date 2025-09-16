@@ -80,7 +80,7 @@ else
     <Card Class="w-full max-w-md shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
         <CardHeader Class="space-y-1 text-center pb-8">
             <div class="flex justify-center mb-4">
-                <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                <div class="w-16 h-16 @ColorService.GetCurrentColor()!.Gradient rounded-2xl flex items-center justify-center">
                     <UserPlus Class="w-8 h-8 text-white" />
                 </div>
             </div>
@@ -187,8 +187,8 @@ else
                     <ValidationMessage For="() => register.ConfirmPassword" class="text-xs text-red-600"/>
                 </div>
                 <Button Type="submit"
-                        Disabled="@(isLoading || (register.FullName == "" || register.Area == "" ||  register.Email == "" || register.Password == "" || register.ConfirmPassword == ""))"
-                        Class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-md transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50  cursor-pointer">
+                        Disabled="@(isLoading || (register.FullName == "" || register.Area == "" ||  !IsValidEmail(register.Email) || !IsValidPassword(register.Password) || !IsValidPassword(register.ConfirmPassword)))"
+                        Class=@($"w-full {ColorService.GetCurrentColor()!.Gradient} {ColorService.GetCurrentColor()!.Hover} text-white font-semibold py-2 px-4 rounded-md transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50  cursor-pointer")>
 
                     @if (isLoading)
                     {

@@ -1,4 +1,8 @@
 <button @onclick="OnClickHandler" class="@GetClasses()">
-    <PanelLeftClose />
+    @if(IsSidebarClosed){
+        <PanelLeftOpen />
+    }else{
+        <PanelLeftClose />
+    }
     <span class="sr-only">Toggle Sidebar</span>
 </button>

@@ -19,6 +19,37 @@
                 document.documentElement.classList.remove('dark');
             }
         })();
+        
+        (async function obtenerDatos() {
+            try {
+                const apiUrl = "https://localhost:7260/api/generics/colors";
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Error en la petición: ' + response.status);
+
+                const data = await response.json();
+                const accent = localStorage.getItem('color-accent') || 'Azul';
+
+                const colorSeleccionado = data.find(c => c.name?.trim().toLowerCase() === accent.trim().toLowerCase());
+
+                const elementos = [
+                    document.getElementById('logo'),
+                    document.getElementById('progressBar'),
+                    document.getElementById('dot-1'),
+                    document.getElementById('dot-2'),
+                    document.getElementById('dot-3')
+                ];
+
+                const clasePorDefecto = "bg-gradient-to-br from-blue-500 to-indigo-500";
+
+                const clases = (colorSeleccionado?.gradient || clasePorDefecto).split(' ');
+
+                elementos.forEach(el => {
+                    if (el) el.classList.add(...clases);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        })();
 
         const currentTheme2 = localStorage.getItem('color-theme') || 'system';
         applyTheme(currentTheme2);
@@ -69,13 +100,13 @@
     </style>
 </head>
 
-<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen">    
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 min-h-screen">
     <div id="app">
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 ">
             <div class="flex flex-col items-center space-y-6">
                 <!-- Logo animado con reloj simple -->
                 <div class="relative">
-                    <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-2xl">
+                    <div id="logo" class="w-20 h-20 rounded-2xl flex items-center justify-center shadow-2xl">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock-icon lucide-clock w-10 h-10 text-white animate-spin"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="10"/></svg>
                     </div>
                 </div>
@@ -88,14 +119,14 @@
 
                 <!-- Barra de progreso animada -->
                 <div class="w-64 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" style="animation: loading-bar 2s ease-in-out infinite;"></div>
+                    <div id="progressBar" class="h-full  rounded-full" style="animation: loading-bar 2s ease-in-out infinite;"></div>
                 </div>
 
                 <!-- Puntos de carga -->
                 <div class="flex space-x-2">
-                    <div class="w-3 h-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full animate-bounce" style="animation-delay: 0s; animation-duration: 1s;"></div>
-                    <div class="w-3 h-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full animate-bounce" style="animation-delay: 0.2s; animation-duration: 1s;"></div>
-                    <div class="w-3 h-3 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full animate-bounce" style="animation-delay: 0.4s; animation-duration: 1s;"></div>
+                    <div id="dot-1" class="w-3 h-3 rounded-full animate-bounce" style="animation-delay: 0s; animation-duration: 1s;"></div>
+                    <div id="dot-2" class="w-3 h-3 rounded-full animate-bounce" style="animation-delay: 0.2s; animation-duration: 1s;"></div>
+                    <div id="dot-3" class="w-3 h-3 rounded-full animate-bounce" style="animation-delay: 0.4s; animation-duration: 1s;"></div>
                 </div>
             </div>
         </div>

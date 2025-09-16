@@ -6,12 +6,11 @@
 @inherits LayoutComponentBase
 
 <div class="page">
-    @* <div class="sidebar"> *@
-    @*     <NavMenu /> *@
-    @* </div> *@
+    <div>
+        <Sidebar IsClosed="@State.IsSidebarClosed" />
+    </div>
 
-    <main class="flex">
-        @* <article class="content px-4"> *@
+    <main class="flex h-screen">
             <AuthorizeView>
                 <Authorized>
                     @Body
@@ -26,7 +25,6 @@
                     </div>
                 </Authorizing>
             </AuthorizeView>
-        @* </article> *@
     </main>
 </div>
 

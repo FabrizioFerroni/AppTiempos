@@ -48,7 +48,7 @@ else
     <Card Class="w-full max-w-md bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-gray-200 dark:border-gray-700 shadow-xl">
         <CardHeader Class="space-y-1 text-center">
             <div class="flex justify-center mb-4">
-                <div class="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center"> 
+                <div class="w-16 h-16 @ColorService.GetCurrentColor()!.Gradient rounded-2xl flex items-center justify-center"> 
                     <Send Class="w-8 h-8 text-white" />
                 </div>
             </div>
@@ -128,7 +128,7 @@ else
                 </div>
                 <Button Type="submit"
                         Disabled="@(isLoading || (!IsValidEmail(invite.Email) || invite.FullName == "" || invite.Reason == ""))"
-                        Class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-2.5 cursor-pointer">
+                        Class=@($"w-full {ColorService.GetCurrentColor()!.Gradient} {ColorService.GetCurrentColor()!.Hover} text-white font-medium py-2.5 cursor-pointer")>
 
                     @if (isLoading)
                     {
