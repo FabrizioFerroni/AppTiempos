@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AppTiemposV3.SharedClases.Constants;
 using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.SharedClases.Enums;
 
 namespace AppTiemposV3.SharedClases.GenericModels;
 
@@ -18,7 +19,7 @@ public static class Generics
 
         string idToken = claims.First(c => c.Type == CustomClaimTypes.Id).Value!;
         string fullName = claims.First(c => c.Type == CustomClaimTypes.FullName).Value!;
-        string area = claims.First(c => c.Type == CustomClaimTypes.Area).Value!;
+        Areas area = Enum.Parse<Areas>(claims.First(c => c.Type == CustomClaimTypes.Area).Value!, ignoreCase: true);
         string email = claims.First(c => c.Type == CustomClaimTypes.Email).Value!;
         string role = claims.First(c => c.Type == CustomClaimTypes.Role).Value!;
         string pwdChange = claims.First(c => c.Type == CustomClaimTypes.PwdChange).Value!;
@@ -35,7 +36,7 @@ public static class Generics
             {
                 new(CustomClaimTypes.Id, userSession.Id.ToString()!),
                 new(CustomClaimTypes.FullName, userSession.FullName!),
-                new(CustomClaimTypes.Area, userSession.Area!),
+                new(CustomClaimTypes.Area, userSession.Area!.ToString()!),
                 new(CustomClaimTypes.Email, userSession.Email!),
                 new(CustomClaimTypes.Role, userSession.Role!),
                 new(CustomClaimTypes.PwdChange, userSession.LastPasswordChange?.ToString("O")!),

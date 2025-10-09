@@ -35,7 +35,7 @@ public class CategoryRepository : ICategoryContract<CategoryResponseDto>
     public async Task<DataAResponse<CategoryResponseDto>> GetAllCategories()
     {
         List<CategoryResponseDto> categories = await _dbCxt.Categories
-            .OrderByDescending(o => o.CreatedAt)
+            .OrderBy(o => o.Name)
             .ProjectTo<CategoryResponseDto>(_iMapper.ConfigurationProvider)
             .ToListAsync();
 
@@ -64,6 +64,16 @@ public class CategoryRepository : ICategoryContract<CategoryResponseDto>
         CategoryResponseDto resCat = _iMapper.Map<CategoryResponseDto>(cat);
 
         return new DataResponse<CategoryResponseDto> (true, resCat, HttpStatusCode.OK);
+    }
+
+    public async Task<DataResponse<Guid>> GetCategoryIdPorNombre(string nombre)
+    {
+        string name = nombre.Replace("-", " ");
+        CategoriesEntity cat = await GetCategoryByNombreAsync(name);
+
+        CategoryResponseDto resCat = _iMapper.Map<CategoryResponseDto>(cat);
+
+        return new DataResponse<Guid> (true, resCat.Id, HttpStatusCode.OK);
     }
 
     public async Task<GeneralResponse> CreateCategory(CreateCategoryDto dto)
@@ -204,6 +214,14 @@ public class CategoryRepository : ICategoryContract<CategoryResponseDto>
     {
         CategoriesEntity? category = await _dbCxt.Categories
             .FirstOrDefaultAsync(r => r.Slug == slug);
+
+        return category ?? throw new NotFoundException("Categoria no encontrada");
+    }
+    
+    private async Task<CategoriesEntity> GetCategoryByNombreAsync(string nombre)
+    {
+        CategoriesEntity? category = await _dbCxt.Categories
+            .FirstOrDefaultAsync(r => r.Name == nombre);
 
         return category ?? throw new NotFoundException("Categoria no encontrada");
     }

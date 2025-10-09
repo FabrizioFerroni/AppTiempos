@@ -83,7 +83,6 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
 
         ActivitiesEntity? act = await _dbCxt.Activities
             .Include(r => r.Requeriment)
-            .Include(c => c.Category)
             .Include(u => u.User)
             .FirstOrDefaultAsync(a => a.Id == id && a.UserId == user.Id);
         
@@ -101,7 +100,6 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
 
         ActivitiesEntity? act = await _dbCxt.Activities
             .Include(r => r.Requeriment)
-            .Include(c => c.Category)
             .Include(u => u.User)
             .FirstOrDefaultAsync(a => a.UrlIndetificator == url && a.UserId == user.Id);
         
@@ -134,7 +132,6 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
 
         ActivitiesEntity? act = await _dbCxt.Activities
             .Include(r => r.Requeriment)
-            .Include(c => c.Category)
             .Include(u => u.User)
             .FirstOrDefaultAsync(a => a.Id == id && a.UserId == user.Id);
             

@@ -1,0 +1,58 @@
+.ml-5 {
+    margin-left: 1rem;
+}
+
+.pr-5 {
+    padding-right: 0.5rem;
+}
+
+.pl-5 {
+    padding-left: 1rem;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.disabled,
+disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.page-item {
+    color: #157347;
+    .page-link {
+        color: #157347;
+        &:hover {
+            color: #157347;
+        }
+    }
+    &.disabled {
+        .page-link {
+            color: #6c757d;
+        }
+    }
+    &.active {
+        .page-link {
+            background-color: #157347;
+            border-color: #157347;
+            color: #fff;
+        }
+    }
+}
+
+.outnone {
+    outline: none;
+    box-shadow: 0 0 0 0 transparent;
+}
+
+.ordenados {
+    &:hover,
+    &:active,
+    &.active {
+        i {
+            color: #157347;
+        }
+    }
+}

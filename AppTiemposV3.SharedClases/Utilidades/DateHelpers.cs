@@ -16,4 +16,25 @@ public class DateHelpers
         if (hours < 24) return $"{hours}h";
         return $"{days}d";
     }
+
+    public static string FormatDateOnly(DateTime? date)
+    {
+        if (date is null)
+        {
+            return string.Empty;
+        }
+        
+        return date.Value.ToString("dd/MM/yyyy");
+    }
+    
+    public static string FormatDateAndTime(DateTime? date)
+    {
+        if (date is null)
+        {
+            return string.Empty;
+        }
+        
+        return date.Value.ToString("dd/MM/yyyy HH:mm");
+    }
+
 }

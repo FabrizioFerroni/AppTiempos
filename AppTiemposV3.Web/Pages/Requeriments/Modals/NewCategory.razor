@@ -1,0 +1,111 @@
+    @* Modal nueva categoria *@
+    <Modal IdElement="@Id"
+           Id=@($"dialog-modal-category-{IdModalStr}")>
+        <div class="px-6 my-4">
+            <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+                <span class="text-gray-700 dark:text-gray-300 text-md">
+                    Crear nueva categoria
+                </span>
+                <Button
+                    Variant="ghost"
+                    Size="sm"
+                    Command="close"
+                    CommandFor=@($"modal-{Id}")
+                    Class="text-xs cursor-pointer"
+                    OnClick="() => OnResetCategory()"
+                >
+                    <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+                </Button>
+            </div>
+
+            <span class="text-gray-700 dark:text-gray-500 text-xs leading-none">
+                Da de alta la categoria del requerimiento.
+            </span>
+
+            <EditForm Enhance Model=@categoryDto class="space-y-4 mt-2" novalidate OnValidSubmit=@SendNewCategory
+                      FormName="NewCategoryForm">
+                <DataAnnotationsValidator/>
+
+                <div class="space-y-2">
+                    <Label For="nombre" Id="nombreLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Nombre
+                    </Label>
+                    <div class="relative">
+                        <Input
+                            Type="text"
+                            @bind-Value="categoryDto.Name"
+                            Id="nombre"
+                            Name="nombre"
+                            Placeholder="Incidente de implementación"
+                            Autocomplete="off"
+                            Required
+                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                    </div>
+                    <ValidationMessage For="() => categoryDto.Name" class="text-xs text-red-600"/>
+                </div>
+
+                <div class="space-y-2">
+                    <Label For="descripcionCat" Id="descripcionCatlabel"
+                           Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Descripción
+                    </Label>
+                    <div class="relative">
+                        <TextArea
+                            @bind-Value="categoryDto.Descripcion"
+                            Id="descripcionCat"
+                            Name="descripcion"
+                            Placeholder="Descripción de la categoria"
+                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"></TextArea>
+                    </div>
+                    <ValidationMessage For="() => categoryDto.Descripcion" class="text-xs text-red-600"/>
+                </div>
+
+
+                <div class="space-y-2">
+                    <Label For="color" Id="colorLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Color
+                    </Label>
+                    <div class="relative">
+                        <Input
+                            Type="color"
+                            @bind-Value="categoryDto.Color"
+                            Id="color"
+                            Name="color"
+                            Placeholder="#ff00ff"
+                            Autocomplete="off"
+                            Required
+                            Style="margin: 0 !important; padding: 0 !important;  width: 75px !important; height: 75px !important; border:  0 !important;"
+                            Class="cursor-pointer"
+                        />
+                    </div>
+                    <ValidationMessage For="() => categoryDto.Color" class="text-xs text-red-600"/>
+                </div>
+
+
+                <div class="flex items-center justify-end">
+                    <Button Type="submit"
+                            Disabled="@(isLoadingCat)"
+                            Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
+
+                        @if (isLoadingCat)
+                        {
+                            <LoaderCircle Class="mr-3 size-5 animate-spin"/>
+                            <span>Guardando...</span>
+                        }
+                        else
+                        {
+                        <Save Class="me-2 size-5"/>
+                            <span>
+                                Guardar
+                            </span>
+                        }
+                    </Button>
+
+                    <button @ref="closeModalCatRef" type="button" class="hidden" id="closeModalCat" command="close"
+                            commandfor="@($"modal-{Id}")"></button>
+                </div>
+            </EditForm>
+        </div>
+    </Modal>
+    @*fin modal nueva categoria *@

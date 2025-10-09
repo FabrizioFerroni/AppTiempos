@@ -14,6 +14,8 @@ public interface ICategoryContract<T>
     Task<DataResponse<T>> GetCategoryPorId(Guid id);
         
     Task<DataResponse<T>> GetCategoryPorSlug(string slug);
+    
+    Task<DataResponse<Guid>> GetCategoryIdPorNombre(string nombre);
 
     Task<GeneralResponse> CreateCategory(CreateCategoryDto dto);
 

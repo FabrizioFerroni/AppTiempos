@@ -16,10 +16,11 @@ public class ColorService
     
     public string PreferredColor { get; private set; } = "Azul";
     
+    //
     public ColorService(IJSRuntime jsRuntime, HttpClient httpClient)
     {
         _jsRuntime = jsRuntime;
-        _httpClient = httpClient;
+         _httpClient = httpClient;
     }
     
     public async Task InitializeAsync()
@@ -44,7 +45,19 @@ public class ColorService
       catch (Exception ex)
       {
           await _jsRuntime.InvokeVoidAsync("console.error", $"Error cargando colores: {ex.Message}");
-          Colors = new List<ColorModel>();
+          // Colors = new List<ColorModel>();
+          if (Colors == null || !Colors.Any())
+              Colors = new List<ColorModel>
+              {
+                 new ColorModel() {
+                      Id = Generate(Alphabets.LowercaseLettersAndDigits, 10),
+                      Name = "Azul",
+                      Primary = "from-blue-500 to-purple-600",
+                      Secondary = "from-blue-600 to-purple-700",
+                      Gradient = "bg-gradient-to-r from-blue-500 to-purple-600",
+                      Hover = "hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-700"
+                  }
+              };
           PreferredColor = "Azul";
       }
     }
@@ -71,6 +84,13 @@ public class ColorService
             };
         
         return Colors!.FirstOrDefault(c => c.Name == PreferredColor) ?? Colors!.First();
+    }
+
+    public string GetButtonClassess()
+    {
+        ColorModel? color = GetCurrentColor();
+
+        return $"{color.Gradient} {color.Hover} text-white font-medium cursor-pointer";
     }
 
 }

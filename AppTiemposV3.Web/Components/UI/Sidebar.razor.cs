@@ -36,6 +36,8 @@ public partial class Sidebar : ComponentBase
         FechaHoy = hoy.ToString("dddd dd/MM", cultura);
 
         FechaHoy = char.ToUpper(FechaHoy[0]) + FechaHoy.Substring(1);
+        
+        StateHasChanged();
     }
     
     private async void HandleColorChanged()
@@ -65,7 +67,7 @@ public partial class Sidebar : ComponentBase
         new MenuItem("Dashboard", "/app/dashboard", GetItemIcon("Dashboard")),
         new MenuItem("Vista Semanal", "/app/semanal", GetItemIcon("Semanal")),
         new MenuItem("Actividades", "/app/actividades", GetItemIcon("Actividades")),
-        new MenuItem("Requerimientos", "/app/requiremientos", GetItemIcon("Requerimientos")),
+        new MenuItem("Requerimientos", "/app/requerimientos", GetItemIcon("Requerimientos")),
         new MenuItem("Capacitaciones", "/app/capacitaciones", GetItemIcon("Capacitaciones")),
         new MenuItem("Rechazos", "/app/rechazos", GetItemIcon("Rechazos")),
         new MenuItem("Reportes", "/app/reportes", GetItemIcon("Reportes")),

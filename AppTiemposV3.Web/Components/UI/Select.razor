@@ -1,0 +1,65 @@
+@typeparam TItem
+
+<div id="@elementId" class="relative inline-block w-full">
+    <button id="@Id" type="button" @onclick="Toggle"
+            class="@GetClasessButton()">
+        <span>
+            @if(!string.IsNullOrWhiteSpace(SelectedText))
+            {
+                @SelectedText
+            }
+            else
+            {
+                @Placeholder
+            }
+        </span>
+        @if (IsOpen)
+        {
+            <ChevronUp Class="h-4 w-4 opacity-50" />
+        }
+        else
+        {
+            <ChevronDown Class="h-4 w-4 opacity-50" />
+        }
+    </button>
+
+    @if (IsOpen)
+    {
+        <div id="@($"dropdown-{elementId}")" class="absolute mt-1 w-full rounded-md border bg-[hsl(var(--popover))] text-[hsl(var(--popover-foreground))] shadow-md z-50">
+            @if (EnableSearch) 
+            {
+                <div class="p-2 rounded-t-md bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white  ">
+                    <input type="search"
+                        placeholder="Buscar..."
+                        @bind-value="searchText"
+                        @bind-value:event="oninput"
+                        class="relative rounded-md flex w-full cursor-text select-none items-center py-1.5 text-sm font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
+                    </div>
+            }
+            <div class="@HeightClass overflow-auto rounded-b-md">
+                @if (FilteredItems != null)
+                {
+                    @for (int i = 0; i < FilteredItems.Count(); i++)
+                    {
+                        TItem item = FilteredItems.ElementAt(i);
+                        bool isFirst = i == 0;
+                        bool isLast = i == FilteredItems.Count() - 1;
+
+                        <div @onclick="() => SelectItem(item)"
+                             class="@GetClasessOption(isFirst, isLast)">
+                            @if (EqualityComparer<TItem>.Default.Equals(item, Value))
+                            {
+                                <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                                    <Check Class="h-4 w-4"/>
+                                </span>
+                            }
+                            <span>
+                                @ItemTextSelector(item)
+                            </span>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>

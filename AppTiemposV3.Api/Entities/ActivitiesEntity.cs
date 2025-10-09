@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AppTiemposV3.SharedClases.Enums;
 
 namespace AppTiemposV3.Api.Entities;
 
@@ -30,15 +31,17 @@ public class ActivitiesEntity : BaseEntity
     [StringLength(255)]
     public string? Comment { get; set; } = null;
     
+    public Etapas Etapa { get; set; } = Etapas.Alta;
+    
     [Required]
     public required Guid RequerimentId { get; set; } = Guid.Empty;
     
     public RequerimentsEntity Requeriment { get; set; } = null!;
     
-    [Required]
+   /* [Required]
     public required Guid CategoryId { get; set; } = Guid.Empty;
     
-    public CategoriesEntity Category { get; set; } = null!;
+    public CategoriesEntity Category { get; set; } = null!;*/
     
     [Required]
     public required Guid UserId { get; set; } = Guid.Empty;

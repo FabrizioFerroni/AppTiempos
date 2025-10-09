@@ -1,0 +1,317 @@
+@page "/app/requerimientos"
+@using AppTiemposV3.SharedClases.DTOs.Requeriments
+@using AppTiemposV3.SharedClases.Enums
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
+@using AppTiemposV3.Web.Pages.Requeriments.Modals
+@using AppTiemposV3.Web.Pages.Requeriments.Documents
+
+<PageTitle>
+    Requerimientos | TimeTracker Pro
+</PageTitle>
+
+<div class="flex flex-col w-full">
+    <Navbar Title="Gestión de Requerimientos" Subtitle="Administra y organiza todos los requerimientos del proyecto" OnToggleSidebar="HandleSidebarToggle">
+        <div class="text-right">
+            <Button 
+                Class="@ColorService.GetButtonClassess()"
+                OnClick="@(() => NewModal())"
+                >
+                <Plus Class="h-4 w-4 mr-2"/> 
+                Nuevo REQ
+            </Button>
+        </div>
+    </Navbar>
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                <CardHeader>
+                    <div class="flex justify-between items-center">
+                        Buscar Requerimientos
+
+                        <Button
+                            Variant="ghost"
+                            Size="sm"
+                            Class="cursor-pointer"
+                            OnClick="() => { isOpenBuscar = !isOpenBuscar; StateHasChanged(); }"
+                        >
+                            @if (!isOpenBuscar)
+                            {
+                                <ChevronDown Class="w-4 h-4" />
+                            }
+                            else
+                            {
+                                <ChevronUp Class="w-4 h-4" />
+                            }
+                        </Button>
+                    </div>
+                </CardHeader>
+                
+                @if (isOpenBuscar)
+                {
+                    <CardContent>
+                    <div class="flex gap-2">
+                        <div class="w-40">
+                            <Select TItem="string"
+                                    Items="@OptionsSearch"
+                                    Value="@BuscarPor"
+                                    ValueChanged="OnSearchSelectedChanged"
+                                    Placeholder="Buscar por"
+                                    ItemTextSelector="x => x"
+                                    ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500"
+                                    ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500"
+                                    OnDropdownStateChanged="HandleDropdownState"
+                            >
+                            </Select>
+                        </div>
+                        <div class="relative flex-1">
+                            <Search Class="absolute left-3 top-1/2 -translate-y-1/2 transform  text-gray-400 w-4 h-4 "/>
+                            <SearchInput
+                                @bind-Value="search"
+                                Placeholder="Buscar por ID, título o descripción..."
+                                OnSearch="@DoSearch"
+                                Delay="400"
+                                Disabled="@(BuscarPor == "")"
+                                Class="pl-10 pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"/>
+                            @if (!string.IsNullOrWhiteSpace(BuscarPor) && !string.IsNullOrWhiteSpace(search))
+                            {
+                                <Button Size="sm" Variant="ghost" Class="absolute right-3 top-1/2 -translate-y-1/2 transform cursor-pointer" OnClick="() => UpdateSearch()">
+                                    <CloseCircle Class="text-gray-400 w-4 h-4 "/>
+                                </Button>
+                            }
+                        </div>
+                    </div>
+                </CardContent>
+                }
+            </Card>
+
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                <CardHeader>
+                    <CardTitle>
+                        <div class="flex justify-between items-center">
+                            <div class="flex-1">
+                                Lista de Requerimientos
+                            </div>
+                            <div class="flex justify-between items-center gap-3">
+                                @if (!IsLoading)
+                                {
+                                    <div class="w-16">
+                                        <Select TItem="int"
+                                                Items="@OptionsPaginated"
+                                                Value="@registrosPorPagina"
+                                                ValueChanged="OnPaginatedSelectedChanged"
+                                                Placeholder="Paginado"
+                                                ItemTextSelector="x => x.ToString()"
+                                                ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500"
+                                                ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500">
+                                        </Select>
+                                    </div>
+                                    <div class="w-44">
+                                        <Select TItem="string"
+                                                Items="@OptionsOrders"
+                                                Value="@ordenar"
+                                                ValueChanged="OnOrderSelectedChanged!"
+                                                Placeholder="Ordenar por"
+                                                ItemTextSelector="x => x"
+                                                ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500"
+                                                ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500">
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Button 
+                                            OnClick="() => OnAscendingChanged()"
+                                            Variant=""
+                                            Size=""
+                                            Class="flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50  cursor-pointer font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white dark:hover:bg-gray-500">
+                                            @if (ascending)
+                                            {
+                                                <ArrowUpAz Class="h-4 w-4" />
+                                            }
+                                            else
+                                            {
+                                                <ArrowDownAz Class="h-4 w-4" />
+                                            }
+                                        </Button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    @if (IsLoading || IsLoadingBackend || IsLoadingDelete)
+                    {
+                        <div class="flex flex-col items-center justify-center py-12 text-center">
+                            <LoaderCircle Class="w-16 h-16 mb-4 animate-spin"/>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                Cargando requerimientos
+                            </h3>
+                            <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                                Espere unos segundos ...
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (Requeriments.Count == 0 && !SearchEmpty)
+                        {
+                            <div class="flex flex-col items-center justify-center py-12 text-center">
+                                <FileText Class="w-16 h-16 mb-4 text-gray-400"/>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    No hay requerimientos
+                                </h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-4">
+                                    Comienza creando tu primer requerimiento
+                                </p>
+                                <Button 
+                                    Class="@ColorService.GetButtonClassess()"
+                                    OnClick="@(() => NewModal())"
+                                >
+                                    <Plus class="w-4 h-4 mr-2"/>
+                                    Crear Primer REQ
+                                </Button>
+                            </div>
+                        }
+                        else if (Requeriments.Count == 0 && SearchEmpty)
+                        {
+                            <div class="flex flex-col items-center justify-center py-12 text-center">
+                                <SearchX Class="w-16 h-16 mb-4 text-gray-400"/>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    No se han encontrado resultados para: <span class="font-bold">@($"{BuscarPor} {search}")</span> 
+                                </h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-4">
+                                    Prueba de otra forma u con otro criterio.
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="space-y-4">
+                                @foreach (RequerimentResponseDto? req in Requeriments)
+                                {
+                                    <div id="@req.Id" class="flex items-start justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700  transition-colors">
+                                        <div class="flex-1 space-y-2">
+                                            <div class="flex items-center gap-2">
+                                                <Enlace Href="@req.Url" Target="_blank" Class="cursor-pointer" Rel="noopener noreferrer nofollow">
+                                                    <Badge Variant="secondary" Class=@($"font-mono text-xs {ColorService.GetButtonClassess()}")>
+                                                        @($"ReqID{req.ReqID}")
+                                                    </Badge>
+                                                </Enlace>
+                                                <h3 class="font-medium text-gray-800 dark:text-gray-100">
+                                                    @req.Titulo
+                                                </h3>
+                                            </div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                                @req.Descripcion
+                                            </p>
+                                            <div class="flex flex-col">
+                                                <span class="text-xs text-gray-500 dark:text-gray-400 pt-2">
+                                                    Tipo: @req.Category.Name.ToUpperInvariant()
+                                                </span>
+                                                <span class="text-xs text-gray-500 dark:text-gray-400 pt-2">
+                                                    Cliente: @req.Cliente.ToUpperInvariant()
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                                <span>
+                                                    Creado el: @FormatDateOnly(req.CreatedAt)
+                                                </span>
+                                                @if (req.ModifiedAt is not null && FormatDateOnly(req.ModifiedAt) != FormatDateOnly(req.CreatedAt))
+                                                {
+                                                    <span>
+                                                        -
+                                                    </span>
+                                                    <span>
+                                                        Actualizado el: @FormatDateOnly(req.ModifiedAt)
+                                                    </span>
+                                                }
+                                                @if (filesUploaded >= 1)
+                                                {
+                                                    <span>
+                                                        -
+                                                    </span>
+                                                    <span class="flex gap-1 items-center">
+                                                        <Files Class="w-4 h-4" />
+                                                        @filesUploaded
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <div class="flex gap-2 ml-4">
+                                            <Button
+                                                Variant="outline"
+                                                Size="sm"
+                                                Id=@($"documents-{req.Id}")
+                                                OnClick="@(() => DocumentsModal())"
+                                                Class="text-gray-400  dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-orange-800/20 dark:hover:border-orange-900/50 cursor-pointer">
+                                                <FolderOpen Class="w-4 h-4"/>
+                                            </Button>
+                                            <Button
+                                                Variant="outline"
+                                                Size="sm"
+                                                Id=@($"eye-{req.Id}")
+                                                OnClick="@(() => ShowModal(req.Id))"
+                                                Class="text-gray-400  dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-green-800/20 dark:hover:border-green-900/50 cursor-pointer">
+                                                <Eye Class="w-4 h-4"/>
+                                            </Button>
+                                            <Button
+                                                Variant="outline"
+                                                Size="sm"
+                                                Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-blue-800/20 dark:hover:border-blue-900/50 cursor-pointer"
+                                                Id=@($"edit-btn-{req.Id}")
+                                                OnClick="@(() => EditModal(req.Id))"
+                                                Disabled=@(req.EtapaActual == Etapas.Validacion && req.Estado == Estados.Finalizado)>
+                                                <Edit Class="w-4 h-4"/>
+                                            </Button>
+                                            <Button
+                                                Variant="outline"
+                                                Size="sm"
+                                                Id=@($"delete-button-{req.Id}")
+                                                OnClick="@(() => DeleteModal(req.Id, req.ReqID))"
+                                                Class="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-500 dark:hover:border-red-900/50 dark:bg-gray-600  cursor-pointer">
+                                                <Trash2 Class="w-4 h-4"/>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    
+
+                    }
+                    @if (!IsLoading || !IsLoadingBackend || !IsLoadingDelete)
+                    {
+                        <Paginado T="RequerimentResponseDto"
+                                  Content="Requeriments"
+                                  PageNumber="pagina"
+                                  Size="registrosPorPagina"
+                                  TotalElements="totalElements"
+                                  CurrentPage="currentPage"
+                                  TotalPages="totalPages"
+                                  MaxVisiblePages="maxVisiblePages"
+                                  IsFirst="isFirst"
+                                  IsLast="isLast"
+                                  ShowCantPages="!IsLoadingBackend"
+                                  FirstPage="First"
+                                  LastPage="Last"
+                                  RewindPage="Rewind"
+                                  ForwardPage="Forward"
+                                  OnSetPage="SetPage" />
+                        
+                    }
+                </CardContent>
+            </Card>
+            
+            <DocumentModal @ref="docModalRef" />
+            
+            <NewRequeriment @ref="newModalRef" OnSaved="HandleRequerimentSaved" />
+
+            <ShowRequeriment @ref="showModalRef" />
+
+            <EditRequeriment @ref="editModalRef" OnSaved="HandleRequerimentSaved" />
+
+            <DeleteRequeriment @ref="deleteModalRef" OnSaved="HandleRequerimentDeleted" />
+        </div>
+    </article>
+</div>
+

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.Web.Services;
 using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
 using Microsoft.AspNetCore.Components;
@@ -30,6 +31,26 @@ public partial class RegisterInvite : ComponentBase
     [Inject] private IJSRuntime? Js { get; set; }
     
     private UserDto? register = new UserDto();
+    
+    private List<Areas> OptionsAreas = Enum.GetValues(typeof(Areas))
+        .Cast<Areas>()
+        .Where(a => a != Areas.None)
+        .ToList();
+    
+    private Areas? AreaSeleccionadaNullable = null;
+    
+    private Areas AreaSeleccionada
+    {
+        get => AreaSeleccionadaNullable ?? default; // default es el primer valor del enum
+        set => AreaSeleccionadaNullable = value;
+    }
+        
+    private Task OnAreaSelectedChanged(Areas value)
+    {
+        AreaSeleccionada = value;
+        register!.Area = value;
+        return Task.CompletedTask;
+    }
     
     protected override async Task OnInitializedAsync()
     {

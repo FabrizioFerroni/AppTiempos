@@ -16,13 +16,10 @@ namespace AppTiemposV3.Api.Controllers;
 public class RequerimentController : ControllerBase
 {
     private readonly IRequerimentContract<RequerimentResponseDto> _requerimentContract;
-    private readonly IUserContract _userContext;
-    private Guid _userId => _userContext.GetUserId();
 
-    public RequerimentController(IRequerimentContract<RequerimentResponseDto> requerimentContract, IUserContract userContext)
+    public RequerimentController(IRequerimentContract<RequerimentResponseDto> requerimentContract)
     {
         _requerimentContract = requerimentContract;
-        _userContext = userContext;
     }
     
     [HttpGet]
@@ -30,7 +27,7 @@ public class RequerimentController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetAllRequerimentPaginados([FromQuery] PaginationDto pagination, [FromQuery]  string buscarPor = "ReqID")
     {
-        Pageable<List<RequerimentResponseDto>> response = await _requerimentContract.GetAllRequerimentsPag(pagination, buscarPor, _userId);
+        Pageable<List<RequerimentResponseDto>> response = await _requerimentContract.GetAllRequerimentsPag(pagination, buscarPor);
         return Ok(response);
     }
     
@@ -39,7 +36,7 @@ public class RequerimentController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetAllRequeriment()
     {
-        DataAResponse<RequerimentResponseDto> response = await _requerimentContract.GetAllRequeriments(_userId);
+        DataAResponse<RequerimentResponseDto> response = await _requerimentContract.GetAllRequeriments();
         return Ok(response);
     }
 
@@ -49,7 +46,7 @@ public class RequerimentController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetById(Guid id)
     {
-        DataResponse<RequerimentResponseDto> response = await _requerimentContract.GetRequerimentporId(id, _userId);
+        DataResponse<RequerimentResponseDto> response = await _requerimentContract.GetRequerimentporId(id);
         return Ok(response);
     }
     
@@ -59,7 +56,7 @@ public class RequerimentController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetByReqId(string reqId)
     {
-        DataResponse<RequerimentResponseDto> response = await _requerimentContract.GetRequerimentporReqId(reqId, _userId);
+        DataResponse<RequerimentResponseDto> response = await _requerimentContract.GetRequerimentporReqId(reqId);
         return Ok(response);
     }
 
@@ -69,7 +66,7 @@ public class RequerimentController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> CreateRequeriment([FromBody] CreateRequerimentDto dto)
     {
-        GeneralResponse  response = await _requerimentContract.CreateRequeriment(dto, _userId);
+        GeneralResponse  response = await _requerimentContract.CreateRequeriment(dto);
         return StatusCode(201, response);
     }
 
@@ -80,7 +77,7 @@ public class RequerimentController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> UpdateRequeriment(Guid id, [FromBody] UpdateRequerimentDto dto)
     {
-        GeneralResponse response = await _requerimentContract.UpdateRequeriment(id, dto, _userId);
+        GeneralResponse response = await _requerimentContract.UpdateRequeriment(id, dto);
         return Ok(response);
     }
 
@@ -90,7 +87,7 @@ public class RequerimentController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> DeleteRequeriment(Guid id)
     {
-        GeneralResponse response = await _requerimentContract.DeleteRequeriment(id, _userId);
+        GeneralResponse response = await _requerimentContract.DeleteRequeriment(id);
         return Ok(response);
     }
     
@@ -100,7 +97,7 @@ public class RequerimentController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> RestoreRequeriment(Guid id)
     {
-        GeneralResponse response = await _requerimentContract.RestoreRequeriment(id, _userId);
+        GeneralResponse response = await _requerimentContract.RestoreRequeriment(id);
         return Ok(response);
     }
 }

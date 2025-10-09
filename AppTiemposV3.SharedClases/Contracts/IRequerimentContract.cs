@@ -8,20 +8,20 @@ namespace AppTiemposV3.SharedClases.Contracts
 {
     public interface IRequerimentContract<T>
     {
-        Task<DataAResponse<T>> GetAllRequeriments(Guid userId);
+        Task<DataAResponse<T>> GetAllRequeriments();
 
-        Task<Pageable<List<T>>> GetAllRequerimentsPag(PaginationDto pagination, string buscarPor, Guid userId);
+        Task<Pageable<List<T>>> GetAllRequerimentsPag(PaginationDto pagination, string buscarPor);
 
-        Task<DataResponse<T>> GetRequerimentporId(Guid id, Guid userId);
+        Task<DataResponse<T>> GetRequerimentporId(Guid id);
         
-        Task<DataResponse<T>> GetRequerimentporReqId(string reqId, Guid userId);
+        Task<DataResponse<T>> GetRequerimentporReqId(string reqId);
 
-        Task<GeneralResponse> CreateRequeriment(CreateRequerimentDto dto, Guid userId);
+        Task<GeneralResponse> CreateRequeriment(CreateRequerimentDto dto);
 
-        Task<GeneralResponse> UpdateRequeriment(Guid id, UpdateRequerimentDto dto, Guid userId);
+        Task<GeneralResponse> UpdateRequeriment(Guid id, UpdateRequerimentDto dto);
 
-        Task<GeneralResponse> DeleteRequeriment(Guid id, Guid userId);
+        Task<GeneralResponse> DeleteRequeriment(Guid id);
         
-        Task<GeneralResponse> RestoreRequeriment(Guid id, Guid userId);
+        Task<GeneralResponse> RestoreRequeriment(Guid id);
     }
 }

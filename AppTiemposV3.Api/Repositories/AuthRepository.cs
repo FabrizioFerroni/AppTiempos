@@ -415,7 +415,7 @@ public class AuthRepository : IAuthContract
         {
             new Claim(CustomClaimTypes.Id, userSession.Id.ToString()!),
             new Claim(CustomClaimTypes.FullName, userSession.FullName!),
-            new Claim(CustomClaimTypes.Area, userSession.Area!),
+            new Claim(CustomClaimTypes.Area, userSession.Area!.ToString()!),
             new Claim(CustomClaimTypes.Email, userSession.Email!),
             new Claim(CustomClaimTypes.Role, userSession.Role!),
             new Claim(CustomClaimTypes.PwdChange, userSession.LastPasswordChange?.ToString("O")!),
