@@ -1,7 +1,11 @@
 <button
     class="@GetButtonClasses()"
     type="@Type"
+    id="@Id"
     disabled="@Disabled"
-    @onclick="OnClick">
+    @onclick="OnClick"
+    command="@Command"
+    commandfor="@CommandFor"
+    >
     @ChildContent
 </button>

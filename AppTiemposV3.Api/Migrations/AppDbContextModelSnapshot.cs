@@ -28,9 +28,6 @@ namespace AppTiemposV3.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("Comment")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
@@ -49,6 +46,11 @@ namespace AppTiemposV3.Api.Migrations
 
                     b.Property<TimeSpan?>("EndTime")
                         .HasColumnType("time");
+
+                    b.Property<int>("Etapa")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValueSql("1");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -89,7 +91,8 @@ namespace AppTiemposV3.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("Etapa")
+                        .HasDatabaseName("IX_Activities_Etapa");
 
                     b.HasIndex("RequerimentId");
 
@@ -217,6 +220,9 @@ namespace AppTiemposV3.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("Cliente")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -235,11 +241,18 @@ namespace AppTiemposV3.Api.Migrations
                     b.Property<string>("Descripcion")
                         .HasColumnType("longtext");
 
-                    b.Property<int>("FolderId")
+                    b.Property<int>("Estado")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasDefaultValueSql("1");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("FolderId"));
+                    b.Property<int>("EtapaActual")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValueSql("1");
+
+                    b.Property<int>("FolderId")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -258,9 +271,6 @@ namespace AppTiemposV3.Api.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("Tipo")
-                        .HasColumnType("int");
-
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -273,8 +283,14 @@ namespace AppTiemposV3.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("UserId")
                         .HasDatabaseName("IX_Requeriments_UserId");
+
+                    b.HasIndex("UserId", "FolderId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Requeriments_UserId_FolderId");
 
                     b.HasIndex("UserId", "ReqID")
                         .IsUnique()
@@ -292,9 +308,6 @@ namespace AppTiemposV3.Api.Migrations
                     b.Property<string>("Capacitator")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
-
-                    b.Property<Guid>("CategoryId")
-                        .HasColumnType("char(36)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -344,8 +357,6 @@ namespace AppTiemposV3.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
-
                     b.HasIndex("RequerimentId");
 
                     b.HasIndex("UserId");
@@ -353,7 +364,7 @@ namespace AppTiemposV3.Api.Migrations
                     b.HasIndex("Capacitator", "UserId")
                         .HasDatabaseName("IX_Training_Capacitator_User");
 
-                    b.ToTable("Trainings");
+                    b.ToTable("trainings", (string)null);
                 });
 
             modelBuilder.Entity("AppTiemposV3.Api.Entities.UserEntity", b =>
@@ -365,10 +376,8 @@ namespace AppTiemposV3.Api.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<string>("Area")
-                        .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("varchar(15)");
+                    b.Property<int>("Area")
+                        .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -566,12 +575,6 @@ namespace AppTiemposV3.Api.Migrations
 
             modelBuilder.Entity("AppTiemposV3.Api.Entities.ActivitiesEntity", b =>
                 {
-                    b.HasOne("AppTiemposV3.Api.Entities.CategoriesEntity", "Category")
-                        .WithMany("Activities")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("AppTiemposV3.Api.Entities.RequerimentsEntity", "Requeriment")
                         .WithMany("Activities")
                         .HasForeignKey("RequerimentId")
@@ -583,8 +586,6 @@ namespace AppTiemposV3.Api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Category");
 
                     b.Navigation("Requeriment");
 
@@ -593,23 +594,25 @@ namespace AppTiemposV3.Api.Migrations
 
             modelBuilder.Entity("AppTiemposV3.Api.Entities.RequerimentsEntity", b =>
                 {
+                    b.HasOne("AppTiemposV3.Api.Entities.CategoriesEntity", "Category")
+                        .WithMany("Requeriments")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("AppTiemposV3.Api.Entities.UserEntity", "User")
                         .WithMany("Requeriments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Category");
+
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("AppTiemposV3.Api.Entities.TrainingEntity", b =>
                 {
-                    b.HasOne("AppTiemposV3.Api.Entities.CategoriesEntity", "Category")
-                        .WithMany("Trainings")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("AppTiemposV3.Api.Entities.RequerimentsEntity", "Requeriment")
                         .WithMany("Trainings")
                         .HasForeignKey("RequerimentId")
@@ -621,8 +624,6 @@ namespace AppTiemposV3.Api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Category");
 
                     b.Navigation("Requeriment");
 
@@ -682,9 +683,7 @@ namespace AppTiemposV3.Api.Migrations
 
             modelBuilder.Entity("AppTiemposV3.Api.Entities.CategoriesEntity", b =>
                 {
-                    b.Navigation("Activities");
-
-                    b.Navigation("Trainings");
+                    b.Navigation("Requeriments");
                 });
 
             modelBuilder.Entity("AppTiemposV3.Api.Entities.RequerimentsEntity", b =>

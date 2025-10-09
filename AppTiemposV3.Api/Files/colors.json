@@ -1,6 +1,6 @@
 [
   {
-    "Id": "bxas9hfxhm",
+    "Id": "jrfw410qcx",
     "Name": "Azul",
     "Primary": "from-blue-500 to-purple-600",
     "Secondary": "from-blue-600 to-purple-700",
@@ -8,7 +8,7 @@
     "Hover": "hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-700"
   },
   {
-    "Id": "5qmnijrcsj",
+    "Id": "9efxbo7lhd",
     "Name": "Rojo",
     "Primary": "from-red-500 to-pink-600",
     "Secondary": "from-red-600 to-pink-700",
@@ -16,7 +16,7 @@
     "Hover": "hover:bg-gradient-to-r hover:from-red-600 hover:to-pink-700"
   },
   {
-    "Id": "l5h7tlxvm8",
+    "Id": "t79er5sxhg",
     "Name": "Verde",
     "Primary": "from-green-500 to-emerald-600",
     "Secondary": "from-green-600 to-emerald-700",
@@ -24,7 +24,7 @@
     "Hover": "hover:bg-gradient-to-r hover:from-green-600 hover:to-emerald-700"
   },
   {
-    "Id": "b2sjjr5i3l",
+    "Id": "8jv2oo2ci0",
     "Name": "Naranja",
     "Primary": "from-orange-500 to-red-600",
     "Secondary": "from-orange-600 to-red-700",
@@ -32,7 +32,7 @@
     "Hover": "hover:bg-gradient-to-r hover:from-orange-600 hover:to-red-700"
   },
   {
-    "Id": "wudu8h618u",
+    "Id": "xic0oag8ic",
     "Name": "Morado",
     "Primary": "from-purple-500 to-indigo-600",
     "Secondary": "from-purple-600 to-indigo-700",

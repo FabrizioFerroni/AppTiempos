@@ -16,6 +16,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using Swashbuckle.AspNetCore.Filters;
 using System.Text;
+using System.Text.Json.Serialization;
 using AppTiemposV3.Api.Events;
 using AppTiemposV3.Api.Middlewares;
 using AppTiemposV3.Api.Services;
@@ -82,7 +83,10 @@ services.AddControllers().AddNewtonsoftJson(options =>
     options.SerializerSettings.Converters.Add(new DateOnlyNullableJsonConverter());
 });
 
-services.AddControllers();
+services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 services.AddEndpointsApiExplorer();
 // Add authentication to Swagger UI
@@ -108,7 +112,7 @@ services.AddDbContext<AppDbContext>(opt =>
     opt.UseMySql(connectBdMySql, ServerVersion.AutoDetect(connectBdMySql), b =>
     {
         b.EnableRetryOnFailure(3);
-        b.CommandTimeout(60);
+        b.CommandTimeout(3600); //60
         b.MigrationsHistoryTable("ef_migrations");
         b.UseRelationalNulls();
     });
@@ -204,9 +208,8 @@ services.AddCors(options =>
     {
         policy.WithOrigins(origins) 
             .AllowAnyMethod()
-            .AllowAnyHeader()
             .AllowCredentials()
-            .WithHeaders(HeaderNames.ContentType);
+            .WithHeaders(HeaderNames.ContentType, HeaderNames.Authorization);
     });
 });
 

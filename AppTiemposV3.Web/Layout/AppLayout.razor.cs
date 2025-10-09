@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace AppTiemposV3.Web.Layout;
 
-public partial class AppLayout 
+public partial class AppLayout : IDisposable
 {
     [Inject] LayoutState State { get; set; } = default!;
     

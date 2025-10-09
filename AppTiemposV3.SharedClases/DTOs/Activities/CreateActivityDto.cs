@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AppTiemposV3.SharedClases.Enums;
 
 namespace AppTiemposV3.SharedClases.DTOs.Activities;
 
@@ -18,6 +19,5 @@ public class CreateActivityDto
     [StringLength(255)]
     public string? Description { get; set; } = string.Empty;
     
-    [Required]
-    public required Guid CategoryId { get; set; } = Guid.Empty;
+    public Etapas Etapa { get; set; } = Etapas.Alta;
 }

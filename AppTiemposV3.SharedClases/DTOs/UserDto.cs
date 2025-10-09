@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AppTiemposV3.SharedClases.Enums;
 
 namespace AppTiemposV3.SharedClases.DTOs;
 
@@ -8,9 +9,7 @@ public class UserDto
     [Length(2, 150)]
     public string FullName { get; set; } = string.Empty;
 
-    [Required]
-    [Length(5, 15)]
-    public string Area { get; set; } = string.Empty;
+    public Areas Area { get; set; }
 
     [Required]
     [EmailAddress]

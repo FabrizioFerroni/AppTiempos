@@ -1,8 +1,11 @@
 using AppTiemposV3.SharedClases.Contracts;
+using AppTiemposV3.SharedClases.DTOs.Categories;
+using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using AppTiemposV3.Web;
 using AppTiemposV3.Web.Authentication;
+using AppTiemposV3.Web.Handlers;
 using AppTiemposV3.Web.Services;
 using Blazored.LocalStorage;
 using Blazored.SessionStorage;
@@ -18,17 +21,25 @@ services.AddCascadingAuthenticationState();
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7260") });
+services.AddScoped<AuthHeaderHandler>();
+//services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7260") });
+services.AddHttpClient("API", client =>
+    {
+        client.BaseAddress = new Uri("https://localhost:7260");
+    })
+    .AddHttpMessageHandler<AuthHeaderHandler>();
+services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
 services.AddBlazoredLocalStorage();
 services.AddBlazoredSessionStorage();
 services.AddAuthorizationCore();
 services.AddScoped<AuthenticationStateProvider, CustomAuthenticationProvider>();
 services.AddScoped<IAuthContract, AuthService>();
+services.AddScoped<IRequerimentContract<RequerimentResponseDto>, RequerimentsService>();
+services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryService>();
 services.AddScoped<LayoutState>();
 services.AddScoped<ColorService>();
+services.AddSingleton<NotificationService>();
 
-
-//await builder.Build().RunAsync();
 WebAssemblyHost? host = builder.Build();
 
 ColorService? colorService = host.Services.GetRequiredService<ColorService>();
@@ -58,6 +69,41 @@ await js.InvokeVoidAsync("eval", @"
 ");
 
 await js.InvokeVoidAsync("eval", @"
+    const script = document.createElement('script');
+    script.src = '/js/clipboardToUrl.js';
+    script.type = 'text/javascript';
+    document.head.appendChild(script);
+");
+
+await js.InvokeVoidAsync("eval", @"
+    const script = document.createElement('script');
+    script.src = '/js/modalHelpers.js';
+    script.type = 'text/javascript';
+    document.head.appendChild(script);
+");
+
+await js.InvokeVoidAsync("eval", @"
+    const script = document.createElement('script');
+    script.src = '/js/site.js';
+    script.type = 'text/javascript';
+    document.head.appendChild(script);
+");
+
+await js.InvokeVoidAsync("eval", @"
+    const script = document.createElement('script');
+    script.src = '/js/selectHelper.js';
+    script.type = 'text/javascript';
+    document.head.appendChild(script);
+");
+
+await js.InvokeVoidAsync("eval", @"
+    const script = document.createElement('script');
+    script.src = '/js/utils.js';
+    script.type = 'text/javascript';
+    document.head.appendChild(script);
+");
+
+await js.InvokeVoidAsync("eval", @"
 (async function() {
     try {
         const response = await fetch('https://localhost:7260/api/generics/colors');
@@ -76,6 +122,6 @@ await js.InvokeVoidAsync("eval", @"
 LayoutState? layoutState = host.Services.GetRequiredService<LayoutState>();
 
 bool? sidebarClosed = await localStorage.GetItemAsync<bool?>("SidebarClosed");
-await layoutState.SetSidebar(sidebarClosed ?? false); // inicializa el estado
+await layoutState.SetSidebar(sidebarClosed ?? false); 
 
 await host.RunAsync();

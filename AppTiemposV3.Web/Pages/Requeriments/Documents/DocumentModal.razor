@@ -1,0 +1,99 @@
+
+<Modal Method="document" IdElement="@Id"
+       Id=@($"dialog-modal-{IdModalStr}") StylePanel="width: calc(95vw - 15px); max-width: calc(95vw - 15px); height: calc(90vh - 100px); max-height: calc(90vh - 100px)">
+    <div class="px-6 my-4">
+        <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+            <div class="flex flex-col gap-1 items-start justify-start">
+                <span class="text-gray-700 dark:text-gray-300 text-xl">
+                    Documentos
+                </span>
+                <span class="text-gray-700 dark:text-gray-500 text-sm leading-none">
+                    Gestiona todos los archivos asociados a este requerimiento.
+                </span>
+            </div>
+            <div class="flex gap-3 items-center justify-end">
+                <div class="flex gap-1 items-center justify-end">
+                    <Button
+                        Variant="outline"
+                        Size="sm"
+                        Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
+                        Command="show-modal"
+                        CommandFor=@($"document-add-{Id}")
+                        OnClick="() => {  }"
+                    >
+                        <Plus Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+                    </Button>
+                    <Button
+                        Variant="outline"
+                        Size="sm"
+                        Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
+                        Command="show-modal"
+                        CommandFor=@($"document-edit-{Id}")
+                        Disabled=@(IsDisabled)
+                        OnClick="() => {  }"
+                    >
+                        <Edit Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+                    </Button>
+                    <Button
+                        Variant="outline"
+                        Size="sm"
+                        Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
+                        Command="show-modal"
+                        CommandFor=@($"document-delete-{Id}")
+                        Disabled=@(IsDisabled)
+                        OnClick="() => {  }"
+                    >
+                        <Trash2 Class="text-red-600 hover:text-red-800 h-4 w-4"/>
+                    </Button>
+                    <Button
+                        Variant="outline"
+                        Size="sm"
+                        Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
+                        Command="show-modal"
+                        CommandFor=@($"document-download-{Id}")
+                        OnClick="() => {  }"
+                        Disabled=@(IsDisabled)
+                    >
+                        <HardDriveDownload Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+                    </Button>
+                </div>
+                <Button
+                    Variant="ghost"
+                    Size="sm"
+                    Command="close"
+                    CommandFor=@($"document-{Id}")
+                    Class="text-xs cursor-pointer"
+                    OnClick="() => {  }"
+                >
+                    <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+                </Button>
+                
+            </div>
+        </div>
+
+        
+
+        @if (countData == 0)
+        {
+            <div class="relative w-full h-[calc(90vh-180px)]">
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                    <FileText class="w-16 h-16 mb-4 text-gray-400" />
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        No hay documentos
+                    </h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-4">
+                        Comienza agregando el primer documento a este requerimiento
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+        }
+
+    </div>
+</Modal>
+
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalDocument-{Id}") command="show-modal" commandfor=@($"document-{Id}")></button>      
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalDocument-{Id}") command="close" commandfor="@($"document-{Id}")"></button>  

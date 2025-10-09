@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AppTiemposV3.SharedClases.Enums;
 
 namespace AppTiemposV3.SharedClases.DTOs.Activities;
 
@@ -24,4 +25,6 @@ public class UpdateActivityDto
     public string? StatusMessage { get; set; }
     
     public string? Comment { get; set; }
+    
+    public Etapas Etapa { get; set; }
 }

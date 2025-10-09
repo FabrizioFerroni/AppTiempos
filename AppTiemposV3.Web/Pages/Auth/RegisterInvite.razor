@@ -1,4 +1,5 @@
 @page "/unirme/{Token}"
+@using AppTiemposV3.SharedClases.Enums
 
 @layout MainLayout
 
@@ -115,9 +116,9 @@ else
                 </div>
 
                 <div class="space-y-2">
-                    <Label For="area" Id="areaLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Areá a que perteneces</Label>
+                    <Label For="areas" Id="areaLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">Areá a que perteneces</Label>
                     <div class="relative">
-                        <Input
+                        @*<Input
                             Type="text"
                             @bind-Value="register!.Area"
                             Id="area"
@@ -126,7 +127,20 @@ else
                             Autocomplete="off"
                             Required
                             Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                        />
+                        />*@
+                        <Select TItem="Areas"
+                                Items="@OptionsAreas"
+                                Id="areas"
+                                Value="AreaSeleccionada"
+                                ValueChanged="OnAreaSelectedChanged!"
+                                Placeholder="Selecciona el area al que perteneces"
+                                ItemTextSelector="x => x.ToString()"
+                                ClassButton=@($"pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                ClassOption=@($"pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                EnableSearch="false"
+                                HeightClass="max-h-[120px]"
+                        >
+                        </Select>
                         <IdCardLanyard Class="absolute right-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
                     </div>
                     <ValidationMessage For="() => register.Area" class="text-xs text-red-600"/>
@@ -187,7 +201,7 @@ else
                     <ValidationMessage For="() => register.ConfirmPassword" class="text-xs text-red-600"/>
                 </div>
                 <Button Type="submit"
-                        Disabled="@(isLoading || (register.FullName == "" || register.Area == "" ||  !IsValidEmail(register.Email) || !IsValidPassword(register.Password) || !IsValidPassword(register.ConfirmPassword)))"
+                        Disabled="@(isLoading || (register.FullName == "" || register.Area == Areas.None ||  !IsValidEmail(register.Email) || !IsValidPassword(register.Password) || !IsValidPassword(register.ConfirmPassword)))"
                         Class=@($"w-full {ColorService.GetCurrentColor()!.Gradient} {ColorService.GetCurrentColor()!.Hover} text-white font-semibold py-2 px-4 rounded-md transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50  cursor-pointer")>
 
                     @if (isLoading)

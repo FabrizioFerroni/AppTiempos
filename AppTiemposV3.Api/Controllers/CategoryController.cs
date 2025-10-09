@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 namespace AppTiemposV3.Api.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize]
 [Route("api/categories")]
 [ApiController]
 public class CategoryController : ControllerBase
@@ -56,8 +56,19 @@ public class CategoryController : ControllerBase
         DataResponse<CategoryResponseDto> response = await _categoryContract.GetCategoryPorSlug(slug);
         return Ok(response);
     }
+    
+    [HttpGet("n/{nombre}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> GetByCategoryIdNombre(string nombre)
+    {
+        DataResponse<Guid> response = await _categoryContract.GetCategoryIdPorNombre(nombre);
+        return Ok(response);
+    }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(201)]
     [ProducesResponseType(400)]
     [ProducesResponseType(500)]
@@ -79,6 +90,7 @@ public class CategoryController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
@@ -89,6 +101,7 @@ public class CategoryController : ControllerBase
     }
     
     [HttpPost("{id}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]

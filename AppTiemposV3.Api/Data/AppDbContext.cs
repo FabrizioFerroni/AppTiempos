@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
+using AppTiemposV3.SharedClases.Enums;
 
 namespace AppTiemposV3.Api.Data;
 
@@ -69,12 +70,24 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
             }
         }
 
+        builder.Entity<UserEntity>(u =>
+        {
+            u.Property(e => e.Area)
+                .HasConversion<int>() 
+                .HasColumnType("int");
+        });
+
         builder.Entity<RequerimentsEntity>(e =>
         {
             e.HasOne(r => r.User)
                   .WithMany(u => u.Requeriments)
                   .HasForeignKey(r => r.UserId)
                   .OnDelete(DeleteBehavior.Restrict);
+            
+            e.HasOne(rc => rc.Category)
+                .WithMany(c => c.Requeriments)
+                .HasForeignKey(rf => rf.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             e.HasIndex(r => r.UserId)
              .HasDatabaseName("IX_Requeriments_UserId");
@@ -82,6 +95,11 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
             e.HasIndex(r => new { r.UserId, r.ReqID })
              .HasDatabaseName("IX_Requeriments_UserId_ReqID")
              .IsUnique();
+            
+            // ✅ Índice único compuesto para FolderId por usuario
+            e.HasIndex(r => new { r.UserId, r.FolderId })
+                .HasDatabaseName("IX_Requeriments_UserId_FolderId")
+                .IsUnique();
 
             e.Property(c => c.CreatedAt)
             .HasColumnType("timestamp")
@@ -95,6 +113,15 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
             
             e.Property(id => id.Url)
                 .HasDefaultValueSql(null);
+            
+            e.Property(r => r.Estado)
+                .HasConversion<int>()
+                .HasColumnType("int")
+                .HasDefaultValueSql("1");
+            
+            e.Property(et => et.EtapaActual)
+                .HasConversion<int>()
+                .HasDefaultValueSql("1");
         });
         
         builder.Entity<CategoriesEntity>(e =>
@@ -151,11 +178,6 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
                 .WithMany(r => r.Activities)
                 .HasForeignKey(af => af.RequerimentId)
                 .OnDelete(DeleteBehavior.Restrict);
-            
-            a.HasOne(ac => ac.Category)
-                .WithMany(c => c.Activities)
-                .HasForeignKey(af => af.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
 
             a.HasIndex(r => r.UserId)
                 .HasDatabaseName("IX_Activities_UserId");
@@ -178,6 +200,13 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
             
             a.Property(id => id.Comment)
                 .HasDefaultValueSql(null);
+            
+            a.Property(e => e.Etapa)
+                .HasConversion<int>()
+                .HasDefaultValueSql("1");
+            
+            a.HasIndex(e => e.Etapa)
+                .HasDatabaseName("IX_Activities_Etapa");
         });
 
         builder.Entity<TrainingEntity>(t =>
@@ -190,11 +219,6 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
             t.HasOne(ar => ar.Requeriment)
                 .WithMany(r => r.Trainings)
                 .HasForeignKey(af => af.RequerimentId)
-                .OnDelete(DeleteBehavior.Restrict);
-            
-            t.HasOne(ac => ac.Category)
-                .WithMany(c => c.Trainings)
-                .HasForeignKey(af => af.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
             
             t.Property(ab => ab.StartDate)

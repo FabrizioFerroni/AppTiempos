@@ -16,5 +16,10 @@ namespace AppTiemposV3.SharedClases.DTOs.Requeriments
 
         [Url]
         public string? Url { get; set; } = string.Empty;
+        
+        
+        public string? ConjuntoCambios { get; set; } = string.Empty;
+        
+        
     }
 }

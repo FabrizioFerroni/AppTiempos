@@ -7,7 +7,7 @@ public static class SanitizeText
         if (string.IsNullOrWhiteSpace(titulo))
             return string.Empty;
 
-        var invalidChars = Path.GetInvalidFileNameChars();
+        char[] invalidChars = Path.GetInvalidFileNameChars();
         return string.Concat(titulo.Where(c => !invalidChars.Contains(c)));
     }
 }

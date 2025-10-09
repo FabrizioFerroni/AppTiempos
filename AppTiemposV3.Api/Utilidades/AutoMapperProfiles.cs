@@ -4,8 +4,8 @@ using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
+using AppTiemposV3.SharedClases.Enums;
 using AutoMapper;
-using Tipo = AppTiemposV3.Api.Entities.Tipo;
 using UserDto = AppTiemposV3.SharedClases.DTOs.Requeriments.UserDto;
 
 namespace AppTiemposV3.Api.Utilidades
@@ -26,10 +26,16 @@ namespace AppTiemposV3.Api.Utilidades
             CreateMap<CreateRequerimentDto, RequerimentsEntity>();
             CreateMap<UpdateRequerimentDto, RequerimentsEntity>()
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.HasValue ? (Estados?)src.Estado.Value : null))
+                .ForMember(dest => dest.EtapaActual, opt => opt.MapFrom(src => src.EtapaActual.HasValue ? (Etapas?)src.EtapaActual.Value : null))
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<RequerimentsEntity, RequerimentResponseDto>()
-                .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User));
-
+                .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User))
+                .ForMember(d => d.Category, o => o.MapFrom(s => s.Category))
+                // .ForMember(dest => dest.Etapa, opt => opt.MapFrom(src => src.Etapa.HasValue ? (Estados?)src.Etapa.Value : null))
+                .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado));
+         
+            CreateMap<CategoriesEntity, CategoryDtoA>();
             CreateMap<UserEntity, UserDto>();
         }
 
@@ -52,15 +58,16 @@ namespace AppTiemposV3.Api.Utilidades
             
             CreateMap<ActivitiesEntity, ActivityResponseDto>()
                 .ForMember(d => d.Requeriment, o => o.MapFrom(s => s.Requeriment))
-                .ForMember(d => d.Category, o => o.MapFrom(s => s.Category))
-                .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User));
+                .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User))
+                .ForMember(dest => dest.Etapa, opt => opt.MapFrom(src => src.Etapa));
 
             CreateMap<RequerimentsEntity, RequerimentDtoA>()
-                .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.HasValue ? (TipoA?)src.Tipo.Value : null));
-            CreateMap<CategoriesEntity, CategoryDtoA>();
+                .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado));
+            
             CreateMap<UserEntity, UserDtoA>();
-            CreateMap<Tipo, TipoA>().ConvertUsing(src => (TipoA)src);
-            CreateMap<Tipo?, TipoA?>().ConvertUsing(src => src.HasValue ? (TipoA?)src.Value : null);
+            //TODO: Luego ver esto
+            CreateMap<Etapas, Etapas>().ConvertUsing(src => (Etapas)src);
+            CreateMap<Etapas?, Etapas?>().ConvertUsing(src => src.HasValue ? (Etapas?)src.Value : null);
         }
 
         public void MappingTraining()
@@ -73,11 +80,9 @@ namespace AppTiemposV3.Api.Utilidades
             
             CreateMap<TrainingEntity, TrainingResponseDto>()
                 .ForMember(d => d.Requeriment, o => o.MapFrom(s => s.Requeriment))
-                .ForMember(d => d.Category, o => o.MapFrom(s => s.Category))
                 .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User));
 
             CreateMap<RequerimentsEntity, RequerimentDtoT>();
-            CreateMap<CategoriesEntity, CategoryDtoT>();
             CreateMap<UserEntity, UserDtoT>();
         }
 

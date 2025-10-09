@@ -54,11 +54,9 @@ public class GenericRepository : IGenericContract
                 queryable = queryable.Where(userFilter);
             }
         }
-
-
-
+        
         // Filtro por búsqueda
-        if (!string.IsNullOrEmpty(pagination.Search))
+        if (!string.IsNullOrWhiteSpace(pagination.Search))
         {
             string propertyName;
             if (expressionBuscar.Body is UnaryExpression unaryExp && unaryExp.Operand is MemberExpression memberExp)
@@ -70,12 +68,63 @@ public class GenericRepository : IGenericContract
 
             ParameterExpression param = Expression.Parameter(typeof(TEntity), "e");
             MemberExpression propertyAccess = Expression.Property(param, propertyName);
-            ConstantExpression searchValue = Expression.Constant(pagination.Search);
-            MethodInfo containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) })!;
-            MethodCallExpression containsExpression = Expression.Call(propertyAccess, containsMethod, searchValue);
-            Expression<Func<TEntity, bool>> lambda = Expression.Lambda<Func<TEntity, bool>>(containsExpression, param);
+            Type propertyType = propertyAccess.Type;
+
+            Expression<Func<TEntity, bool>> lambda;
+
+            // Detectamos el tipo del campo dinámicamente
+            if (propertyType == typeof(string))
+            {
+                // Campo string → usar Contains
+                MethodInfo containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) })!;
+                ConstantExpression searchValue = Expression.Constant(pagination.Search);
+                MethodCallExpression containsExpression = Expression.Call(propertyAccess, containsMethod, searchValue);
+                lambda = Expression.Lambda<Func<TEntity, bool>>(containsExpression, param);
+            }
+            else if (propertyType == typeof(Guid))
+            {
+                // Campo Guid → comparar por igualdad si se puede parsear
+                if (Guid.TryParse(pagination.Search, out Guid guidValue))
+                {
+                    ConstantExpression searchGuid = Expression.Constant(guidValue);
+                    BinaryExpression equal = Expression.Equal(propertyAccess, searchGuid);
+                    lambda = Expression.Lambda<Func<TEntity, bool>>(equal, param);
+                }
+                else
+                {
+                    // Si no es un GUID válido, que no devuelva nada
+                    lambda = e => false;
+                }
+            }
+            else if (IsNumericType(propertyType))
+            {
+                // Campo numérico → comparar igualdad si se puede convertir
+                if (decimal.TryParse(pagination.Search, out decimal numValue))
+                {
+                    ConstantExpression searchNum = Expression.Constant(Convert.ChangeType(numValue, propertyType));
+                    BinaryExpression equal = Expression.Equal(propertyAccess, searchNum);
+                    lambda = Expression.Lambda<Func<TEntity, bool>>(equal, param);
+                }
+                else
+                {
+                    lambda = e => false;
+                }
+            }
+            else
+            {
+                // Otros tipos (ej. DateTime, Enum, etc.) → comparar con ToString().Contains()
+                MethodInfo toStringMethod = propertyType.GetMethod("ToString", Type.EmptyTypes)!;
+                MethodCallExpression toStringCall = Expression.Call(propertyAccess, toStringMethod);
+                MethodInfo containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) })!;
+                ConstantExpression searchValue = Expression.Constant(pagination.Search);
+                MethodCallExpression containsExpression = Expression.Call(toStringCall, containsMethod, searchValue);
+                lambda = Expression.Lambda<Func<TEntity, bool>>(containsExpression, param);
+            }
+
             queryable = queryable.Where(lambda);
         }
+
+
 
         // Total
         int totalElements = await queryable.CountAsync();
@@ -277,5 +326,15 @@ public class GenericRepository : IGenericContract
     {
         UserEntity? user = await _userManager.FindByIdAsync(userId!.ToString()!);
         return user ?? throw new NotFoundException("El usuario no fue encontrado");
+    }
+    
+    private static bool IsNumericType(Type type)
+    {
+        return type == typeof(byte) || type == typeof(sbyte) ||
+               type == typeof(short) || type == typeof(ushort) ||
+               type == typeof(int) || type == typeof(uint) ||
+               type == typeof(long) || type == typeof(ulong) ||
+               type == typeof(float) || type == typeof(double) ||
+               type == typeof(decimal);
     }
 }

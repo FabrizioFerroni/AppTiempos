@@ -1,7 +1,5 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using AppTiemposV3.Web.Pages
-@inject NavigationManager Router
-@inject AuthenticationStateProvider AuthStateProvider
 
 @inherits LayoutComponentBase
 
@@ -10,9 +8,10 @@
         <Sidebar IsClosed="@State.IsSidebarClosed" />
     </div>
 
-    <main class="flex h-screen">
+    <main class="flex min-h-screen @(State.IsSidebarClosed ? "main-collapsed" : "main-expanded")">
             <AuthorizeView>
                 <Authorized>
+                    <NotificationContainer />
                     @Body
                 </Authorized>
                 <NotAuthorized>
@@ -28,10 +27,20 @@
     </main>
 </div>
 
-
-<div id="blazor-error-ui">
-    Se ha producido un error.
-    <a href="" class="reload">Recargar</a>
-    <a class="dismiss">🗙</a>
+<div id="blazor-error-ui" class="select-none fixed bottom-4 left-1/2 -translate-x-1/2 max-w-lg w-full bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded-lg shadow-lg flex items-center justify-between">
+    <div class="flex items-center justify-between w-full">
+        <div class="flex items-center space-x-2">
+            <AlertTriangle Class="h-5 w-5 text-red-600 font-bold leading-none"/>
+            <span class="text-sm font-bold leading-none">
+                Algo salió mal.
+            </span>
+            <span class="text-gray-700 hover:text-gray-800 text-sm font-semibold leading-none">
+                Recarga con el botón de la derecha.
+            </span>
+        </div>
+        <a class="reload cursor-pointer">
+            <RotateCw Class="h-5 w-5 text-gray-700 hover:text-red-800 text-sm font-bold leading-none" />
+        </a>
+    </div>
 </div>
 

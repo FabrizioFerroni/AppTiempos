@@ -1,21 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using AppTiemposV3.SharedClases.Enums;
 
 namespace AppTiemposV3.Api.Entities
 {
-    
-    public enum Tipo
-    {
-        Informes,
-        MigracionPlugins,
-        MigracionWeb
-    }
-    
     public class RequerimentsEntity : BaseEntity
     {
         [Required]
         [StringLength(15)]
+        [RegularExpression(@"^\d+$", ErrorMessage = "Solo se permiten números")]
         public required string ReqID { get; set; } = string.Empty;
 
         [Required]
@@ -24,7 +18,9 @@ namespace AppTiemposV3.Api.Entities
         [Required]
         public required string Cliente { get; set; } = string.Empty;
 
-        public string StoryPoint { get; set; } = "0.00";
+        [RegularExpression(@"^[0-9\.]$", ErrorMessage = "Solo se permiten números")]
+        [Required]
+        public required string StoryPoint { get; set; } = string.Empty;
 
         [Url]
         public string? Url { get; set; } = null;
@@ -36,16 +32,22 @@ namespace AppTiemposV3.Api.Entities
 
         public UserEntity User { get; set; } = null!;
         
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int FolderId { get; set; }
+
+        public Estados Estado { get; set; } = Estados.Pendiente;
         
-        public Tipo? Tipo {get; set;}
+        public Etapas EtapaActual { get; set; } = Etapas.Alta;
         
         public string? ConjuntoCambios { get; set; } = null;
         
         public ICollection<ActivitiesEntity> Activities { get; set; } = new List<ActivitiesEntity>();
         
         public ICollection<TrainingEntity> Trainings { get; set; } = new List<TrainingEntity>();
+        
+        [Required]
+        public required Guid CategoryId { get; set; } = Guid.Empty;
+    
+        public CategoriesEntity Category { get; set; } = null!;
 
     }
 }

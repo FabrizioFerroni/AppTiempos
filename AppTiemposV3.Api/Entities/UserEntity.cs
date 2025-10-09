@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AppTiemposV3.SharedClases.Enums;
 using Microsoft.AspNetCore.Identity;
 
 namespace AppTiemposV3.Api.Entities;
@@ -10,8 +11,7 @@ public class UserEntity : IdentityUser<Guid>
     public string FullName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "El campo {0} es obligatorio.")]
-    [StringLength(15, MinimumLength = 5, ErrorMessage = "El campo {0} debe tener entre {2} y {1} caracteres.")]
-    public string Area { get; set; } = string.Empty;
+    public Areas Area { get; set; }
 
     public DateTime LastPasswordChange { get; set; } = DateTime.Now;
 

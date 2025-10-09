@@ -1,16 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using AppTiemposV3.SharedClases.Enums;
 //using Newtonsoft.Json;
 using static AppTiemposV3.SharedClases.Utilidades.SanitizeText;
 
 namespace AppTiemposV3.SharedClases.DTOs.Activities;
-
-public enum TipoA
-{
-    Informes,
-    MigracionPlugins,
-    MigracionWeb
-}
 
 public class ActivityResponseDto
 {
@@ -34,13 +28,13 @@ public class ActivityResponseDto
     public string StatusMessage { get; set; } = "En Progreso";
 
     public string? Comment { get; set; } = null;
+
+    public Etapas Etapa { get; set; } = Etapas.Alta;
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public TimeSpan? TimeElapsed => EndTime.HasValue ? EndTime.Value - StartTime : null;
     
     public RequerimentDtoA Requeriment { get; set; } = new RequerimentDtoA();
-    
-    public CategoryDtoA Category { get; set; } = new CategoryDtoA();
     
     public UserDtoA Usuario { get; set; } = new UserDtoA();
 }
@@ -50,9 +44,6 @@ public class RequerimentDtoA
     public Guid Id { get; set; }
     
     public string ReqID { get; set; } = string.Empty;
-
-    public string ReqIDDesc => "ReqID" + ReqID;
-
     public string Titulo { get; set; } = string.Empty;
 
     public string Cliente { get; set; } = string.Empty;
@@ -63,7 +54,7 @@ public class RequerimentDtoA
 
     public string? Descripcion {  get; set; } = string.Empty;
     
-    public TipoA? Tipo { get; set; } = null;
+    public Estados? Estado { get; set; } = null;
         
     public string? ConjuntoCambios { get; set; } = null;
     
@@ -76,16 +67,6 @@ public class RequerimentDtoA
     }
         
     public string? FolderPath => _folderId + " - " + ReqID + " - " + SanitizeTitulo(Titulo);
-}
-
-
-public class CategoryDtoA
-{
-    public Guid Id { get; set; }
-
-    public string Name { get; set; } = string.Empty;
-    
-    public string Color { get; set; } = string.Empty;
 }
 
 public class UserDtoA

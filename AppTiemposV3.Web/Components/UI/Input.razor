@@ -1,6 +1,8 @@
-<input 
+<input
+    @ref="_inputRef"
     type="@Type"
     class="@GetClasess()"
+    style="@Style"
     id="@Id"
     name="@Name"
     placeholder="@Placeholder"
@@ -10,10 +12,13 @@
     autocapitalize="@Autocapitalize"
     autofocus="@Autofocus"
     required="@Required"
-    value="@Value"
+    minlength="@MinLength"
     maxlength="@MaxLength"
     min="@Min"
-    @oninput="OnValueChanged"
+    pattern="@Pattern"
+    inputmode="@InputMode"
+    @bind="CurrentValue"
+    @bind:event="oninput"
     @onclick="OnClick"
     @attributes="GetBooleanAttributes().Concat(AdditionalAttributes ?? new()).ToDictionary(k => k.Key, v => v.Value)"
     />

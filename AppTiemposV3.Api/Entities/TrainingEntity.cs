@@ -31,10 +31,10 @@ public class TrainingEntity : BaseEntity
     
     public RequerimentsEntity Requeriment { get; set; } = null!;
     
-    [Required]
+    /*[Required]
     public required Guid CategoryId { get; set; } = Guid.Empty;
     
-    public CategoriesEntity Category { get; set; } = null!;
+    public CategoriesEntity Category { get; set; } = null!;*/
     
     [Required]
     public required Guid UserId { get; set; }

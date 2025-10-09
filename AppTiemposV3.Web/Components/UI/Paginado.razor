@@ -1,0 +1,92 @@
+@typeparam T
+
+@if (Content?.Count >= 1)
+{
+    <div class="flex flex-col md:flex-row justify-between items-center mt-4">
+
+        <p class=@($" {(ShowCantPages ? "" : "text-transparent" )} text-center md:text-left pt-3 md:pt-0 select-none")>
+            @GetShowingResultsMessage()
+        </p>
+
+        <nav class="flex items-center justify-end pt-4" aria-label="Table navigation">
+            <ul class="flex items-center -space-x-px h-10 text-base">
+
+                <!-- Botón Primero -->
+                <li class="hidden md:block @(TotalPages < MaxVisiblePages ? "hidden" : "block")">
+                    <a class="cursor-pointer flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white @(IsFirst ? "cursor-not-allowed pointer-events-none" : "")"
+                       @onclick="First">
+                        <span class="sr-only">Primero</span>
+                        <ChevronFirst Class="w-4 h-4 rtl:rotate-180" />
+                    </a>
+                </li>
+
+                <!-- Botón Anterior -->
+                <li>
+                    <a class="cursor-pointer flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 rounded-s md:rounded-s-none bg-white border border-e-0 border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white @(IsFirst ? "cursor-not-allowed pointer-events-none" : "")"
+                       @onclick="Rewind">
+                        <span class="sr-only">Anterior</span>
+                        <ChevronLeft Class="w-4 h-4 rtl:rotate-180" />
+                    </a>
+                </li>
+
+                <!-- Páginas antes -->
+                @foreach (int numeroPagina in VisiblePagesBefore)
+                {
+                    if (numeroPagina == 0)
+                    {
+                        <li><span class="cursor-pointer flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300  hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">...</span></li>
+                    }
+                    else
+                    {
+                        <li>
+                            <a class="@(numeroPagina == CurrentPage 
+                                ? $"cursor-default pointer-events-none flex items-center justify-center px-4 h-10 leading-tight {color.GetButtonClassess()}" 
+                                : "cursor-pointer flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300  hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white")"
+                               @onclick="() => SetPage(numeroPagina)">
+                                @numeroPagina
+                            </a>
+                        </li>
+                    }
+                }
+
+                <!-- Páginas después -->
+                @foreach (int numeroPagina in VisiblePagesAfter)
+                {
+                    if (numeroPagina == 0)
+                    {
+                        <li><span class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">...</span></li>
+                    }
+                    else
+                    {
+                        <li>
+                            <a class="@(numeroPagina == CurrentPage 
+                                 ? $"cursor-default pointer-events-none flex items-center justify-center px-4 h-10 leading-tight {color.GetButtonClassess()}" 
+                                 : "cursor-pointer flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300  hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white")"
+                               @onclick="() => SetPage(numeroPagina)">
+                                @numeroPagina
+                            </a>
+                        </li>
+                    }
+                }
+
+                <!-- Botón Siguiente -->
+                <li>
+                    <a class="cursor-pointer flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300  hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white @(IsLast ? "cursor-not-allowed pointer-events-none" : "")"
+                       @onclick="Forward">
+                        <span class="sr-only">Siguiente</span>
+                        <ChevronRight Class="w-4 h-4 rtl:rotate-180" />
+                    </a>
+                </li>
+
+                <!-- Botón Último -->
+                <li class="hidden md:block @(TotalPages < MaxVisiblePages ? "hidden" : "block")">
+                    <a class="cursor-pointer flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white @(IsLast ? "cursor-not-allowed pointer-events-none" : "")"
+                       @onclick="Last">
+                        <span class="sr-only">Último</span>
+                        <ChevronLast Class="w-4 h-4 rtl:rotate-180" />
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace AppTiemposV3.SharedClases.DTOs;
 
 public class PaginationDto
@@ -21,6 +23,7 @@ public class PaginationDto
         }
     }
     
+    [JsonPropertyName("search")]
     public string? Search { get; set; } = null;
     
     public bool Ascending { get; set; } = true;
