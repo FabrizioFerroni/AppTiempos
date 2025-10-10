@@ -8,12 +8,12 @@
                     <h2>Please wait...</h2>
                 </Authorizing>
             </AuthorizeRouteView>
-            <FocusOnNavigate RouteData="@routeData" Selector="article"/>
+            @* <FocusOnNavigate RouteData="@routeData" Selector="article"/> *@
         </Found>
         <NotFound>
-            <PageTitle>Página no encontrada</PageTitle>
+            <PageTitle>Página no encontrada | TimeTracker Pro</PageTitle>
             <LayoutView Layout="@typeof(ErrorLayout)">
-                <p role="alert">Sorry, there's nothing at this address.</p>
+                <NotFoundUI />
             </LayoutView>
         </NotFound>
     </Router>
