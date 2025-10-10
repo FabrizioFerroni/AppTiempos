@@ -6,38 +6,41 @@ using System.Globalization;
 using AppTiemposV3.SharedClases.GenericModels;
 using AppTiemposV3.Web.Services;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.Routing;
 
 namespace AppTiemposV3.Web.Components.UI;
 
-public partial class Sidebar : ComponentBase
+public partial class Sidebar : ComponentBase, IDisposable
 {
     [Inject] private NavigationManager Nav { get; set; } = null!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
     [Inject] private ColorService ColorService { get; set; } = null!;
     [Inject] private ILocalStorageService _localStorageService { get; set; } = default!;
     private string CurrentUrl => Nav.Uri.Replace(Nav.BaseUri, "/");
-    private string rutaAcciones { get; set; } = "/app/actividades?nueva=true";
     private string rutaProfile { get; set; } = "/app/perfil";
     private string FechaHoy = string.Empty;
     [Parameter] public bool IsClosed { get; set;  } = false;
     private double TodayHoursWorked { get; set; } = Math.Round(4.50, 1);
     private double TodayHoursTarget { get; set; } = 8;
     
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         ColorService.OnColorChanged += HandleColorChanged;
+        Nav.LocationChanged += OnLocationChanged;
+        return Task.CompletedTask;
     }
     
     protected override void OnInitialized()
     {
         DateTime hoy = DateTime.Now;
         var cultura = new CultureInfo("es-ES");
-
         FechaHoy = hoy.ToString("dddd dd/MM", cultura);
-
         FechaHoy = char.ToUpper(FechaHoy[0]) + FechaHoy.Substring(1);
-        
-        StateHasChanged();
+    }
+    
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        await InvokeAsync(StateHasChanged);
     }
     
     private async void HandleColorChanged()
@@ -52,11 +55,9 @@ public partial class Sidebar : ComponentBase
         if (remaining <= 0)
             return "0h";
 
-        // Convierte a horas y minutos reales
         int hours = (int)remaining;
         int minutes = (int)Math.Round((remaining - hours) * 60);
 
-        // Convertimos minutos a fracción decimal (ej: 30 min = 0.5h, 6 min = 0.1h)
         double totalDecimal = hours + (minutes / 60.0);
 
         return totalDecimal.ToString("0.0") + "h";
@@ -108,6 +109,7 @@ public partial class Sidebar : ComponentBase
     private string GetItemClass(string url)
     {
         bool isActive = CurrentUrl == url;
+        //StateHasChanged();
         ColorModel? currentColor = ColorService.GetCurrentColor();
         return $"flex items-center gap-3 px-3 py-2 rounded-lg text-sm my-2 " +
                (isActive
@@ -182,9 +184,17 @@ public partial class Sidebar : ComponentBase
         return "font-medium text-blue-600 dark:text-blue-400";
     }
     
+    private async Task NewActivity()
+    {
+        string? test = await _localStorageService.GetItemAsStringAsync("SidebarClosed");
+        Console.WriteLine(test);
+        //await newModalRef!.ShowAsync(IdModal);
+    }
+    
     
     public void Dispose()
     {
+        Nav.LocationChanged -= OnLocationChanged;
         ColorService.OnColorChanged -= HandleColorChanged; 
     }
    
