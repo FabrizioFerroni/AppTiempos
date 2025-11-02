@@ -1,0 +1,261 @@
+@page "/app/actividades"
+@using AppTiemposV3.SharedClases.DTOs.Activities
+@using AppTiemposV3.SharedClases.Enums
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
+@using AppTiemposV3.Web.Pages.Requeriments.Modals
+@using AppTiemposV3.Web.Pages.Activities.Modales
+
+<PageTitle>
+    Actividades | TimeTracker Pro
+</PageTitle>
+
+<div class="flex flex-col w-full">
+    <Navbar Title="Gestión de Actividades" Subtitle="Administra tus tareas y requerimientos" OnToggleSidebar="HandleSidebarToggle">
+        <div class="text-right flex items-center gap-2">
+            @* <WorkHoursConfig /> *@
+            <Button
+                Class="@($"{ColorService.GetButtonClassess()} {((IsNewButtonNavbarDisabled || IsLoading) ? "cursor-not-allowed" : "cursor-default")}")"
+                Disabled=@(IsNewButtonNavbarDisabled || IsLoading)
+                Id="btn-NewAct"
+                OnClick="@(() => NewActivity())">
+                <Plus Class="h-4 w-4 mr-2"/>
+                Nueva Actividad
+            </Button>
+        </div>
+    </Navbar>
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            <div class="flex items-center justify-between mb-4 select-none">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        @* TODO: Puedo hacer un componente y que devuelva la fecha para abajo llamar a la funcion FechaString  *@
+                        <CalendarView Mode="CalendarMode.Single" AllowFutureDates="false" OnDateSelected="DateChanged" />
+                    </div>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                        @DateSelected
+                    </span>
+                </div>
+                <div class="text-sm text-gray-500">
+                    @($"{Activities.Count} {Plural(Activities.Count, "actividad encontrada", "actividades encontradas")}")
+                </div>
+            </div>
+            
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                <CardHeader>
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <CardTitle>Lista de Actividades</CardTitle>
+                        </div>
+
+                        <div class="flex justify-end items-center gap-3">
+                            @if (!IsLoading)
+                            {
+                                <div class="w-16">
+                                    <Select TItem="int"
+                                            Items="@OptionsPaginated"
+                                            Value="@registrosPorPagina"
+                                            ValueChanged="OnPaginatedSelectedChanged"
+                                            Placeholder="Paginado"
+                                            ItemTextSelector="x => x.ToString()"
+                                            ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500"
+                                            ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500">
+                                    </Select>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+
+                </CardHeader>
+                <CardContent>
+                    @*TODO: Esto se tiene que cambiar por lo que responda el back *@
+                    @if (IsLoading)
+                    {
+                        <div class="flex flex-col items-center justify-center py-12 text-center">
+                            <LoaderCircle Class="w-16 h-16 mb-4 animate-spin"/>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                Cargando actividades
+                            </h3>
+                            <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                                Espere unos segundos ...
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (Activities.Count == 0)
+                        {
+                            <div class="flex flex-col items-center justify-center py-12 text-center select-none">
+                                <div class="w-16 h-16 mb-4 text-gray-400">
+                                    <Clock Class="w-full h-full"/>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    No hay actividades para el dia: @DateSelected
+                                </h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-4">
+                                    No tienes actividades registradas para esta fecha
+                                </p>
+                                <Button
+                                    Class="@ColorService.GetButtonClassess()" Disabled=@(IsNewButtonDisabled || IsLoading)  OnClick="@(() => NewActivity())">
+                                    <Plus class="w-4 h-4 mr-2"/>
+                                    Crear primera actividad
+                                </Button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="space-y-4">
+                                @foreach (ActivityResponseDto activity in Activities)
+                                {
+                                    //DisableButtonNew(activity.EndTime);
+                                    // activity-item card-hover
+                                    <div id="@activity.Id" class="activity-item card-hover flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 transition-colors">
+                                        <div class="flex-1 grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                                            @* Cargado *@
+                                            <div>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    Cargado?
+                                                </p>
+                                                <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                    @if (activity.IsLoaded)
+                                                    {
+                                                        <CheckCircle Class="w-4 h-4 text-green-500" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <XCircle Class="w-4 h-4 text-red-500" />
+                                                    }
+                                                </p>
+                                            </div>
+                                            @* Fin Cargado *@
+                                            @* ReqID *@
+                                            <div>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">Requerimiento</p>
+                                                <Button
+                                                    Variant="ghost"
+                                                    Size="sm"
+                                                    Class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-medium p-0 h-auto justify-start cursor-pointer"
+                                                    OnClick="@(() => ShowModal(activity.Requeriment.Id))"
+                                                >
+                                                    @($"ReqID{activity.Requeriment.ReqID}")
+                                                    <ExternalLink Class="w-3 h-3 ml-1" />
+                                                </Button>
+                                            </div>
+                                            @* Fin ReqID *@
+
+                                            @* Descripcion *@
+                                            <div class="md:col-span-2">
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    Descripción
+                                                </p>
+                                                <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                    @activity.Description
+                                                </p>
+                                            </div>
+                                            @* Fin Descripcion *@
+
+                                            @* Tiempo concurrido *@
+                                            <div class="flex justify-between items-center gap-1">
+                                                <div>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Hora inicio</p>
+                                                    <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                        @($"{activity.StartTime}")
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                        Hora fin
+                                                    </p>
+                                                    <p  class="font-medium text-gray-800 dark:text-gray-100">
+                                                        @($"{(activity.EndTime is not null ? $"{activity.EndTime}" : "#:##" )}")
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Total</p>
+                                                    <span class="@($"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {GetStatusColor(activity.StatusMessage)}")"> 
+                                                     @($"{(activity.EndTime is not null ? $"{activity.TimeElapsed}" : "#:##")}")
+                                                 </span>
+                                                </div>
+                                            </div>
+                                            @* Fin Tiempo concurrido *@
+                                            
+                                            @* Estado *@
+                                            <div>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    Etapa
+                                                </p>
+                                                <span class="@($"inline-flex items-center px-2 py-1  text-xs font-medium")">
+                                                    @activity.Etapa
+                                                </span>
+                                            </div>
+                                            @* Fin Estado *@
+
+                                            
+                                        </div>
+                                        <div class="flex gap-2 ml-4">
+                                            <Enlace
+                                                Href=@($"/app/actividad/{activity.UrlIndetificator}")
+                                                Target="_self"
+                                                Rel="noopener noreferer"
+                                                Class="border border-gray-300 hover:bg-gray-100 dark:border-gray-700  dark:hover:bg-gray-700 h-9 px-3 text-sm inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none text-gray-400  dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-green-800/20 dark:hover:border-green-900/50 cursor-pointer">
+                                                <Eye Class="w-4 h-4"/>
+                                            </Enlace>
+                                            <Button
+                                                Variant="outline"
+                                                Size="sm"
+                                                Id=@($"edit-button-{activity.Id}")
+                                                OnClick="@(() => EditModal(activity.Id))"
+                                                Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-blue-800/20 dark:hover:border-blue-900/50 cursor-pointer"
+                                                Disabled=@(activity.IsLoaded && activity.StatusMessage == "completed")
+                                                >
+                                                <Edit Class="w-4 h-4"/>
+                                            </Button>
+                                            @*  *@
+                                            <Button
+                                                Variant="outline"
+                                                Size="sm"
+                                                Id=@($"delete-button-{activity.Id}")
+                                                OnClick="@(() => DeleteModal(activity.Id, activity.Requeriment.ReqID, activity.StartDate))"
+                                                Class="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-500 dark:hover:border-red-900/50 dark:bg-gray-600  cursor-pointer">
+                                                <Trash2 Class="w-4 h-4"/>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    @if (!IsLoading || !IsLoadingBackend || !IsLoadingDelete)
+                    {
+                        <Paginado T="ActivityResponseDto"
+                                  Content="Activities"
+                                  PageNumber="pagina"
+                                  Size="registrosPorPagina"
+                                  TotalElements="totalElements"
+                                  CurrentPage="currentPage"
+                                  TotalPages="totalPages"
+                                  MaxVisiblePages="maxVisiblePages"
+                                  IsFirst="isFirst"
+                                  IsLast="isLast"
+                                  ShowCantPages="!IsLoadingBackend"
+                                  FirstPage="First"
+                                  LastPage="Last"
+                                  RewindPage="Rewind"
+                                  ForwardPage="Forward"
+                                  OnSetPage="SetPage" />
+
+                    }
+                </CardContent>
+            </Card>
+
+            <NewActivity @ref="newModalRef" OnSaved="HandleActivitySavedNew" />
+            
+            <ShowRequeriment @ref="showModalRef" />
+            
+            <EditActivity @ref=editModalRef OnSaved="HandleActivitySaved"/>
+            
+            <DeleteActivity @ref="deleteModalRef" OnSaved="HandleActivityDeleted" />
+        </div>
+    </article>
+</div>

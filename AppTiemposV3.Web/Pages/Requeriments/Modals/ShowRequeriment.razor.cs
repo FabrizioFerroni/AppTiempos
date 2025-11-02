@@ -104,4 +104,17 @@ public partial class ShowRequeriment : ComponentBase
         mensajes.Remove(id);
         StateHasChanged(); 
     }
+    
+    private string FormatTime(TimeSpan ts)
+    {
+        if (ts == TimeSpan.Zero)
+        {
+            return "00:00";
+        }
+
+        int horas = (int)ts.TotalHours;
+        int minutos = ts.Minutes;
+
+        return $"{horas:00}:{minutos:00}";
+    }
 }

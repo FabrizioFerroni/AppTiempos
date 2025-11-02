@@ -1,6 +1,10 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AppTiemposV3.SharedClases.Contracts;
+using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
+using AppTiemposV3.SharedClases.Utilidades;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using AppTiemposV3.Web;
@@ -28,6 +32,12 @@ services.AddHttpClient("API", client =>
         client.BaseAddress = new Uri("https://localhost:7260");
     })
     .AddHttpMessageHandler<AuthHeaderHandler>();
+
+JsonSerializerOptions? jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+jsonOptions.Converters.Add(new TimeOnlyJsonConverter());
+jsonOptions.Converters.Add(new JsonStringEnumConverter());
+
+services.AddSingleton(jsonOptions);
 services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
 services.AddBlazoredLocalStorage();
 services.AddBlazoredSessionStorage();
@@ -35,6 +45,7 @@ services.AddAuthorizationCore();
 services.AddScoped<AuthenticationStateProvider, CustomAuthenticationProvider>();
 services.AddScoped<IAuthContract, AuthService>();
 services.AddScoped<IRequerimentContract<RequerimentResponseDto>, RequerimentsService>();
+services.AddScoped<IActivityContract<ActivityResponseDto>, ActivityService>();
 services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryService>();
 services.AddScoped<LayoutState>();
 services.AddScoped<ColorService>();
@@ -78,6 +89,13 @@ await js.InvokeVoidAsync("eval", @"
 await js.InvokeVoidAsync("eval", @"
     const script = document.createElement('script');
     script.src = '/js/modalHelpers.js';
+    script.type = 'text/javascript';
+    document.head.appendChild(script);
+");
+
+await js.InvokeVoidAsync("eval", @"
+    const script = document.createElement('script');
+    script.src = '/js/dateTimeHelper.js';
     script.type = 'text/javascript';
     document.head.appendChild(script);
 ");

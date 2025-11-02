@@ -25,4 +25,10 @@
       <_ContentIncludedByDefault Remove="wwwroot\data\colors.json" />
       <_ContentIncludedByDefault Remove="Components\UI\SidebarProvider\Sidebar.razor" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Components\UI\AlertTittle.razor.cs">
+        <DependentUpon>AlertTitle.razor</DependentUpon>
+      </Compile>
+    </ItemGroup>
 </Project>

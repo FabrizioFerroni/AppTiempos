@@ -1,7 +1,7 @@
 @typeparam TItem
 
 <div id="@elementId" class="relative inline-block w-full">
-    <button id="@Id" type="button" @onclick="Toggle"
+    <button id="@Id" type="button" @onclick="Toggle" disabled="@Disabled"
             class="@GetClasessButton()">
         <span>
             @if(!string.IsNullOrWhiteSpace(SelectedText))

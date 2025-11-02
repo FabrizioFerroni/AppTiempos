@@ -40,6 +40,9 @@ namespace AppTiemposV3.Api.Entities
         
         public string? ConjuntoCambios { get; set; } = null;
         
+        [NotMapped]
+        public TimeSpan WorkedTime { get; set; }
+        
         public ICollection<ActivitiesEntity> Activities { get; set; } = new List<ActivitiesEntity>();
         
         public ICollection<TrainingEntity> Trainings { get; set; } = new List<TrainingEntity>();

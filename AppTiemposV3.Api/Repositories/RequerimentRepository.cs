@@ -166,6 +166,22 @@ namespace AppTiemposV3.Api.Repositories
             UserEntity user = await GetUserByIdAsync(_userId);
 
             RequerimentsEntity req = await GetRequerimentByIdAsync(id, user.Id);
+            
+            double totalWorked = _dbCxt.Activities
+                .Where(a => !a.IsDeleted)
+                .Where(a => a.RequerimentId == req.Id)
+                .AsEnumerable() 
+                .Sum(a =>
+                    {
+                        TimeSpan start = a.StartTime.ToTimeSpan();
+                        TimeSpan end = a.EndTime?.ToTimeSpan() ?? start;
+                        return (end - start).TotalSeconds;
+                    }
+                );
+
+            TimeSpan totalTime = TimeSpan.FromSeconds(totalWorked);
+            req.WorkedTime = totalTime;
+
 
             RequerimentResponseDto resReq = _iMapper.Map<RequerimentResponseDto>(req);
 

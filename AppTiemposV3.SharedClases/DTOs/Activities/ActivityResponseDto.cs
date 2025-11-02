@@ -15,11 +15,9 @@ public class ActivityResponseDto
     [DataType(DataType.Date)]
     public DateOnly StartDate { get; set; }
     
-    [DataType(DataType.Time)]
-    public TimeOnly StartTime { get; set; }
+    public string StartTime { get; set; }
     
-    [DataType(DataType.Time)]
-    public TimeOnly? EndTime { get; set; } = null;
+    public string? EndTime { get; set; } = null;
     
     public string Description { get; set; } = string.Empty;
     
@@ -30,9 +28,14 @@ public class ActivityResponseDto
     public string? Comment { get; set; } = null;
 
     public Etapas Etapa { get; set; } = Etapas.Alta;
+
+    public TimeSpan WorkedTime { get; set; }
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public TimeSpan? TimeElapsed => EndTime.HasValue ? EndTime.Value - StartTime : null;
+    // public TimeSpan? TimeElapsed => EndTime.HasValue ? EndTime.Value - StartTime : null;
+    public string? TimeElapsed => EndTime is not null
+        ? (TimeOnly.Parse(EndTime) - TimeOnly.Parse(StartTime)).ToString("hh\\:mm")
+        : null;
     
     public RequerimentDtoA Requeriment { get; set; } = new RequerimentDtoA();
     
@@ -58,6 +61,8 @@ public class RequerimentDtoA
         
     public string? ConjuntoCambios { get; set; } = null;
     
+    public CategoryDtoRes Category { get; set; } = new CategoryDtoRes();
+    
     private int _folderId;
         
     [JsonIgnore]
@@ -76,4 +81,13 @@ public class UserDtoA
     public string FullName { get; set; } = string.Empty;
 
     public string Area { get; set; } = string.Empty;
+}
+
+public class CategoryDtoRes
+{
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+    
+    public string Color { get; set; } = string.Empty;
 }

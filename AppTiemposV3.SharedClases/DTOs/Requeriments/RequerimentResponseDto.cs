@@ -49,6 +49,8 @@ namespace AppTiemposV3.SharedClases.DTOs.Requeriments
         
         public CategoryDtoA Category { get; set; } = new CategoryDtoA();
         
+        public TimeSpan WorkedTime { get; set; }
+        
        
     }
 

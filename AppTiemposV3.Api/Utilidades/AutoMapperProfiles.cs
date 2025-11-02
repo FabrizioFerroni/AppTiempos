@@ -59,12 +59,18 @@ namespace AppTiemposV3.Api.Utilidades
             CreateMap<ActivitiesEntity, ActivityResponseDto>()
                 .ForMember(d => d.Requeriment, o => o.MapFrom(s => s.Requeriment))
                 .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User))
-                .ForMember(dest => dest.Etapa, opt => opt.MapFrom(src => src.Etapa));
+                .ForMember(dest => dest.Etapa, opt => opt.MapFrom(src => src.Etapa))
+                .ForMember(dest => dest.StartTime,
+                    opt => opt.MapFrom(src => src.StartTime.ToString("HH:mm")))
+                .ForMember(dest => dest.EndTime,
+                    opt => opt.MapFrom(src => src.EndTime.HasValue ? src.EndTime.Value.ToString("HH:mm") : null));
 
             CreateMap<RequerimentsEntity, RequerimentDtoA>()
-                .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado));
+                .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado))
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category));
             
             CreateMap<UserEntity, UserDtoA>();
+            CreateMap<CategoriesEntity, CategoryDtoRes>();
             //TODO: Luego ver esto
             CreateMap<Etapas, Etapas>().ConvertUsing(src => (Etapas)src);
             CreateMap<Etapas?, Etapas?>().ConvertUsing(src => src.HasValue ? (Etapas?)src.Value : null);

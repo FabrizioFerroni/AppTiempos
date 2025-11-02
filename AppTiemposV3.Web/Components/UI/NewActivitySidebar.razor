@@ -1,0 +1,231 @@
+@using AppTiemposV3.SharedClases.Constants
+@using AppTiemposV3.SharedClases.Enums
+@using Microsoft.AspNetCore.Components.Authorization
+@using AppTiemposV3.Web.Pages.Requeriments.Modals
+<Modal Method="new-activity-sidebar" IdElement="@Id"
+       Id=@($"dialog-modal-new-act-{IdModalStr}")>
+       <div class="px-6 my-4">
+              <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+                     <span class="text-gray-700 dark:text-gray-300 text-md">
+                            Crear nueva actividad
+                     </span>
+                     <Button
+                            Variant="ghost"
+                            Size="sm"
+                            Command="close"
+                            CommandFor=@($"new-activity-sidebar-{Id}")
+                            Class="text-xs cursor-pointer"
+                            OnClick="() => { OnResetNewAct(); }"
+                     >
+                            <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+                     </Button>
+              </div>
+
+              @if (isError)
+              {
+                     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative mt-2" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                            <div class="block sm:inline">
+                                   @messageError
+                            </div>
+                            <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
+                                   <Close Class="h-6 w-6 text-red-500" />
+                            </button>
+                     </div>
+              }
+              
+              <EditForm Enhance Model=@activityDto class="space-y-4 mt-2" novalidate OnValidSubmit=@SendNewActivity  FormName="NewActivityForm">
+                     <DataAnnotationsValidator/>
+
+                     <div class="space-y-2">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                   <div>
+                                          <Label For="dateIn" Id="dateLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                                 Fecha
+                                          </Label>
+                                          <Input
+                                                 Type="date"
+                                                 @bind-Value="StartDateString"
+                                                 InputMode="date"
+                                                 Id="dateIn"
+                                                 Name="date"
+                                                 Placeholder="Fecha de la actividad"
+                                                 Autocomplete="off"
+                                                 Required
+                                                 Disabled
+                                                 Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                          />
+                                          <ValidationMessage For="() => activityDto.StartDate" class="text-xs text-red-600"/>
+                                   </div>
+
+                                   <div>
+                                          <Label For="hourIn" Id="hourLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                                 Hora de inicio
+                                          </Label>
+                                          <Input
+                                                 Type="time"
+                                                 @bind-Value="StartTimeString"
+                                                 Id="hourIn"
+                                                 Name="hour"
+                                                 Placeholder="Hora de la actividad"
+                                                 Autocomplete="off"
+                                                 Required
+                                                 Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                          />
+                                          <ValidationMessage For="() => activityDto.StartTime" class="text-xs text-red-600"/>
+                                   </div>
+                            </div>
+                     </div>
+                     @* Validacion de fechas *@
+                     @if (IsPastDateTime)
+                     {
+                            <Alert Variant="destructive" Class="mt-2 border-gray-300 dark:border-gray-600">
+                                   <AlertTriangle Class="h-4 w-4" Style="color: red !important;" />
+                                   <AlertDescription>
+                                          La fecha y hora seleccionadas son anteriores a la actual. Verifica si hay actividades
+                                          pendientes sin finalizar.
+                                   </AlertDescription>
+                            </Alert>
+                     }
+                     @* Fin validacion fecha *@
+
+                     <div class="space-y-2">
+                            <Label For="requerimiento" Id="requerimientolabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                   Requerimiento
+                            </Label>
+                            <div class="flex gap-2">
+                                   <Select TItem="string"
+                                           Items="@OptionsRequeriments"
+                                           Id="requerimiento"
+                                           Disabled=@IsRequerimentsNotLoaded
+                                           Value="@RequerimientoSeleccionado"
+                                           ValueChanged="OnRequerimentSelectedChanged!"
+                                           Placeholder="Selecciona un requerimiento"
+                                           ItemTextSelector="x => x"
+                                           ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                           ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                           EnableSearch="true"
+                                           HeightClass="max-h-[120px]"
+                                   >
+                                   </Select> 
+                                   
+                                   <div>
+                                          <Button
+                                                 Variant="outline"
+                                                 Class="cursor-pointer text-xs"
+                                                 Command="show-modal"
+                                                 CommandFor=@($"modal-{IdModalRequeriment}")>
+                                                 <Plus Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+                                          </Button>
+                                   </div>
+                            </div>
+                            @if (isSuccessReq)
+                            {
+                                   <span class="text-xs text-green-600">
+                                          @messageSuccessReq
+                                   </span>
+                            }
+                            <ValidationMessage For="() => activityDto.RequerimentId" class="text-xs text-red-600"/>
+                     </div>
+
+                     <div class="space-y-2">
+                            <Label For="descripcion" Id="descripcionlabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                   Descripción
+                            </Label>
+                            <TextArea
+                                  @bind-Value="activityDto.Description"
+                                  Id="descripcion"
+                                  Name="descripcion"
+                                  Placeholder="Descripción de la actividad"
+                                  Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"></TextArea>
+                                   
+                            <ValidationMessage For="() => activityDto.Description" class="text-xs text-red-600"/>
+                     </div>
+
+                     <div>
+                            <Label For="etapa" Id="etapaLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                   Etapa de la actividad
+                            </Label>
+                            <div class="relative">
+                                   <Select TItem="Etapas"
+                                           Items="@OptionsEtapas"
+                                           Id="etapa"
+                                           Value="EtapaSeleccionada"
+                                           ValueChanged="OnEtapaSelectedChanged"
+                                           Placeholder="Selecciona la etapa de la actividad"
+                                           ItemTextSelector="x => x.ToString()"
+                                           ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                           ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                           EnableSearch="false"
+                                           HeightClass="max-h-[120px]"
+                                   >
+                                   </Select>
+                            </div>
+                            <ValidationMessage For="() => activityDto.Etapa" class="text-xs text-red-600"/>
+                     </div>
+
+                     @* Validation of work hours  *@
+                     <Alert Variant="@(validationResult.IsValid ? "default" : "destructive")" Class="bg-white dark:bg-gray-800 mt-4 border-gray-300 dark:border-gray-600 select-none">
+                            @if (validationResult.IsValid)
+                            {
+                                   @if (!string.IsNullOrWhiteSpace(validationResult.Warning))
+                                   {
+                                          <AlertTriangle Class="h-4 w-4" Style="color: var(--color-yellow-600) !important;" />
+                                   }
+                                   else
+                                   {
+                                          <CheckCircle Class="h-4 w-4" Style="color: var(--color-green-600) !important;"/>
+                                   }
+                            }
+                            else
+                            {
+                                   <XCircle Class="h-4 w-4" Style="color: var(--color-red-600) !important;" />
+                            }
+                            <AlertDescription>
+                                   @if (!string.IsNullOrWhiteSpace(validationResult.Warning))
+                                   {
+                                          @validationResult.Warning;
+                                   }
+                                   else if (!string.IsNullOrWhiteSpace(validationResult.Error))
+                                   {
+                                          @validationResult.Error;
+                                   }
+                                   else
+                                   {
+                                          <span>Horario Valido</span>  
+                                   }
+                            </AlertDescription>
+                     </Alert>
+
+                     <div class="flex items-center justify-end mt-6">
+                            <Button Type="submit"
+                                    Disabled="@(IsLoadingNew || !IsRequerimentIdSelected)"
+                                    Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
+
+                                   @if (IsLoadingNew)
+                                   {
+                                          <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                          <span>Guardando...</span>
+                                   }
+                                   else
+                                   {
+                                          <Save Class="me-2 size-5" />
+                                          <span>
+                                                 Guardar
+                                          </span>
+                                   }
+                            </Button>
+                            <button type="button" class="hidden" id="closeModalNewReq" command="close" commandfor="@($"new-activity-{Id}")"></button>
+                     </div>
+              </EditForm>
+       </div>
+</Modal>
+
+<NewRequeriment
+       Id="@IdModalRequeriment"
+       OnSaved="HandleRequerimentSaved"
+       OnRequerimentSelectedChanged="HandleRequerimentSelected"
+       OnShowSuccess="HandleRequerimentSuccess!"/>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNewSidebar-{Id}") command="show-modal" commandfor=@($"new-activity-sidebar-{Id}")></button>      
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalNewSidebar-{Id}") command="close" commandfor="@($"new-activity-sidebar-{Id}")"></button>   
