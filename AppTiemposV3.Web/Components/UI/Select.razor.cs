@@ -29,6 +29,7 @@ public partial class Select<TItem> : ComponentBase
     [Parameter] public string? ClassButton { get; set; }
     [Parameter] public string? ClassOption { get; set; }
     [Parameter] public string? Id { get; set; }
+    [Parameter] public bool Disabled { get; set; } = false;
 
     private bool IsOpen { get; set; }
     
@@ -87,7 +88,7 @@ public partial class Select<TItem> : ComponentBase
     private string GetClasessButton()
     {
         string baseClasses =
-            "flex h-10 w-full items-center justify-between rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50  cursor-pointer";
+            $"flex h-10 w-full items-center justify-between rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50  cursor-pointer";
 
         return Cn(baseClasses, ClassButton);
     }

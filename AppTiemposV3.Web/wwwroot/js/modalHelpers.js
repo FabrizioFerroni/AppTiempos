@@ -34,3 +34,52 @@ window.modalHelpers = {
         return !!document.getElementById(id);
     }
 };
+
+window.modalHelpersSidebar = {
+    showModal: function (modalId, guid) {
+        try {
+            /*const button = document.querySelector(
+                `[command="show-modal"][commandfor="${modalId}-${guid}"]`
+            );*/
+            const button = document.getElementById(`${modalId}-${guid}`);
+            if (button) {
+                button.click();
+                console.log(`Modal ${modalId}-${guid} abierto correctamente.`);
+            } else {
+                console.warn(`No se encontró el botón para el modal ${modalId}-${guid}.`);
+            }
+        } catch (err) {
+            console.error("Error al abrir el modal:", err);
+        }
+    },
+    showModalBTN: function (modalId) {      
+        
+        try {
+            const button = document.getElementById(`${modalId}`);
+            if (button) {
+                button.click();
+                console.log(`Modal ${modalId} abierto correctamente.`);
+            } else {
+                console.warn(`No se encontró el botón para el modal ${modalId}.`);
+            }
+        } catch(err) {
+            console.error("Error al abrir el modal:", err);
+        }
+    },
+    closeModal: function (modalId, guid) {
+        try {
+            /*const button = document.querySelector(
+                `[command="close"][commandfor="${modalId}-${guid}"]`
+            );*/
+            const button = document.getElementById(`${modalId}-${guid}`);
+            if (button) {
+                button.click();
+                console.log(`Modal ${modalId}-${guid} cerrado correctamente.`);
+            } else {
+                console.warn(`No se encontró el botón para cerrar el modal ${modalId}-${guid}.`);
+            }
+        } catch (err) {
+            console.error("Error al cerrar el modal:", err);
+        }
+    }
+};

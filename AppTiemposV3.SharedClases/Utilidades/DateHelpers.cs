@@ -36,5 +36,13 @@ public class DateHelpers
         
         return date.Value.ToString("dd/MM/yyyy HH:mm");
     }
+    
+    public static string FormatTimeTS(TimeSpan? ts)
+    {
+        if (ts is null)
+            return string.Empty;
+
+        return $"{(int)ts.Value.TotalHours:00}:{ts.Value.Minutes:00}";
+    }
 
 }

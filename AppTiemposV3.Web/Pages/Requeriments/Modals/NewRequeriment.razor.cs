@@ -13,7 +13,7 @@ namespace AppTiemposV3.Web.Pages.Requeriments.Modals;
 
 public partial class NewRequeriment : ComponentBase
 {
-    public Guid Id { get; set; }
+    [Parameter] public Guid Id { get; set; }
     [Inject] private IJSRuntime? JS { get; set; }
     
     [Inject] private NavigationManager? Router { get; set; }
@@ -23,6 +23,9 @@ public partial class NewRequeriment : ComponentBase
     [Inject] private ColorService ColorService { get; set; } = null!;
     
     [Parameter] public EventCallback<SavedEventArgs> OnSaved { get; set; }
+    
+    [Parameter] public EventCallback<string> OnRequerimentSelectedChanged { get; set; }
+    [Parameter] public EventCallback<MarkupString> OnShowSuccess { get; set; }
     
  
     private MarkupString? messageSuccessCat = new MarkupString("");
@@ -127,7 +130,10 @@ public partial class NewRequeriment : ComponentBase
             if (response?.Flag == true)
             {
                 OnResetNewReq();
-                
+                await OnRequerimentSelectedChanged.InvokeAsync(requerimentDto.ReqID);
+                await OnShowSuccess.InvokeAsync(
+                    (MarkupString)(response?.Message!.Replace("\n", "<br/>")!)
+                );
                 IsLoadingNew = false;
                 await JS!.InvokeVoidAsync("modalHelpers.clickElement", closeModalRef);
                 SavedEventArgs? args = new SavedEventArgs

@@ -9,6 +9,7 @@ public partial class Button : ComponentBase
     [Parameter] public string Variant { get; set; } = "default";
     [Parameter] public string Size { get; set; } = "default";
     [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Style { get; set; }
     [Parameter] public string? Id { get; set; }
     
     [Parameter] public string? Type { get; set; } = "button";

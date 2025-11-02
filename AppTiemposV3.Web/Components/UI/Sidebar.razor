@@ -1,5 +1,6 @@
 @using AppTiemposV3.SharedClases.Constants
 @using Microsoft.AspNetCore.Components.Authorization
+@using AppTiemposV3.Web.Pages.Activities.Modales
 <AuthorizeView>
     <div class="fixed border-r border-gray-200/50 dark:border-gray-700/50 flex flex-col h-full @(IsClosed ? "w-16" :"w-82") bg-white/80 dark:bg-gray-800/90">
         <!-- Header -->
@@ -77,6 +78,7 @@
                 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0">Acciones Rápidas</p>
                 }
                 <Button Class=@($"w-full flex items-center justify-start gap-2 px-3 py-2 text-sm border border-dashed rounded-lg cursor-pointer {ColorService.GetCurrentColor().Gradient} hover:bg-gray-100 dark:hover:bg-gray-700  {(IsClosed ? "justify-center": "")}")
+                        Disabled=@IsNewButtonDisabled
                         OnClick="NewActivity">
                     <span>
                         <Plus Class="h-4 w-4"/>
@@ -144,23 +146,23 @@
         <div class="p-4 border-t border-gray-200/50 dark:border-gray-700/50">
             <!-- Perfil -->
             @* <AuthorizeView> *@
-                <button class="flex items-center gap-3 mb-3 w-full @(IsClosed ? "" : "p-2") rounded-lg hover:bg-gray-100  cursor-pointer @ColorService!.GetCurrentColor()!.Hover"
-                        @onclick="() => Nav.NavigateTo(rutaProfile)">
-                    <div class="w-8 h-8 flex items-center justify-center rounded-full  @ColorService!.GetCurrentColor()!.Gradient  text-white">
-                        @GetInitials(@context.User.Claims.FirstOrDefault(u => u.Type == CustomClaimTypes.FullName)!.Value)
+            <button class="flex items-center gap-3 mb-3 w-full @(IsClosed ? "" : "p-2") rounded-lg hover:bg-gray-100  cursor-pointer @ColorService!.GetCurrentColor()!.Hover"
+                    @onclick="() => Nav.NavigateTo(rutaProfile)">
+                <div class="w-8 h-8 flex items-center justify-center rounded-full  @ColorService!.GetCurrentColor()!.Gradient  text-white">
+                    @GetInitials(@context.User.Claims.FirstOrDefault(u => u.Type == CustomClaimTypes.FullName)!.Value)
+                </div>
+                @if (!IsClosed)
+                {
+                    <div class="flex-1 min-w-0 text-left">
+                        <p class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+                            @context.User.Claims.FirstOrDefault(u => u.Type == CustomClaimTypes.FullName)!.Value
+                        </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            @context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.Area)!.Value
+                        </p>
                     </div>
-                    @if (!IsClosed)
-                    {
-                        <div class="flex-1 min-w-0 text-left">
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
-                                @context.User.Claims.FirstOrDefault(u => u.Type == CustomClaimTypes.FullName)!.Value
-                            </p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
-                                @context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.Area)!.Value
-                            </p>
-                        </div>
-                    }
-                </button>
+                }
+            </button>
             @* </AuthorizeView> *@
 
             <!-- Logout -->
@@ -181,3 +183,5 @@
         </div>
     </div>
 </AuthorizeView>
+
+ <NewActivitySidebar @ref="newModalRef" OnSaved="HandleActivitySaved" /> 

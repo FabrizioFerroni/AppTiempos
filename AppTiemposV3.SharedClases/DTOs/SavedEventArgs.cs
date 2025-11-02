@@ -4,4 +4,5 @@ public class SavedEventArgs
 {
     public string Message { get; set; } = string.Empty;
     public bool Success { get; set; }
+    public DateOnly? StartDate { get; set; }
 }

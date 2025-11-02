@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using AppTiemposV3.SharedClases.Enums;
 
 namespace AppTiemposV3.Api.Entities;
@@ -38,10 +39,8 @@ public class ActivitiesEntity : BaseEntity
     
     public RequerimentsEntity Requeriment { get; set; } = null!;
     
-   /* [Required]
-    public required Guid CategoryId { get; set; } = Guid.Empty;
-    
-    public CategoriesEntity Category { get; set; } = null!;*/
+    [NotMapped]
+    public TimeSpan WorkedTime { get; set; }
     
     [Required]
     public required Guid UserId { get; set; } = Guid.Empty;

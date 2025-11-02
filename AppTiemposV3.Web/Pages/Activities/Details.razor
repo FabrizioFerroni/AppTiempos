@@ -1,0 +1,279 @@
+@page "/app/actividad/{urlId}"
+@using AppTiemposV3.SharedClases.Constants
+@using AppTiemposV3.Web.Pages.Requeriments.Modals
+@using AppTiemposV3.Web.Pages.Activities.Modales
+@using Microsoft.AspNetCore.Components.Authorization
+
+
+<PageTitle>
+    Detalle de Actividad | TimeTracker Pro
+</PageTitle>
+
+
+<div class="flex flex-col w-full">
+    <Navbar Title="Detalle de Actividad" Subtitle="Información completa de la actividad" OnToggleSidebar="HandleSidebarToggle">
+        <div class="text-right flex items-center gap-2">
+            <Enlace Href="/app/actividades" Target="_self" Class="border border-gray-300  dark:hover:bg-gray-700 h-9 px-3 text-sm inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none text-gray-400  dark:text-gray-300 dark:border-gray-500 cursor-pointer">
+                <ArrowLeft Class="h-4 w-4 mr-2"/>
+                Volver
+            </Enlace>
+        </div>
+    </Navbar>
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            @if (IsLoadingData)
+            {
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <LoaderCircle Class="w-16 h-16 mb-4 animate-spin text-gray-900 dark:text-gray-100"/>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        Cargando datos de la actividad
+                    </h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                        Espere unos segundos ...
+                    </p>
+                </div>
+            }
+            else
+            {
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-6 select-none">
+                <Card Class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/25 dark:to-blue-800/30 border-blue-200 dark:border-blue-500/40">
+                  <CardContent Class="pt-6">
+                    <div class="flex items-center gap-3">
+                      <Calendar Class="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                      <div>
+                        <p class="text-sm font-medium text-blue-800 dark:text-blue-300">Fecha</p>
+                        <p class="text-lg font-bold text-blue-900 dark:text-blue-100">
+                          @ActivityRes!.StartDate - @ObtainDate(ActivityRes!.StartDate)
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card Class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/25 dark:to-green-800/30 border-green-200 dark:border-green-500/40">
+                  <CardContent Class="pt-6">
+                    <div class="flex items-center gap-3">
+                      <Clock Class="w-8 h-8 text-green-600 dark:text-green-400" />
+                      <div>
+                        <p class="text-sm font-medium text-green-800 dark:text-green-300">Story Points</p>
+                        <p class="text-lg font-bold text-green-900 dark:text-green-100">
+                          @ActivityRes!.Requeriment.StoryPoint SP (@ObtenerTiempoDesarrolloSP(ActivityRes!.Requeriment.StoryPoint))
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card Class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/25 dark:to-orange-800/30 border-orange-200 dark:border-orange-500/40">
+                  <CardContent Class="pt-6">
+                    <div class="flex items-center gap-3">
+                      <Clock Class="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                      <div>
+                        <p class="text-sm font-medium text-orange-800 dark:text-orange-300">Duración Total</p>
+                        <p class="text-lg font-bold text-orange-900 dark:text-orange-100">
+                          @if (ActivityRes!.TimeElapsed is null)
+                          {
+                            <span>0:00</span>
+                          }
+                          else
+                          {
+                            <span>@ActivityRes!.TimeElapsed</span>
+                          }
+                        </p> 
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card Class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/25 dark:to-purple-800/30 border-purple-200 dark:border-purple-500/40">
+                  <CardContent Class="pt-6">
+                    <div class="flex items-center gap-3">
+                      <User class="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                      <div>
+                        <p class="text-sm font-medium text-purple-800 dark:text-purple-300">Categoría</p>
+                        <p class="text-lg font-bold text-purple-900 dark:text-purple-100">
+                          @ActivityRes!.Requeriment.Category.Name
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40 select-none">
+                <CardHeader>
+                  <CardTitle class="flex items-center gap-2">
+                    <FileText class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    Información de la Actividad
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div class="space-y-6">
+                    @* {/* Primera fila: REQ y Cliente */} *@
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div>
+                        <label class="text-sm font-medium text-gray-600 dark:text-gray-400">REQ</label>
+                        <div>
+                          <Button
+                            Variant="ghost"
+                            Size="md"
+                            Class="text-blue-500 hover:text-blue-800   font-semibold text-lg  h-auto justify-start cursor-pointer hover:bg-transparent"
+                            OnClick="@(() => ShowModal(ActivityRes!.Requeriment.Id))"
+                            Style="background-color: transparent !important;"
+                          >
+                            @($"ReqID{ActivityRes!.Requeriment.ReqID}")
+                            <ExternalLink class="w-4 h-4 ml-1" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Cliente</label>
+                        <p class="text-lg text-gray-800 dark:text-gray-100">
+                          @ActivityRes!.Requeriment.Cliente
+                        </p>
+                      </div>
+                    </div>
+
+                    @* {/* Segunda fila: Descripción */} *@
+                    <div>
+                      <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Descripción</label>
+                      <p class="text-lg text-gray-800 dark:text-gray-100">
+                        @ActivityRes!.Description
+                      </p>
+                    </div>
+
+                    @* {/* Tercera fila: Horas de inicio y fin */} *@
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div>
+                        <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Hora de inicio</label>
+                        <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                          @ActivityRes!.StartTime
+                        </p>
+                      </div>
+                      <div>
+                        <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Hora de fin</label>
+                        <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                          @if (ActivityRes!.EndTime is not null)
+                          {
+                            <span>@ActivityRes!.EndTime</span>
+                          }
+                          else
+                          {
+                            <span>#:##</span>
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    @* {/* Cuarta fila: Tiempo para Desarrollo y Testing */} *@
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div>
+                        <label class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                          Tiempo para Desarrollo (80%)
+                        </label>
+                        <p class="text-lg text-gray-800 dark:text-gray-100">
+                          @ObtainTimeEstimated(ActivityRes!.Requeriment.StoryPoint, "Desarrollo")
+                        </p>
+                      </div>
+                      <div>
+                        <label class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                          Tiempo para Testing (20%)
+                        </label>
+                        <p class="text-lg text-gray-800 dark:text-gray-100">
+                          @ObtainTimeEstimated(ActivityRes!.Requeriment.StoryPoint, "Testing")
+                        </p>
+                      </div>
+                    </div>
+
+                    @* {/* Quinta fila: Tiempo Real Trabajado */} *@
+                    <div>
+                      <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Tiempo Real Trabajado</label>
+                      <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                        <span>
+                          @FormatTime(ActivityRes!.WorkedTime)
+                        </span>
+                      </p>
+                    </div>
+
+                    @* {/* Sexta fila: Estados */} *@
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div>
+                        <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Estado del Tiempo</label>
+                        <AuthorizeView>
+                          @{
+                            string area = @context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.Area)!.Value;
+                            StatusItem st = ObtainStatus(ActivityRes!.WorkedTime, ActivityRes!.Requeriment.StoryPoint, area);
+                          }
+                          <div class="flex items-center gap-2 mt-1">
+                            @st.Icon
+                            <p class="text-lg text-gray-800 dark:text-gray-100">
+                              @st.Result
+                            </p>
+                          </div>
+                        </AuthorizeView>
+                      </div>
+                      <div>
+                        <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Estado en CRM</label>
+                        <div class="flex items-center gap-2 mt-1">
+                          @if (ActivityRes!.IsLoaded)
+                          {
+                            <CheckCircle Class="h4- w-4 text-green-600"/>
+                            <p class="text-lg text-gray-800 dark:text-gray-100">
+                              Subido al CRM de tareas de producción
+                            </p>
+                          }
+                          else
+                          {
+                            <Clock Class="h4- w-4" Style="color: #F0B100 !important;"/> /* f0b100 */
+                            <p class="text-lg text-gray-800 dark:text-gray-100">
+                              Pendiente de subir al CRM
+                            </p>
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    @* {/* Séptima fila: Comentario */} *@
+                    @if (ActivityRes!.Comment is not null)
+                    {
+                      <div>
+                        <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Comentario</label>
+                        <p class="text-lg text-gray-800 dark:text-gray-100">
+                          @ActivityRes!.Comment
+                        </p>
+                      </div>
+                    }
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <div class="flex justify-end gap-4">
+                <Button 
+                  Variant="outline" 
+                  Class="flex items-center gap-2 cursor-pointer" 
+                  OnClick="@(() => EditModal(ActivityRes!.Id))" 
+                  Id=@($"edit-detail-button-{ActivityRes!.Id}")
+                  >
+                  <Edit Class="w-4 h-4" />
+                  Editar
+                </Button>
+                <Button 
+                  Variant="destructive"  
+                  Class="flex items-center gap-2 cursor-pointer" 
+                  OnClick="@(() => DeleteModal(ActivityRes!.Id, ActivityRes!.Requeriment.ReqID, ActivityRes!.StartDate))" 
+                  Id=@($"delete-detail-button-{ActivityRes!.Id}")
+                  >
+                  <Trash2 Class="w-4 h-4" />
+                  Eliminar
+                </Button>
+              </div>
+            }
+
+          <ShowRequeriment @ref="showModalRef" />
+
+          <EditActivity @ref=editModalRef OnSaved="HandleActivitySaved"/>
+
+          <DeleteActivity @ref="deleteModalRef" OnSaved="HandleActivityDeleted" />
+        </div>
+    </article>
+</div>

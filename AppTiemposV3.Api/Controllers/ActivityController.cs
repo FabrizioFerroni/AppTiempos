@@ -15,13 +15,10 @@ namespace AppTiemposV3.Api.Controllers;
 public class ActivityController : ControllerBase
 {
     private readonly IActivityContract<ActivityResponseDto>  _activityContract;
-    private readonly IUserContract _userContext;
-    private Guid _userId => _userContext.GetUserId();
 
-    public ActivityController(IActivityContract<ActivityResponseDto> activityContract, IUserContract userContext)
+    public ActivityController(IActivityContract<ActivityResponseDto> activityContract)
     {
         _activityContract = activityContract;
-        _userContext = userContext;
     }
     
     [HttpGet]
@@ -29,7 +26,7 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetAllActivitiesPaginados([FromQuery] PaginationDto pagination, [FromQuery]  string buscarPor = "Description")
     {
-        Pageable<List<ActivityResponseDto>> response = await _activityContract.GetAllActivitiesPag(pagination, buscarPor, _userId);
+        Pageable<List<ActivityResponseDto>> response = await _activityContract.GetAllActivitiesPag(pagination, buscarPor);
         return Ok(response);
     }
     
@@ -38,7 +35,7 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetAllActivities()
     {
-        DataAResponse<ActivityResponseDto> response = await _activityContract.GetAllActivities(_userId);
+        DataAResponse<ActivityResponseDto> response = await _activityContract.GetAllActivities();
         return Ok(response);
     }
     
@@ -47,7 +44,7 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetAllActivitiesLastThree()
     {
-        DataAResponse<ActivityResponseDto> response = await _activityContract.GetLastThreeActivities(_userId);
+        DataAResponse<ActivityResponseDto> response = await _activityContract.GetLastThreeActivities();
         return Ok(response);
     }
     
@@ -59,10 +56,26 @@ public class ActivityController : ControllerBase
         if (!DateOnly.TryParse(startDate, out var fecha))
             throw new BadRequestException("La fecha proporcionada no tiene un formato válido (ej: yyyy-MM-dd)");
         
-        pagination.Ordenar = "StartDateTimeCombo";
-        pagination.Ascending = false;
+        if(pagination.Ordenar == "")
+        {
+            pagination.Ordenar = "StartDateTimeCombo";
+        }
+        //pagination.Ascending = !pagination.Ascending;
         
-        Pageable<List<ActivityResponseDto>> response = await _activityContract.GetAllActivitiesPerDayPag(pagination, fecha, _userId);
+        Pageable<List<ActivityResponseDto>> response = await _activityContract.GetAllActivitiesPerDayPag(pagination, fecha);
+        
+        return Ok(response);
+    }
+    
+    [HttpGet("t/date/{startDate}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> GetAllActivitiesForDateSPag(string startDate)
+    {
+        if (!DateOnly.TryParse(startDate, out var fecha))
+            throw new BadRequestException("La fecha proporcionada no tiene un formato válido (ej: yyyy-MM-dd)");
+        
+        DataAResponse<ActivityResponseDto> response = await _activityContract.GetAllActivitiesPerDay(fecha);
         
         return Ok(response);
     }
@@ -81,7 +94,7 @@ public class ActivityController : ControllerBase
         pagination.Ordenar = "StartDateTimeCombo";
         pagination.Ascending = false;
         
-        Pageable<List<ActivityResponseDto>> response = await _activityContract.GetAllActivitiesPerRangePag(pagination, fechaS, fechaE, _userId);
+        Pageable<List<ActivityResponseDto>> response = await _activityContract.GetAllActivitiesPerRangePag(pagination, fechaS, fechaE);
         
         return Ok(response);
     }
@@ -92,7 +105,7 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetActivityById(Guid id)
     {
-        DataResponse<ActivityResponseDto> response = await _activityContract.GetActivityById(id, _userId);
+        DataResponse<ActivityResponseDto> response = await _activityContract.GetActivityById(id);
         return Ok(response);
     }
     
@@ -102,7 +115,17 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetByActivityByUrlIndentifier(string url)
     {
-        DataResponse<ActivityResponseDto> response = await _activityContract.GetActivityByUrl(url, _userId);
+        DataResponse<ActivityResponseDto> response = await _activityContract.GetActivityByUrl(url);
+        return Ok(response);
+    }
+    
+    [HttpGet("r/{reqId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> GetByRequerimentByReqId(string reqId)
+    {
+        DataResponse<Guid> response = await _activityContract.GetRequerimentActivity(reqId);
         return Ok(response);
     }
 
@@ -112,7 +135,7 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> CreateActivity([FromBody] CreateActivityDto dto)
     {
-        GeneralResponse  response = await _activityContract.CreateActivity(dto, _userId);
+        GeneralResponse  response = await _activityContract.CreateActivity(dto);
         return StatusCode(201, response);
     }
 
@@ -123,7 +146,7 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> UpdateActivity(Guid id, [FromBody] UpdateActivityDto dto)
     {
-        GeneralResponse response = await _activityContract.UpdateActivity(id, dto, _userId);
+        GeneralResponse response = await _activityContract.UpdateActivity(id, dto);
         return Ok(response);
     }
 
@@ -133,7 +156,7 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> DeleteActivity(Guid id)
     {
-        GeneralResponse response = await _activityContract.DeleteActivity(id, _userId);
+        GeneralResponse response = await _activityContract.DeleteActivity(id);
         return Ok(response);
     }
     
@@ -143,7 +166,7 @@ public class ActivityController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> RestoreActivity(Guid id)
     {
-        GeneralResponse response = await _activityContract.RestoreActivity(id, _userId);
+        GeneralResponse response = await _activityContract.RestoreActivity(id);
         return Ok(response);
     }
 }

@@ -27,9 +27,14 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
          _httpClient = httpClient;
     }
 
-    public Task<DataAResponse<RequerimentResponseDto>> GetAllRequeriments()
+    public async Task<DataAResponse<RequerimentResponseDto>> GetAllRequeriments()
     {
-        throw new NotImplementedException();
+        DataAResponse<RequerimentResponseDto>? requeriments = await _httpClient.GetFromJsonAsync<DataAResponse<RequerimentResponseDto>>($"{BaseUrl}/requeriments/todos", options);
+        
+        if (requeriments is null) 
+            return new DataAResponse<RequerimentResponseDto>(true, [], HttpStatusCode.OK);
+        
+        return requeriments;
     }
 
     public async Task<Pageable<List<RequerimentResponseDto>>> GetAllRequerimentsPag(PaginationDto pagination, string buscarPor)
