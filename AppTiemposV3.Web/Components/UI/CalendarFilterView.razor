@@ -1,0 +1,33 @@
+@using AppTiemposV3.SharedClases.Enums
+
+<div class="@GetClassesDiv()" id="@ElementId" @ref="ElementRef">
+    <Button Variant="outline" Size="sm" Class="@($" {GetClasessButton()}")" OnClick="ToggleCalendar" Disabled=@Disabled>
+        <Calendar Class="w-4 h-4 mr-2"/>
+        @DateDropdown
+    </Button>
+
+    <div>
+        @if (IsOpen)
+        {
+            <div class="absolute left-0 mt-2 z-50 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 w-[350px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">
+                        @(Mode == CalendarMode.Single ? "Seleccionar fecha" : "Seleccionar rango")
+                    </h2>
+                </div>
+
+                <div>
+                    <CalendarFilterMonth
+                        CurrentMonth="@CurrentMonth"
+                        AllowFutureDates="AllowFutureDates"
+                        SelectedStart="@SelectedStart"
+                        SelectedEnd="@SelectedEnd"
+                        MinDate="@MinDate"
+                        MaxDate="@MaxDate"
+                        OnDateSelected="@HandleDateSelected"
+                        OnMonthChanged="@ChangeMonth"/>
+                </div>
+            </div>
+        }
+    </div>
+</div>

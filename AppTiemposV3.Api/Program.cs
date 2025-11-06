@@ -189,6 +189,7 @@ services.AddHttpContextAccessor();
 // Services and repositories
 services.AddScoped<IAuthContract, AuthRepository>();
 services.AddScoped<IActivityContract<ActivityResponseDto>, ActivityRepository>();
+services.AddScoped<IActivityWeeklyContract<ActivitiesByDay>, ActivityWeeklyRepository>();
 services.AddScoped<IRequerimentContract<RequerimentResponseDto>, RequerimentRepository>();
 services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryRepository>();
 services.AddScoped<IUserContract, UserContextService>();

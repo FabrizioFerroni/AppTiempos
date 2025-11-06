@@ -46,6 +46,7 @@ services.AddScoped<AuthenticationStateProvider, CustomAuthenticationProvider>();
 services.AddScoped<IAuthContract, AuthService>();
 services.AddScoped<IRequerimentContract<RequerimentResponseDto>, RequerimentsService>();
 services.AddScoped<IActivityContract<ActivityResponseDto>, ActivityService>();
+services.AddScoped<IActivityWeeklyContract<ActivitiesByDay>, ActivityWeeklyService>();
 services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryService>();
 services.AddScoped<LayoutState>();
 services.AddScoped<ColorService>();
