@@ -1,3 +1,4 @@
+using AppTiemposV3.Api.Entities;
 using AppTiemposV3.SharedClases.Annotations;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
@@ -15,10 +16,12 @@ namespace AppTiemposV3.Api.Controllers;
 public class ActivityController : ControllerBase
 {
     private readonly IActivityContract<ActivityResponseDto>  _activityContract;
+    private readonly IActivityWeeklyContract<ActivitiesByDay>  _activityWeeklyContract;
 
-    public ActivityController(IActivityContract<ActivityResponseDto> activityContract)
+    public ActivityController(IActivityContract<ActivityResponseDto> activityContract, IActivityWeeklyContract<ActivitiesByDay>  activityWeeklyContract)
     {
         _activityContract = activityContract;
+        _activityWeeklyContract = activityWeeklyContract;
     }
     
     [HttpGet]
@@ -95,6 +98,19 @@ public class ActivityController : ControllerBase
         pagination.Ascending = false;
         
         Pageable<List<ActivityResponseDto>> response = await _activityContract.GetAllActivitiesPerRangePag(pagination, fechaS, fechaE);
+        
+        return Ok(response);
+    }
+    
+    [HttpGet("weekly/{yearQ}/{weekNumberQ}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> GetAllActivitiesForRangeGetAllActivitiesPerRangeWeekC(string yearQ, string weekNumberQ)
+    {
+        int year = int.Parse(yearQ);
+        int weekNumber = int.Parse(weekNumberQ);
+        
+        DataAResponse<ActivitiesByDay> response = await _activityWeeklyContract.GetAllActivitiesPerRangeWeek(year, weekNumber);
         
         return Ok(response);
     }
