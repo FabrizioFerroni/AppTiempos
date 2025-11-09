@@ -1,33 +1,263 @@
 ﻿@page "/app/dashboard"
-@using AppTiemposV3.SharedClases.Constants
-@using Microsoft.AspNetCore.Components.Authorization
+@using AppTiemposV3.SharedClases.DTOs.Activities
 
 <PageTitle>Dashboard</PageTitle>
 
-<div class="flex flex-col w-full">
+<div class="flex flex-col w-full select-none">
     <Navbar Title="Dashboard" Subtitle="Resumen de tu actividad laboral" OnToggleSidebar="HandleSidebarToggle">
-        <div class="text-right">
-            <p class="text-sm text-gray-500 dark:text-gray-400">Semana actual</p>
-            <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">01/09/2025 - 06/09/2025</p>
+        <div class="text-right ">
+            <div class="flex items-center justify-center flex-col"> 
+                <p class="text-sm  @($"{(isWeekActual ? "text-gray-500 dark:text-gray-400" : "text-transparent")}")">Semana actual</p>
+                <div class="flex items-center gap-4 select-none">
+                    <Button Variant="outline" Size="sm" Class="cursor-pointer" OnClick="() => { PreviousWeek(); }">
+                        <ChevronLeft Class="w-4 h-4" />
+                    </Button>
+                    <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                        @weekRange
+                    </p>
+                    <Button Variant="outline" Size="sm" Class="cursor-pointer" OnClick="() => { NextWeek(); }" Disabled=@isNextDisabled>
+                        <ChevronRight Class="w-4 h-4" />
+                    </Button>
+                </div>
+            </div>
         </div>
     </Navbar>
     <article class="content px-4">
-        <h3 class="text-gray-800 dark:text-red-700">Home</h3>
-        <div class="card bg-gray-100 dark:bg-gray-800 ">
-            <div class="card-body">
-                <AuthorizeView Roles="Admin">
-                    <button type="button" class="bg-red-600 dark:bg-blue-900/20 text-white">Admin can click!</button>
-                </AuthorizeView>
-                <AuthorizeView Roles="User, Admin">
-                    <button type="button" class="btn btn-primary text-gray-800 dark:text-red-700">User and Admin can click!</button>
-                </AuthorizeView>
+        <div class="px-6 space-y-6 mt-6">
+            @* Tarjeta de resumenes *@
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card Class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/25 dark:to-blue-800/30 border-blue-200 dark:border-blue-500/40">
+                    <CardHeader Class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle Class="text-sm font-medium text-blue-800 dark:text-blue-300">
+                            Horas Trabajadas
+                        </CardTitle>
+                        <Clock Class="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                            @if (isLoadingKPIs)
+                            {
+                                <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                            }
+                            else
+                            {
+                                <span>
+                                    @($"{kpiData.TotalHours}h")
+                                </span>
+                            }
+                        </div>
+                        <p class="text-xs text-blue-700 dark:text-blue-200">
+                            @($"{(isWeekActual ? "Esta semana" : $"Semana del {weekRange}")}")
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card Class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/25 dark:to-green-800/30 border-green-200 dark:border-green-500/40">
+                    <CardHeader Class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle Class="text-sm font-medium text-green-800 dark:text-green-300">
+                            Tareas Completadas
+                        </CardTitle>
+                        <CheckCircle Class="h-4 w-4 text-green-600 dark:text-green-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-2xl font-bold text-green-900 dark:text-green-100">
+                            @if (isLoadingKPIs)
+                            {
+                                <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                            }
+                            else
+                            {
+                                <span>
+                                    @kpiData.CompletedTasks
+                                </span>
+                            }
+                        </div>
+                        <p class="text-xs text-green-700 dark:text-green-200">
+                            REQs finalizados
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card Class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/25 dark:to-orange-800/30 border-orange-200 dark:border-orange-500/40">
+                    <CardHeader Class="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle Class="text-sm font-medium text-orange-800 dark:text-orange-300">
+                            Tareas Pendientes
+                        </CardTitle>
+                        <AlertCircle Class="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="text-2xl font-bold text-orange-900 dark:text-orange-100">
+                            @if (isLoadingKPIs)
+                            {
+                                <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                            }
+                            else
+                            {
+                                <span>
+                                    @kpiData.PendingTasks
+                                </span>
+                            }
+                        </div>
+                        <p class="text-xs text-orange-700 dark:text-orange-200">
+                            En progreso
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
-            <div class="card-footer">
-                <AuthorizeView>
-                    <h3 class="text-gray-800 dark:text-red-700">You are authenticated</h3>
-                    <h4 class="text-gray-800 dark:text-red-700">Your Role is @context.User.Claims.FirstOrDefault(c => c.Type == CustomClaimTypes.Role)!.Value</h4>
-                </AuthorizeView>
+            @* Fin Tarjeta de resumenes *@
+            @* Grafico y Acciones rapidas *@
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                @*  Gráfico de horas por día  *@
+                <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                    <CardHeader>
+                        <CardTitle Class="flex items-center gap-2">
+                            <TrendingUp Class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                            Horas por Día
+                        </CardTitle>
+                        <CardDescription>
+                            Distribución semanal de tiempo trabajado
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        @if (isLoadingKPIs)
+                        {
+                            <div class="flex flex-col items-center justify-center py-12 text-center">
+                                <LoaderCircle Class="w-16 h-16 mb-4 animate-spin"/>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    Cargando actividades
+                                </h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                                    Espere unos segundos ...
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            <Chart Config="@configGraficos" SetupCompletedCallback="OnChartReady" Height="100"/>
+                        }
+                    </CardContent>
+                </Card>
+
+                @*  Botones de acción rápida *@
+                <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                    <CardHeader>
+                        <CardTitle>
+                            Acciones Rápidas
+                        </CardTitle>
+                        <CardDescription>
+                            Gestiona tu tiempo de forma eficiente
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent Class="space-y-4">
+                        <Button
+                            Class=@($"w-full justify-start gap-3 h-12 {ColorService.GetButtonClassess()}")
+                            OnClick="NewActivity"
+                        >
+                            <Plus Class="w-5 h-5" />
+                            Agregar Nueva Actividad
+                        </Button>
+
+                        <Button
+                            OnClick="@GoToWeekly"
+                            Variant="outline"
+                            Class="w-full cursor-pointer flex justify-start gap-3 h-12 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30"
+                        >
+                            <Calendar Class="w-5 h-5" />
+                            Ir a Vista Semanal
+                        </Button>
+
+                        <Button
+                            Variant="outline"
+                            OnClick="@GoToReports"
+                            Class="w-full cursor-pointer flex justify-start gap-3 h-12 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+
+                        >
+                            <TrendingUp Class="w-5 h-5" />
+                            Ver Reportes Detallados
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
+            @* Fin Grafico y Acciones rapidas *@
+            @* Actividades recientes *@
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40 mb-4">
+                <CardHeader>
+                    <CardTitle>
+                        Actividad Reciente
+                    </CardTitle>
+                    <CardDescription>
+                        Últimas tareas registradas de @($"{(isWeekActual ? "esta semana" : $"la semana del {weekRange}")}")
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div class="space-y-3">
+                        @if (isLoadingAct3)
+                        {
+                            <div class="flex flex-col items-center justify-center py-12 text-center">
+                                <LoaderCircle Class="w-16 h-16 mb-4 animate-spin"/>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    Cargando actividades
+                                </h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                                    Espere unos segundos ...
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            @if (ActivitiesThree.Count == 0)
+                            {
+                                <div class="flex flex-col items-center justify-center py-12 text-center select-none">
+                                    <div class="w-16 h-16 mb-4 text-gray-400">
+                                        <Clock Class="w-full h-full"/>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                        No hay actividades cargadas para la semana @weekRange
+                                    </h3>
+                                    <p class="text-gray-500 dark:text-gray-400 mb-4">
+                                        No tienes actividades registradas para esta semana
+                                    </p>
+                                    <Button
+                                        Class="@ColorService.GetButtonClassess()" Disabled=@(IsNewButtonDisabled || isLoadingAct3 || !isWeekActual)  OnClick="@(() => NewActivity())">
+                                        <Plus class="w-4 h-4 mr-2"/>
+                                        Crear primera actividad
+                                    </Button>
+                                </div>
+                            }
+                            else
+                            {
+                                @foreach (ActivityResponseDto activity in ActivitiesThree)
+                                {
+                                    <div
+                                        id="@activity.Id"
+                                        class="activity-item card-hover flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 transition-colors">
+                                        
+                                        <div class="flex-1">
+                                            <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                @($"ReqID{activity.Requeriment.ReqID}")
+                                            </p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                @activity.Description - @ObtenerDiaSemana(activity.StartDate.ToString()) @activity.StartDate
+                                            </p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-semibold text-gray-800 dark:text-gray-100">
+                                                 @($"{(activity.TimeElapsed is not null ? $"{activity.TimeElapsed}hs" : "00:00hs")}")
+                                            </p>
+                                            <div class="@GetClassesStatus(activity.StatusMessage)">
+                                                @GetStatusName(activity.StatusMessage)
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+                </CardContent>
+            </Card>
+            @* Fin Actividades recientes *@
         </div>
     </article>
 </div>
+
+<NewActivitySidebar @ref="newModalRef" OnSaved="HandleActivitySaved" /> 

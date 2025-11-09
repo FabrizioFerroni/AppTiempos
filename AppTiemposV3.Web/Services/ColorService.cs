@@ -16,7 +16,6 @@ public class ColorService
     
     public string PreferredColor { get; private set; } = "Azul";
     
-    //
     public ColorService(IJSRuntime jsRuntime, HttpClient httpClient)
     {
         _jsRuntime = jsRuntime;
@@ -45,7 +44,7 @@ public class ColorService
       catch (Exception ex)
       {
           await _jsRuntime.InvokeVoidAsync("console.error", $"Error cargando colores: {ex.Message}");
-          // Colors = new List<ColorModel>();
+
           if (Colors == null || !Colors.Any())
               Colors = new List<ColorModel>
               {
@@ -66,8 +65,7 @@ public class ColorService
     {
         PreferredColor = colorName;
         await _jsRuntime.InvokeVoidAsync("localStorage.setItem", LocalStorageKey, colorName);
-        
-        // 🔔 Notificamos a todos los que escuchan
+
         OnColorChanged?.Invoke();
     }
 
@@ -92,5 +90,4 @@ public class ColorService
 
         return $"{color.Gradient} {color.Hover} text-white font-medium cursor-pointer";
     }
-
 }

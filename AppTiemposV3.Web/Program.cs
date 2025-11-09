@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AppTiemposV3.SharedClases.Contracts;
+using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
@@ -47,6 +48,7 @@ services.AddScoped<IAuthContract, AuthService>();
 services.AddScoped<IRequerimentContract<RequerimentResponseDto>, RequerimentsService>();
 services.AddScoped<IActivityContract<ActivityResponseDto>, ActivityService>();
 services.AddScoped<IActivityWeeklyContract<ActivitiesByDay>, ActivityWeeklyService>();
+services.AddScoped<IDashboardContract<DashboardKPIDto>, DashboardService>();
 services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryService>();
 services.AddScoped<LayoutState>();
 services.AddScoped<ColorService>();

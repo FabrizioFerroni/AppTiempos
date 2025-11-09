@@ -42,12 +42,14 @@ public class ActivityController : ControllerBase
         return Ok(response);
     }
     
-    [HttpGet("u/ultimos-3")]
+    [HttpGet("u/ultimos-3/{yearQ}/{weekNumberQ}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(500)]
-    public async Task<IActionResult> GetAllActivitiesLastThree()
+    public async Task<IActionResult> GetAllActivitiesLastThree(string yearQ, string weekNumberQ)
     {
-        DataAResponse<ActivityResponseDto> response = await _activityContract.GetLastThreeActivities();
+        int year = int.Parse(yearQ);
+        int weekNumber = int.Parse(weekNumberQ);
+        DataAResponse<ActivityResponseDto> response = await _activityContract.GetLastThreeActivities(year, weekNumber);
         return Ok(response);
     }
     
