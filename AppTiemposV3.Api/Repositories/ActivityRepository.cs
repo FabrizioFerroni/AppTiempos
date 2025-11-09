@@ -81,11 +81,14 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
         return await _genericContract.GetAllPaginatedPerRangeAsync<ActivitiesEntity, ActivityResponseDto>(pagination, startDate, endDate, _userId);
     }
 
-    public async Task<DataAResponse<ActivityResponseDto>> GetLastThreeActivities()
+    public async Task<DataAResponse<ActivityResponseDto>> GetLastThreeActivities(int year, int weekNumber)
     {
         UserEntity user = await GetUserByIdAsync(_userId);
+        
+        (DateOnly start, DateOnly end) = GetDateRangeFromWeek(year, weekNumber);
 
         List<ActivityResponseDto> activities = await _dbCxt.Activities
+            .Where(u => u.StartDate >= start && u.StartDate <= end)
             .Where(u => u.UserId == user.Id)
             .OrderByDescending(o => o.CreatedAt)
             .Take(3)
@@ -273,5 +276,19 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
         int result = await _dbCxt.SaveChangesAsync();
         if (result <= 0)
             throw new InternalServerErrorException(errorMessage);
+    }
+    
+    private (DateOnly start, DateOnly end) GetDateRangeFromWeek(int year, int weekNumber)
+    {
+        DateTime firstDay = new DateTime(year, 1, 1);
+
+        int offset = DayOfWeek.Monday - firstDay.DayOfWeek;
+        if (offset > 0) offset -= 7;
+
+        DateTime firstMonday = firstDay.AddDays(offset);
+        DateTime startOfWeek = firstMonday.AddDays((weekNumber - 1) * 7);
+        DateTime endOfWeek = startOfWeek.AddDays(6);
+
+        return (DateOnly.FromDateTime(startOfWeek), DateOnly.FromDateTime(endOfWeek));
     }
 }

@@ -16,7 +16,7 @@ public interface IActivityContract<T>
     
     Task<Pageable<List<T>>> GetAllActivitiesPerRangePag(PaginationDto pagination, DateOnly startDate, DateOnly endDate);
     
-    Task<DataAResponse<T>> GetLastThreeActivities();
+    Task<DataAResponse<T>> GetLastThreeActivities(int year, int weekNumber);
     
     Task<DataResponse<T>> GetActivityById(Guid id);
     

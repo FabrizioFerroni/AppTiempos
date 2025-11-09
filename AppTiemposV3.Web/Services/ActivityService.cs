@@ -15,7 +15,7 @@ public class ActivityService: IActivityContract<ActivityResponseDto>
 {
     private readonly HttpClient _httpClient;
     private readonly string BaseUrl = "/api";
-    private readonly JsonSerializerOptions? options = new JsonSerializerOptions
+    private readonly JsonSerializerOptions? options = new()
     {
         PropertyNameCaseInsensitive = true,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
@@ -59,7 +59,6 @@ public class ActivityService: IActivityContract<ActivityResponseDto>
         }
 
         string dateString = startDate.ToString("yyyy-MM-dd");
-        //string dateString2 = "2025-10-14";
 
         string url = $"{BaseUrl}/activities/date/{dateString}?pagina={pagination.Pagina}" +
                      $"&registrosPorPagina={pagination.RegistrosPorPagina}" +
@@ -92,9 +91,18 @@ public class ActivityService: IActivityContract<ActivityResponseDto>
         throw new NotImplementedException();
     }
 
-    public Task<DataAResponse<ActivityResponseDto>> GetLastThreeActivities()
+    public async Task<DataAResponse<ActivityResponseDto>> GetLastThreeActivities(int year, int weekNumber)
     {
-        throw new NotImplementedException();
+        string yearString = year.ToString();
+        string weekNumberString = weekNumber.ToString();
+        string url = $"{BaseUrl}/activities/u/ultimos-3/{yearString}/{weekNumberString}";
+
+        DataAResponse<ActivityResponseDto>? activities = await _httpClient.GetFromJsonAsync<DataAResponse<ActivityResponseDto>>(url, options);
+        
+        if (activities is null) 
+            return new DataAResponse<ActivityResponseDto>(true, [], HttpStatusCode.OK);
+        
+        return activities;
     }
 
     public async Task<DataResponse<ActivityResponseDto>> GetActivityById(Guid id)

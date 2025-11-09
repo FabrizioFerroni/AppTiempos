@@ -20,6 +20,7 @@ using System.Text.Json.Serialization;
 using AppTiemposV3.Api.Events;
 using AppTiemposV3.Api.Middlewares;
 using AppTiemposV3.Api.Services;
+using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
 using AppTiemposV3.SharedClases.GenericModels;
@@ -189,6 +190,7 @@ services.AddHttpContextAccessor();
 // Services and repositories
 services.AddScoped<IAuthContract, AuthRepository>();
 services.AddScoped<IActivityContract<ActivityResponseDto>, ActivityRepository>();
+services.AddScoped<IDashboardContract<DashboardKPIDto>, DashboardRepository>();
 services.AddScoped<IActivityWeeklyContract<ActivitiesByDay>, ActivityWeeklyRepository>();
 services.AddScoped<IRequerimentContract<RequerimentResponseDto>, RequerimentRepository>();
 services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryRepository>();
