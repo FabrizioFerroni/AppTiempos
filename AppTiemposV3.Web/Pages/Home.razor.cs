@@ -4,12 +4,21 @@ using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.Web.Components.UI;
 using AppTiemposV3.Web.Services;
+using ChartJs.Blazor.Common;
+using ChartJs.Blazor.LineChart;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.JSInterop;
+using Microsoft.VisualBasic.CompilerServices;
 using static System.Globalization.CultureInfo;
 using static AppTiemposV3.Web.Utils.CssHelper;
 using static AppTiemposV3.Web.Utils.ConsolePrintHelper;
+using System.Text.Json;
+using ChartJs.Blazor.BarChart;
+using ChartJs.Blazor.Util;
+
+
 namespace AppTiemposV3.Web.Pages;
 
 public partial class Home: ComponentBase, IDisposable
@@ -17,6 +26,7 @@ public partial class Home: ComponentBase, IDisposable
     #region Variables
     #region InjeccionesDep
     [Inject] LayoutState State { get; set; } = null!;
+    [Inject] private IJSRuntime JS { get; set; } = null!;
     [Inject] private NavigationManager? Router { get; set; }
     [Inject] private NotificationService Toltip { get; set; } = default!;
     [Inject] private ColorService ColorService { get; set; } = null!;
@@ -40,6 +50,11 @@ public partial class Home: ComponentBase, IDisposable
     private void GoToWeekly() => NavigateTo("/app/semanal");
     private void GoToReports() => NavigateTo("/app/reportes");
     
+    #region Graficos
+    private BarConfig configGraficos = new();
+    private bool chartReady = false;
+    #endregion
+    
     #region Modales
     private Guid IdModal = Guid.NewGuid();
     private NewActivitySidebar? newModalRef;
@@ -50,6 +65,7 @@ public partial class Home: ComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        
         weekNumberSelected = GetWeekNumber();
         int diff = (7 + (currentDate.DayOfWeek - DayOfWeek.Monday)) % 7;
         DateTime monday = currentDate.AddDays(-diff);
@@ -73,6 +89,7 @@ public partial class Home: ComponentBase, IDisposable
 
         await GetKpis();
         await GetLastThreeActivities();
+        
         await State.InitializeAsync();
         
     }
@@ -95,7 +112,125 @@ public partial class Home: ComponentBase, IDisposable
     }
 
     #region Funciones
+    private async Task FixChartScaleAsync()
+    {
+        if (!chartReady)
+        {
+            return;
+        }
 
+        try
+        {
+            await JS.InvokeVoidAsync("fixChartScale", configGraficos.CanvasId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al ajustar escala: {ex.Message}");
+        }
+    }
+    
+    private async Task OnChartReady()
+    {
+        chartReady = true;
+        await FixChartScaleAsync();
+    }
+    
+    private async Task LoadGraficosHours()
+    {
+        configGraficos = new BarConfig
+        {
+            Options = new BarOptions
+            {
+                Responsive = true,
+                Legend = new Legend()
+                {
+                  Display = false,  
+                },
+                Plugins = new Plugins
+                {
+                    Legend = new Legend
+                    {
+                        Display = false 
+                    },
+                    Title = new Title
+                    {
+                        Display = true,
+                        Text = "Horas por Día"
+                    }
+                },
+            }
+        };
+
+        BarDataset<double> ds = new BarDataset<double>
+        {
+            Label = "Horas trabajadas",
+            BorderWidth = 1
+        };
+
+        List<string> colors = new();
+
+        foreach (DashboardKPIChart dkpi in kpiData.DashboardKPIChart)
+        {
+            configGraficos.Data.Labels.Add(dkpi.Day);
+            ds.Add(Math.Max(0, dkpi.HoursTotal));
+            colors.Add(ColorUtil.RandomColorString());
+        }
+        
+        if (ds.Data.Count == 0)
+        {
+            configGraficos.Data.Labels.Add("Sin datos");
+            ds.Add(0);
+            colors.Add("rgba(200,200,200,0.3)");
+        }
+
+        ds.BackgroundColor = colors.ToArray();
+
+        configGraficos.Data.Datasets.Add(ds);
+        
+        double maxValue = ds.Data.Any() ? ds.Data.Max() : 0;
+        bool allZeros = ds.Data.All(x => x == 0);
+        
+        configGraficos.Options.Scales = new Dictionary<string, Axis>
+        {
+            {
+                "y", new Axis
+                {
+                    Type = "linear",
+                    BeginAtZero = true,
+                    Min = 0,
+                    Max = allZeros ? 1 : maxValue * 1.2,
+                    Ticks = new Ticks
+                    {
+                        MaxTicksLimit = 5
+                    },
+                    Title = new Title
+                    {
+                        Display = true,
+                        Text = "Horas trabajadas"
+                    },
+                }
+            },
+            {
+                "x", new Axis
+                {
+                    Type = "category",
+                    Title = new Title
+                    {
+                        Display = true,
+                        Text = "Día"
+                    },
+                    Ticks = new Ticks
+                    {
+                        MaxRotation = 0, 
+                        MinRotation = 0
+                    },
+                }
+            }
+        };
+        await FixChartScaleAsync();
+        StateHasChanged();
+    }
+    
     private async Task GetKpis(bool loadKpis = true)
     {
         isLoadingKPIs = loadKpis;
@@ -112,108 +247,39 @@ public partial class Home: ComponentBase, IDisposable
             }
             else
             {
-                kpiData = new()
-                {
-                    TotalHours = 0,
-                    CompletedTasks = 0,
-                    PendingTasks = 0,
-                    DashboardKPIChart = new List<DashboardKPIChart>()
-                    {
-                        new DashboardKPIChart()
-                        {
-                            Day = "Lunes",
-                            DayNumber = 1,
-                            HoursTotal = 0
-                        },
-                        new DashboardKPIChart()
-                        {
-                            Day = "Martes",
-                            DayNumber = 2,
-                            HoursTotal = 0
-                        },
-                        new DashboardKPIChart()
-                        {
-                            Day = "Miercoles",
-                            DayNumber = 3,
-                            HoursTotal = 0
-                        },
-                        new DashboardKPIChart()
-                        {
-                            Day = "Jueves",
-                            DayNumber = 4,
-                            HoursTotal = 0
-                        },
-                        new DashboardKPIChart()
-                        {
-                            Day = "Viernes",
-                            DayNumber = 5,
-                            HoursTotal = 0
-                        },
-                        new DashboardKPIChart()
-                        {
-                            Day = "Sabado",
-                            DayNumber = 6,
-                            HoursTotal = 0
-                        }
-                    }
-                };
+                kpiData = CreateEmptyKpiData();
             }
         }
         catch (Exception e)
         {
-            kpiData = new()
-            {
-                TotalHours = 0,
-                CompletedTasks = 0,
-                PendingTasks = 0,
-                DashboardKPIChart = new List<DashboardKPIChart>()
-                {
-                    new DashboardKPIChart()
-                    {
-                        Day = "Lunes",
-                        DayNumber = 1,
-                        HoursTotal = 0
-                    },
-                    new DashboardKPIChart()
-                    {
-                        Day = "Martes",
-                        DayNumber = 2,
-                        HoursTotal = 0
-                    },
-                    new DashboardKPIChart()
-                    {
-                        Day = "Miercoles",
-                        DayNumber = 3,
-                        HoursTotal = 0
-                    },
-                    new DashboardKPIChart()
-                    {
-                        Day = "Jueves",
-                        DayNumber = 4,
-                        HoursTotal = 0
-                    },
-                    new DashboardKPIChart()
-                    {
-                        Day = "Viernes",
-                        DayNumber = 5,
-                        HoursTotal = 0
-                    },
-                    new DashboardKPIChart()
-                    {
-                        Day = "Sabado",
-                        DayNumber = 6,
-                        HoursTotal = 0
-                    }
-                }
-            };
+            kpiData = CreateEmptyKpiData();
             Console.WriteLine(e);
-            throw;
         }
         finally
         {
+            await LoadGraficosHours();
             isLoadingKPIs = false;
             StateHasChanged();
         }
+    }
+
+    private DashboardKPIDto  CreateEmptyKpiData()
+    {
+        return new DashboardKPIDto
+        {
+            TotalHours = 0,
+            CompletedTasks = 0,
+            PendingTasks = 0,
+            DashboardKPIChart = new List<DashboardKPIChart>
+            {
+                new() { Day = "Lunes", DayNumber = 1, HoursTotal = 0 },
+                new() { Day = "Martes", DayNumber = 2, HoursTotal = 0 },
+                new() { Day = "Miércoles", DayNumber = 3, HoursTotal = 0 },
+                new() { Day = "Jueves", DayNumber = 4, HoursTotal = 0 },
+                new() { Day = "Viernes", DayNumber = 5, HoursTotal = 0 },
+                new() { Day = "Sábado", DayNumber = 6, HoursTotal = 0 }
+            }
+        };
     }
 
     private string GetClassesStatus(string status)
@@ -296,8 +362,6 @@ public partial class Home: ComponentBase, IDisposable
         
         try
         {
-            // TODO: Hay que hacer un enpoint sin paginado y que diga si endtime hay alguno null para la fecha buscada
-           
             DataAResponse<ActivityResponseDto> activities =
                 await ActivityService.GetAllActivitiesPerDay(DateOnly.Parse(DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)));
             
@@ -353,11 +417,8 @@ public partial class Home: ComponentBase, IDisposable
         DateTime monday = currentDate.AddDays(-diff);
         DateTime saturday = monday.AddDays(5);
 
-        // Mostrar rango
         weekRange = $"{monday:dd/MM} - {saturday:dd/MM/yyyy}";
         
-
-        // Deshabilitar avanzar si ya estamos en la semana actual o futura
         DateTime todayMonday = DateTime.Today.AddDays(-(7 + (DateTime.Today.DayOfWeek - DayOfWeek.Monday)) % 7);
         isNextDisabled = monday >= todayMonday;
         isWeekActual = monday == todayMonday;

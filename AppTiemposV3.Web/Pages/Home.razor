@@ -1,5 +1,6 @@
 ﻿@page "/app/dashboard"
 @using AppTiemposV3.SharedClases.DTOs.Activities
+@using ChartJs.Blazor.BarChart
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -133,20 +134,7 @@
                         }
                         else
                         {
-                            @* <ResponsiveContainer width="100%" height={200}> *@
-                            @*     <BarChart data={weeklyData}> *@
-                            @*         <XAxis dataKey="day" /> *@
-                            @*         <YAxis /> *@
-                            @*         <Tooltip formatter={(value) => [`${value}h`, "Horas"]} labelStyle={{ color: "#374151" }} /> *@
-                            @*         <Bar dataKey="hours" fill="url(#gradient)" radius={[4, 4, 0, 0]} /> *@
-                            @*         <defs> *@
-                            @*             <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1"> *@
-                            @*                 <stop offset="0%" stopColor="#3B82F6" /> *@
-                            @*                 <stop offset="100%" stopColor="#8B5CF6" /> *@
-                            @*             </linearGradient> *@
-                            @*         </defs> *@
-                            @*     </BarChart> *@
-                            @* </ResponsiveContainer> *@
+                            <Chart Config="@configGraficos" SetupCompletedCallback="OnChartReady" Height="100"/>
                         }
                     </CardContent>
                 </Card>
@@ -193,7 +181,7 @@
             </div>
             @* Fin Grafico y Acciones rapidas *@
             @* Actividades recientes *@
-            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40 mb-4">
                 <CardHeader>
                     <CardTitle>
                         Actividad Reciente

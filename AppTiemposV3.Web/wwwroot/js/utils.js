@@ -59,3 +59,25 @@ window.copyToClipboard = async (text) => {
         return false;
     }
 };
+
+window.fixChartScale = (canvasId) => {
+    const chart = Chart.instances
+        ? Object.values(Chart.instances).find(c => c.canvas.id === canvasId)
+        : null;
+
+    if (!chart) {
+        return;
+    }
+
+    const yScale = chart.scales['y'] || chart.scales['y-axis-0'];
+    if (yScale) {
+        chart.options.scales.yAxes[0].afterBuildTicks = function(scale) {
+            scale.ticks = scale.ticks.filter(t => t >= 0);
+            scale.options.ticks.min = 0;
+        };
+        chart.update();
+    }
+    
+    chart.update();
+    console.log("✅ Escala ajustada para:", canvasId);
+};
