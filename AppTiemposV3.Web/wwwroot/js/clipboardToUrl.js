@@ -1,44 +1,47 @@
 window.crmClipboard = {
-    enablePasteHandler: (inputId, dotNetHelper) => {
-        const input = document.getElementById(inputId);
-        if (!input) return;
+    enablePasteHandler: (inputOrId, dotNetHelper) => {
+        const input = typeof inputOrId === 'string'
+            ? document.getElementById(inputOrId)
+            : inputOrId;
+
+        if (!input) {
+            console.warn("⚠️ No se encontró el input");
+            return;
+        }
+
+        console.log(`✅ Handler conectado a: ${input.id}`);
 
         input.addEventListener("paste", async (e) => {
-            e.preventDefault();
+            const clipboardData = e.clipboardData || window.clipboardData;
+            console.log("📋 Evento paste detectado");
 
-            const typeHtml = "text/html";
-            const typePlain = "text/plain";
+            let pastedHref = "", pastedText = "";
 
-            let pastedHref = "";
-            let pastedText = "";
+            if (clipboardData) {
+                const html = clipboardData.getData("text/html");
+                const text = clipboardData.getData("text/plain");
 
-            const items = await navigator.clipboard.read();
-
-            for (const item of items) {
-                const types = item.types;
-                if (types.includes(typeHtml)) {
-                    const blob = await item.getType(typeHtml);
-                    const html = await blob.text();
-
+                if (html) {
+                    e.preventDefault();
                     const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, typeHtml);
-                    
+                    const doc = parser.parseFromString(html, "text/html");
                     pastedHref = doc.querySelector("a")?.href || "";
                     pastedText = doc.querySelector("a")?.textContent || "";
-                    
-                } else if(types.includes(typePlain)){
-                    const typeItem = await item.getType(typePlain);
-                    pastedHref = await typeItem.text();
+                } else if (text) {
+                    pastedHref = text;
+                    pastedText = text;
                 }
             }
-            
+
             if (pastedHref) {
                 input.value = pastedHref;
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+                console.log(`✅ Pegado en el input id: ${input.id}`);
 
-                if (dotNetHelper) {
+                if (dotNetHelper)
                     dotNetHelper.invokeMethodAsync("OnPasteUrlAndText", pastedHref, pastedText);
-                }
             }
         });
     }
 };
+

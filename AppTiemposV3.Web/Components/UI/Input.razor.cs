@@ -7,7 +7,7 @@ namespace AppTiemposV3.Web.Components.UI;
 
 public partial class Input : ComponentBase
 {
-    private ElementReference _inputRef;
+    public ElementReference _inputRef;
     [Parameter] public string Id { get; set; } = string.Empty;
     [Parameter] public string Name { get; set; } = string.Empty;
     [Parameter] public string Placeholder { get; set; } = string.Empty;
