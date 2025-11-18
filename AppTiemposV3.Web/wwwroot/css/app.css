@@ -115,3 +115,12 @@
     background: #e6000d; /*#555*/
 cursor: pointer;
 }
+
+.card-progress-light {
+    background: linear-gradient(to bottom right, #fefce8, #fef3c7) !important;
+    border: 1px solid #fef08a !important;
+}
+.card-progress-dark {
+    background: linear-gradient(to bottom right, rgba(113,63,18,0.25), rgba(113,63,18,0.3)) !important;
+    border-color: rgba(202,138,4,0.4) !important;
+}

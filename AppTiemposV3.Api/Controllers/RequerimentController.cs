@@ -59,6 +59,16 @@ public class RequerimentController : ControllerBase
         DataResponse<RequerimentResponseDto> response = await _requerimentContract.GetRequerimentporReqId(reqId);
         return Ok(response);
     }
+    
+    [HttpGet("rid/{reqId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> GetByReqIdId(string reqId)
+    {
+        DataResponse<Guid> response = await _requerimentContract.GetIdByReqId(reqId);
+        return Ok(response);
+    }
 
     [HttpPost]
     [ProducesResponseType(201)]

@@ -93,9 +93,19 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
         return requeriment;
     }
 
-    public Task<DataResponse<RequerimentResponseDto>> GetRequerimentporReqId(string reqId)
+    public async Task<DataResponse<RequerimentResponseDto>> GetRequerimentporReqId(string reqId)
     {
-        throw new NotImplementedException();
+        if (reqId.StartsWith("ReqID"))
+        {
+            reqId =  reqId.Replace("ReqID", "");
+        }
+        
+        DataResponse<RequerimentResponseDto>? requeriment = await _httpClient.GetFromJsonAsync<DataResponse<RequerimentResponseDto>>($"{BaseUrl}/requeriments/req/{reqId}", options);
+        
+        if (requeriment is null) 
+            return new DataResponse<RequerimentResponseDto>(true, null!, HttpStatusCode.OK);
+        
+        return requeriment;
     }
 
     public async Task<GeneralResponse> CreateRequeriment(CreateRequerimentDto dto)
@@ -141,5 +151,20 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
     public Task<GeneralResponse> RestoreRequeriment(Guid id)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<DataResponse<Guid>> GetIdByReqId(string reqId)
+    {
+        if (reqId.StartsWith("ReqID"))
+        {
+            reqId =  reqId.Replace("ReqID", "");
+        }
+        
+        DataResponse<Guid>? requerimentId = await _httpClient.GetFromJsonAsync<DataResponse<Guid>>($"{BaseUrl}/requeriments/rid/{reqId}", options);
+        
+        if (requerimentId is null) 
+            return new DataResponse<Guid>(true, Guid.Empty, HttpStatusCode.OK);
+        
+        return requerimentId;
     }
 }

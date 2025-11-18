@@ -18,6 +18,8 @@ public partial class TextArea : ComponentBase
     [Parameter] public bool Required { get; set; }
     [Parameter] public bool Autofocus { get; set; }
     [Parameter] public bool Readonly { get; set; }
+    [Parameter] public string? Rows { get; set; }
+
 
     // Binding
     [Parameter] public string? Value { get; set; }

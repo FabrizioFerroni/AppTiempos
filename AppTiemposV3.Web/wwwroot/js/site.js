@@ -9,3 +9,12 @@ window.openModal = (id) => {
         modal.showModal ? modal.showModal() : modal.classList.add("open");
     }
 };
+
+window.registerThemeChangeHandler = (dotNetHelper) => {
+    const observer = new MutationObserver(() => {
+        dotNetHelper.invokeMethodAsync('OnThemeChanged');
+    });
+
+    const html = document.documentElement;
+    observer.observe(html, { attributes: true, attributeFilter: ['class'] });
+};

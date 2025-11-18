@@ -108,6 +108,25 @@ namespace AppTiemposV3.Api.Repositories
             return new GeneralResponse(true, "Requerimiento restaurado con éxito");
         }
 
+        public async Task<DataResponse<Guid>> GetIdByReqId(string reqId)
+        {
+            if (reqId.StartsWith("ReqID"))
+            {
+                reqId =  reqId.Replace("ReqID", "");
+            }
+        
+            RequerimentsEntity? req = await _dbCxt.Requeriments
+                .FirstOrDefaultAsync(r => r.ReqID == reqId && r.UserId == _userId);
+        
+            if (req == null)
+                throw new NotFoundException("No requeriment found");
+
+
+            RequerimentResponseDto resCat = _iMapper.Map<RequerimentResponseDto>(req);
+
+            return new DataResponse<Guid> (true, resCat.Id, HttpStatusCode.OK);
+        }
+
         /// <summary>
         /// Obtiene todos los requerimientos de un usuario específico, ordenados por fecha de creación descendente.
         /// </summary>

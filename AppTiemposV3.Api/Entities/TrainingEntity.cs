@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AppTiemposV3.Api.Entities;
 
@@ -22,7 +23,7 @@ public class TrainingEntity : BaseEntity
     
     public bool IsLoaded { get; set; } = false;
 
-    public string Status { get; set; } = "En progreso";
+    public string Status { get; set; } = "in-progress";
     
     public string? Notes { get; set; } = null;
     
@@ -31,10 +32,8 @@ public class TrainingEntity : BaseEntity
     
     public RequerimentsEntity Requeriment { get; set; } = null!;
     
-    /*[Required]
-    public required Guid CategoryId { get; set; } = Guid.Empty;
-    
-    public CategoriesEntity Category { get; set; } = null!;*/
+    [NotMapped]
+    public TimeSpan CapacitationTime { get; set; }
     
     [Required]
     public required Guid UserId { get; set; }

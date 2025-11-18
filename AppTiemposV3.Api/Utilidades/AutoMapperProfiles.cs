@@ -86,7 +86,11 @@ namespace AppTiemposV3.Api.Utilidades
             
             CreateMap<TrainingEntity, TrainingResponseDto>()
                 .ForMember(d => d.Requeriment, o => o.MapFrom(s => s.Requeriment))
-                .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User));
+                .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User))
+                .ForMember(dest => dest.StartTime,
+                    opt => opt.MapFrom(src => src.StartTime.ToString("HH:mm")))
+                .ForMember(dest => dest.EndTime,
+                    opt => opt.MapFrom(src => src.EndTime.HasValue ? src.EndTime.Value.ToString("HH:mm") : null));
 
             CreateMap<RequerimentsEntity, RequerimentDtoT>();
             CreateMap<UserEntity, UserDtoT>();

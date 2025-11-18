@@ -10,4 +10,11 @@ public static class IQueryableExtensions
             .Skip((paginacioon.Pagina - 1) * paginacioon.RegistrosPorPagina)
             .Take(paginacioon.RegistrosPorPagina);
     }
+    
+    public static IQueryable<T> PaginarAdvanced<T>(this IQueryable<T> queryable, PaginationDtoAdvanced paginacioon)
+    {
+        return queryable
+            .Skip((paginacioon.Pagina - 1) * paginacioon.RegistrosPorPagina)
+            .Take(paginacioon.RegistrosPorPagina);
+    }
 }

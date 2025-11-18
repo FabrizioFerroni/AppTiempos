@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+using static System.Text.RegularExpressions.Regex;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using static AppTiemposV3.Web.Utils.CssHelper;
@@ -22,6 +22,7 @@ public partial class Input : ComponentBase
     [Parameter] public int? MaxLength { get; set; }
     [Parameter] public int? MinLength { get; set; }
     [Parameter] public int? Min { get; set; }
+    [Parameter] public int? Max { get; set; }
     
     [Parameter] public string? Pattern { get; set; }
     [Parameter] public string? InputMode { get; set; }
@@ -44,7 +45,7 @@ public partial class Input : ComponentBase
     [Parameter(CaptureUnmatchedValues = true)] 
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
     
-    private string CurrentValue
+    /*private string CurrentValue
     {
         get => Value ?? string.Empty;
         set
@@ -64,7 +65,29 @@ public partial class Input : ComponentBase
                 _ = ValueChanged.InvokeAsync(Value);
             }
         }
+    }*/
+    
+    private string CurrentValue
+    {
+        get => Value ?? string.Empty;
+        set
+        {
+            string incoming = value ?? string.Empty;
+
+            if (DigitsOnly)
+            {
+                incoming = Replace(incoming, @"[^0-9\.]", "");
+            }
+
+            // Evita bucles y cambios innecesarios
+            if (!string.Equals(Value, incoming, StringComparison.Ordinal))
+            {
+                Value = incoming;
+                ValueChanged.InvokeAsync(Value);
+            }
+        }
     }
+
     
     private string GetClasess()
     {

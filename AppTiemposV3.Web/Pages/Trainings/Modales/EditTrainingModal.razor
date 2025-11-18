@@ -1,0 +1,339 @@
+<Modal Method="editTraining" IdElement="Id" Id=@($"dialog-modal-edit-training-{IdModalStr}") Class="select-none">
+    <div class="px-6 my-4">
+        <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+            <span class="text-gray-700 dark:text-gray-300 text-md">
+                Editar capacitación
+            </span>
+            <Button
+                Variant="ghost"
+                Size="sm"
+                Command="close"
+                CommandFor=@($"editTraining-{Id}")
+                Class="text-xs cursor-pointer"
+            >
+                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+            </Button>
+        </div>
+
+        @if (IsLoadingData)
+        {
+            <div class="flex flex-col items-center justify-center py-12 text-center">
+                <LoaderCircle Class="w-16 h-16 mb-4 animate-spin text-gray-900 dark:text-gray-100"/>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                    Cargando datos de la capacitación
+                </h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                    Espere unos segundos ...
+                </p>
+            </div>
+        }
+        else
+        {
+            @if (isError && modalStep == "select-req")
+            {
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative mt-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                    <div class="block sm:inline">
+                        @messageError
+                    </div>
+                    <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
+                        <Close Class="h-6 w-6 text-red-500"/>
+                    </button>
+                </div>
+            }
+            
+            @if (modalStep == "select-req")
+            {
+                <div class="space-y-6">
+                    <div class="text-center pt-3">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                            Selecciona un requerimiento
+                        </h3>
+                        <p class="text-gray-500 dark:text-gray-400">
+                            Para editar una capacitación, primero debes seleccionar el requerimiento asociado
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <Label For="requerimiento" Id="reqIdLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            REQ ID *
+                        </Label>
+                        <Select TItem="string"
+                                Items="@OptionsRequeriments"
+                                Id="requerimiento"
+                                Disabled=@IsRequerimentsNotLoaded
+                                Value="@RequerimientoSeleccionado"
+                                ValueChanged="OnRequerimentSelectedChanged!"
+                                Placeholder="Selecciona un requerimiento"
+                                ItemTextSelector="x => x"
+                                ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                EnableSearch="true"
+                                HeightClass="max-h-[70px]"
+                        >
+                        </Select>
+                    </div>
+                    <div>
+                        <span class="text-red-500 m-0 p-0 block w-full" style="font-size: 10px;">
+                            * El requerimiento es necesario para poder asociar la capacitación, tiene que estar previamente cargado en la ficha de requerimientos y tener una actividad cargada previamente. -
+                        </span>
+                    </div>
+                    
+                    <div class="flex justify-end gap-2 pt-4">
+                        <Button 
+                            Type="button"
+                            Variant="outline"
+                            Class="text-gray-700 dark:text-gray-300 cursor-pointer"
+                            Command="close" 
+                            CommandFor="@($"editTraining-{Id}")"
+                            OnClick="async () => await Limpiar()"
+                        >
+                            <Close Class="w-4 h-4 mr-2" />
+                            Cancelar
+                        </Button>
+
+                        <Button
+                            Type="button"
+                            Variant="outline"
+                            Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")
+                            Disabled=@IsNotRequerimentIdSelectedF
+                            OnClick="() => NextStep()"
+                        >
+                            Siguiente
+                            <ChevronRight Class="w-4 h-4 ml-2" />
+                        </Button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4 mt-3">
+                    <CheckCircle Class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <div>
+                        <p class="font-medium text-blue-800 dark:text-blue-200">
+                            Requerimiento seleccionado: @RequerimientoSeleccionado
+                        </p>
+                        <p class="text-sm text-blue-600 dark:text-blue-300">
+                            @DescripcionRequerimientoSeleccionado
+                        </p>
+                    </div>
+                    <Button
+                        Type="button"
+                        Variant="ghost"
+                        Size="sm"
+                        Class="ml-auto text-blue-600 hover:text-gray-800 dark:hover:text-gray-300 cursor-pointer"
+                        OnClick="() => GoToReq()"
+                    >
+                        Cambiar
+                    </Button>
+                </div>
+                
+                @if (isError && modalStep == "selected-req")
+                {
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mt-3 rounded relative" role="alert">
+                        @* <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i> *@
+                        <AlertTriangle Class="flex-shrink-0 me-2"/>
+                        <div class="block sm:inline">
+                            @messageError
+                        </div>
+                        <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
+                            <Close Class="h-6 w-6 text-red-500" />
+                        </button>
+                    </div>
+                }
+                
+                <EditForm Enhance Model=@updateTrainingDto class="space-y-4" novalidate OnValidSubmit=@SendEditTraining  FormName="EditTrainingForm">
+                    <DataAnnotationsValidator/>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <Label For="dateIn" Id="dateLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                Fecha
+                            </Label>
+                            <Input
+                                Type="date"
+                                @bind-Value="StartDateString"
+                                InputMode="date"
+                                Id="dateIn"
+                                Name="date"
+                                Placeholder="Fecha de la actividad"
+                                Autocomplete="off"
+                                Required
+                                Disabled
+                                Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            />
+                            <ValidationMessage For="() => updateTrainingDto.StartDate" class="text-xs text-red-600"/>
+                        </div>
+
+                        <div>
+                            <Label For="hourIn" Id="hourLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                Hora de inicio
+                            </Label>
+                            <Input
+                                Type="time"
+                                @bind-Value="StartTimeString"
+                                Id="hourIn"
+                                Name="hour"
+                                Placeholder="Hora de la actividad"
+                                Autocomplete="off"
+                                Required
+                                Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            />
+                            <ValidationMessage For="() => updateTrainingDto.StartTime" class="text-xs text-red-600"/>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label For="hourFin" Id="hourFinLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Hora de fin
+                        </Label>
+                        <Input
+                            Type="time"
+                            @bind-Value="EndTimeString"
+                            Id="hourFin"
+                            Name="hour"
+                            Placeholder="Hora fin de la actividad"
+                            Autocomplete="off"
+                            Required
+                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        <ValidationMessage For="() => updateTrainingDto.EndTime" class="text-xs text-red-600"/>
+                    </div>
+                    @*@if (IsPastDateEndTimeTime)
+                    {
+                        <Alert Variant="destructive" Class="mt-2 mb-4 border-gray-300 dark:border-gray-600">
+                            <AlertTriangle Class="h-4 w-4" Style="color: red !important;" />
+                            <AlertDescription>
+                                La fecha y hora seleccionadas son anteriores a la actual. No puede ser menor a Hora de inicio.
+                            </AlertDescription>
+                        </Alert>
+                    }*@
+
+                    <div>
+                        <Label For="trainer" Id="trainerLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Capacitador
+                        </Label>
+                        <Input
+                            Type="text"
+                            @bind-Value="updateTrainingDto.Capacitator"
+                            Id="trainer"
+                            Name="trainer"
+                            Placeholder="Nombre de quien fue el capacitador"
+                            Autocomplete="off"
+                            Required
+                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        <ValidationMessage For="() => updateTrainingDto.Capacitator" class="text-xs text-red-600"/>
+                    </div>
+
+                    <div>
+                        <Label For="description" Id="descriptionLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Descripción de la Capacitación
+                        </Label>
+                        <TextArea
+                            Id="description"
+                            Placeholder="Describe el contenido y objetivos de la capacitación..."
+                            @bind-Value=@updateTrainingDto.Description
+                            Required
+                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            Rows="3"
+                            >
+                        </TextArea>
+                        <ValidationMessage For="() => updateTrainingDto.Description" class="text-xs text-red-600"/>
+                    </div>
+
+                    <div>
+                        <Label For="estado" Id="estadoLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Estado de la actividad
+                        </Label>
+                        <div class="relative">
+                            <Select TItem="string"
+                                    Items="@OptionsEstados"
+                                    Id="estado"
+                                    Value="EstadoSeleccionado"
+                                    ValueChanged="OnEstadoSelectedChanged!"
+                                    Placeholder="Selecciona el estado de la actividad"
+                                    ItemTextSelector="x => x.ToString()"
+                                    ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                    ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                    EnableSearch="false"
+                                    HeightClass="max-h-[120px]"
+                            >
+                            </Select>
+                        </div>
+                        <ValidationMessage For="() => updateTrainingDto.Status" class="text-xs text-red-600"/>
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label Id="isLoadedLabelDesc" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            ¿Se cargó tiempo al capacitador?
+                        </Label>
+                        <Switch Id="loaded" Checked=@updateTrainingDto.IsLoaded CheckedChanged="HandleLoadedCheck" Disabled="@(updateTrainingDto.Status != "completed")" />
+                        <Label For="loaded" Id="isLoadedLabel" Class="text-gray-700 dark:text-gray-300 cursor-pointer">
+                            El tiempo de esta capacitación fue cargado al capacitador
+                        </Label>
+
+                        <ValidationMessage For="() => updateTrainingDto.IsLoaded" class="text-xs text-red-600"/>
+                    </div>
+
+                    <div>
+                        <Label For="notes" Id="notesLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Notas Adicionales
+                        </Label>
+                        <TextArea
+                            Id="notes"
+                            Placeholder="Observaciones, resultados, seguimientos necesarios, etc."
+                            @bind-Value=@updateTrainingDto.Notes
+                            Required
+                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            Rows="3"
+                        >
+                        </TextArea>
+                        <ValidationMessage For="() => updateTrainingDto.Notes" class="text-xs text-red-600"/>
+                    </div>
+                   
+                    <div class="flex justify-between gap-2 pt-4">
+                        <Button Type="button" Variant="outline" OnClick="() => GoToReq()" Class="text-gray-700 dark:text-gray-300 cursor-pointer">
+                            <ChevronLeft Class="w-4 h-4 mr-2" />
+                            Atrás
+                        </Button>
+
+                        <div class="flex gap-2">
+                            <Button
+                                Type="button"
+                                Variant="outline"
+                                Class="text-gray-700 dark:text-gray-300 cursor-pointer"
+                                Command="close"
+                                CommandFor="@($"editTraining-{Id}")"
+                            >
+                                <Close Class="w-4 h-4 mr-2" />
+                                Cancelar
+                            </Button>
+                                <Button Type="submit" Disabled="@(IsLoadingEdit || !IsRequerimentIdSelected)"
+                                        Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
+
+                                    @if (IsLoadingEdit)
+                                    {
+                                        <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                        <span>Guardando...</span>
+                                    }
+                                    else
+                                    {
+                                        <Save Class="me-2 size-5" />
+                                        <span>
+                                            Guardar
+                                        </span>
+                                    }
+                            </Button>
+                        </div>
+                    </div>
+                </EditForm>
+            }
+        }
+
+
+    </div>
+</Modal>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalEdit-{Id}") command="show-modal" commandfor=@($"editTraining-{Id}")></button>      
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalEdit-{Id}") command="close" commandfor="@($"editTraining-{Id}")"></button> 

@@ -1,0 +1,132 @@
+@using AppTiemposV3.Web.Pages.Requeriments.Modals
+<Modal Method="showTraining" IdElement="Id" Id=@($"dialog-modal-show-training-{IdModalStr}") Class="select-none">
+    <div class="px-6 my-4"> 
+        <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+            <div class="flex gap-2 items-center">
+                <GraduationCap Class="w-5 h-5 text-blue-600" />
+                <span class="text-gray-700 dark:text-gray-300 text-md">
+                    Detalles de la Capacitación
+                </span>
+            </div>
+            <Button
+                Variant="ghost"
+                Size="sm"
+                Command="close"
+                CommandFor=@($"showTraining-{Id}")
+                Class="text-xs cursor-pointer">
+                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+            </Button>
+        </div>
+        @if (IsLoadingData)
+        {
+            <div class="flex flex-col items-center justify-center py-12 text-center">
+                <LoaderCircle Class="w-16 h-16 mb-4 animate-spin text-gray-900 dark:text-gray-100"/>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                    Cargando datos de la capacitación
+                </h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                    Espere unos segundos ...
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Fecha</span>
+                    <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                      @trainingShow.StartDate
+                    </p>
+                  </div>
+                  <div>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">REQ ID</span>
+                    <p class="text-lg font-semibold text-blue-600 dark:text-blue-400">
+                      <Button
+                        Variant="ghost"
+                        Size="sm"
+                        Class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-medium p-0 h-auto justify-start cursor-pointer"
+                        Style="padding: 0 !important;"
+                        OnClick="@(() => ShowModal(trainingShow.Requeriment.Id))"
+                      >
+                        @trainingShow.Requeriment.ReqIDDesc
+                        <Eye Class="w-3 h-3 ml-1" />
+                      </Button>
+                    </p>
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Estado</span>
+                    <div>
+                      <span class="@($"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {GetStatusColor(trainingShow.Status)}")">
+                        @GetStatusNameR(trainingShow.Status)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
+                  <div>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Capacitador</span>
+                    <p class="text-lg text-gray-800 dark:text-gray-100">
+                      @trainingShow.Capacitator
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Descripción</span>
+                  <p class="text-gray-800 dark:text-gray-100 bg-gray-50 dark:bg-gray-800 rounded-lg mt-1">
+                    @trainingShow.Description
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Horario</span>
+                    <p class="text-lg text-gray-800 dark:text-gray-100">
+                      @trainingShow.StartTime @($"{(trainingShow.EndTime is not null ? $"- {trainingShow.EndTime}" : "- #:##" )}")
+                    </p>
+                    @if (trainingShow.TimeElapsed is not null)
+                    {
+                      <p class="text-sm text-gray-600 dark:text-gray-300">(@trainingShow.TimeElapsed)</p>
+                    }
+                  </div>
+                </div>
+
+                <div>
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Tiempo Cargado al Capacitador
+                  </span>
+                  <div class="flex items-center gap-2 mt-1">
+                    @if (trainingShow.IsLoaded)
+                    {
+                      <CheckCircle Class="w-3 h-3 text-green-500"/>
+                      <span class="text-xs text-green-600 dark:text-green-400">
+                         Sí, tiempo cargado
+                      </span>
+                    } else{
+                      <XCircle Class="w-3 h-3 text-red-500"/>
+                      <span class="text-xs text-red-600 dark:text-red-400">
+                          No, tiempo no cargado
+                      </span>
+                    }
+                  </div>
+                </div>
+                  
+                  @if (trainingShow.Notes is not null)
+                  {
+                    <div>
+                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Notas Adicionales</span>
+                      <p class="text-gray-800 dark:text-gray-100 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mt-1">
+                        @trainingShow.Notes
+                      </p>
+                    </div>
+                  }
+            </div>
+        }
+    </div>
+</Modal>
+
+<ShowRequeriment @ref="showRModalRef" />
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalTraining-{Id}") command="show-modal" commandfor=@($"showTraining-{Id}")></button>      
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalTraining-{Id}") command="close" commandfor="@($"showTraining-{Id}")"></button>     
