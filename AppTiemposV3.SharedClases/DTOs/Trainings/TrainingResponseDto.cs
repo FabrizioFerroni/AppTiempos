@@ -11,13 +11,12 @@ public class TrainingResponseDto
     [DataType(DataType.Date)]
     public DateOnly StartDate { get; set; }
     
-    [DataType(DataType.Time)]
-    public TimeOnly StartTime { get; set; }
+    public string StartTime { get; set; }
     
-    [DataType(DataType.Time)]
-    public TimeOnly? EndTime { get; set; } = null;
+    public string? EndTime { get; set; } = null;
+
     
-    public string Capacitor { get; set; } = string.Empty;
+    public string Capacitator { get; set; } = string.Empty;
     
     public string Description { get; set; } = string.Empty;
     
@@ -28,11 +27,13 @@ public class TrainingResponseDto
     public string? Notes { get; set; } = null;
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public TimeSpan? TimeElapsed => EndTime.HasValue ? EndTime.Value - StartTime : null;
+    public string? TimeElapsed => EndTime is not null
+        ? (TimeOnly.Parse(EndTime) - TimeOnly.Parse(StartTime)).ToString("hh\\:mm")
+        : null;
     
     public RequerimentDtoT Requeriment { get; set; } = new RequerimentDtoT();
     
-    public CategoryDtoT Category { get; set; } = new CategoryDtoT();
+    public TimeSpan CapacitationTime { get; set; }
     
     public UserDtoT Usuario { get; set; } = new UserDtoT();
 }
@@ -66,16 +67,6 @@ public class RequerimentDtoT
     }
         
     public string? FolderPath => _folderId + " - " + ReqID + " - " + SanitizeTitulo(Titulo);
-}
-
-
-public class CategoryDtoT
-{
-    public Guid Id { get; set; }
-
-    public string Name { get; set; } = string.Empty;
-    
-    public string Color { get; set; } = string.Empty;
 }
 
 public class UserDtoT

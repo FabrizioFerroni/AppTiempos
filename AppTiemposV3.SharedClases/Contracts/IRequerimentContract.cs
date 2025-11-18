@@ -23,5 +23,7 @@ namespace AppTiemposV3.SharedClases.Contracts
         Task<GeneralResponse> DeleteRequeriment(Guid id);
         
         Task<GeneralResponse> RestoreRequeriment(Guid id);
+        
+        Task<DataResponse<Guid>> GetIdByReqId(string reqId);
     }
 }

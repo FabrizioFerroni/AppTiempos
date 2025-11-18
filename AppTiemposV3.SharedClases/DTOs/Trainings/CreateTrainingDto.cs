@@ -13,13 +13,10 @@ public class CreateTrainingDto
     public TimeOnly StartTime { get; set; }
     
     [Required]
-    public string Capacitor { get; set; } = string.Empty;
+    public string Capacitator { get; set; } = string.Empty;
     
     [StringLength(255)]
     public string? Description { get; set; } = string.Empty;
-    
-    [Required]
-    public required Guid CategoryId { get; set; } = Guid.Empty;
     
     [StringLength(255)]
     public string? Notes { get; set; } = string.Empty;

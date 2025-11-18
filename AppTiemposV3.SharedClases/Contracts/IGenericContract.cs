@@ -11,4 +11,6 @@ public interface IGenericContract
     
     Task<Pageable<List<TDto>>> GetAllPaginatedPerRangeAsync<TEntity, TDto>(PaginationDto pagination, DateOnly startDate, DateOnly? endDate, Guid? userId) where TEntity : class;
     
+    Task<Pageable<List<TDto>>> GetAllPaginatedFAAsync<TEntity, TDto>(PaginationDtoAdvanced pagination, Guid? userId) where TEntity : class;
+    
 }
