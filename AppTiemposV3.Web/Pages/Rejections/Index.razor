@@ -1,0 +1,598 @@
+@using AppTiemposV3.SharedClases.DTOs.Rejections
+@using AppTiemposV3.SharedClases.DTOs.RejectionDetails
+@using static AppTiemposV3.Web.Utils.Helpers;
+@using AppTiemposV3.Web.Pages.Rejections.ModalRejections
+@using AppTiemposV3.Web.Pages.Rejections.ModalRejectionDetails
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers;
+@using AppTiemposV3.Web.Pages.Requeriments.Modals
+
+@page "/app/rechazos"
+
+<PageTitle>
+    Rechazos | TimeTracker Pro
+</PageTitle>
+
+<div class="flex flex-col w-full select-none">
+    <Navbar Title="Gestión de Rechazos" Subtitle="Administra y da seguimiento a los rechazos de los requerimientos" OnToggleSidebar="HandleSidebarToggle">
+        <div class="flex items-center gap-4 select-none">
+            <Button
+                Class="@ColorService.GetButtonClassess()"
+                Disabled=@(IsLoading)
+                OnClick="() => NewModal()"
+            >
+                <Plus Class="h-4 w-4 mr-2"/>
+                Nuevo rechazo
+            </Button>
+        </div>
+    </Navbar>
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            @* Estadisticas *@
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card Class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/25 dark:to-blue-800/30 border-blue-200 dark:border-blue-500/40">
+                    <CardContent Class="pt-6">
+                        <div class="flex items-center gap-3">
+                            <FileText Class="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                            <div>
+                                <p class="text-sm font-medium text-blue-800 dark:text-blue-300">Total REQs</p>
+                                <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                                    
+                                    @if (IsLoadingKpis)
+                                    {
+                                        <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @kpis.TotalRejections
+                                        </span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card class="@($"{(theme == "dark" ? "card-pending-dark" : "card-pending-light")}")">
+                    <CardContent Class="pt-6">
+                        <div class="flex items-center gap-3">
+                            <XCircle Class="w-8 h-8 text-red-600 dark:text-red-400" />
+                            <div>
+                                <p class="text-sm font-medium text-red-800 dark:text-red-300">Pendientes</p>
+                                <p class="text-2xl font-bold text-red-900 dark:text-red-100">
+                                    
+                                    @if (IsLoadingKpis)
+                                    {
+                                        <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @kpis.PendingRejections
+                                        </span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card Class="@($"{(theme == "dark" ? "card-progress-dark" : "card-progress-light")}")">
+                    <CardContent Class="pt-6">
+                        <div class="flex items-center gap-3">
+                            <Clock Class="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                            <div>
+                                <p class="text-sm font-medium text-yellow-800 dark:text-yellow-300">En Progreso</p>
+                                <p class="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
+                                    
+                                    @if (IsLoadingKpis)
+                                    {
+                                        <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @kpis.InProgressRejections
+                                        </span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card Class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/25 dark:to-green-800/30 border-green-200 dark:border-green-500/40">
+                    <CardContent Class="pt-6">
+                        <div class="flex items-center gap-3">
+                            <CheckCircle Class="w-8 h-8 text-green-600 dark:text-green-400" />
+                            <div>
+                                <p class="text-sm font-medium text-green-800 dark:text-green-300">Solucionados</p>
+                                <p class="text-2xl font-bold text-green-900 dark:text-green-100">
+                                    
+                                    @if (IsLoadingKpis)
+                                    {
+                                        <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @kpis.SuccessRejections
+                                        </span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+            @* Fin Estadisticas *@
+            @* Filtros *@
+            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                <CardHeader>
+                    <CardTitle>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <CardTitle Class="text-lg flex items-center gap-2">
+                                    <Filter Class="w-5 h-5" />
+                                    Filtros Avanzados
+                                </CardTitle>
+                                @if (activeFiltersCount > 0)
+                                {
+                                    <Badge Variant="secondary" Class="bg-blue-100 text-blue-800">
+                                        @($"{activeFiltersCount} {Plural(activeFiltersCount, "activo", "activos")}")
+                                    </Badge>
+                                }
+                            </div>
+                            <div class="flex items-center gap-2">
+                                @if (activeFiltersCount > 0)
+                                {
+                                    <Button Variant="outline" Size="sm" OnClick="() => LimpiarFiltros()"  Class="cursor-pointer">
+                                        <Close Class="w-4 h-4 mr-1" />
+                                        Limpiar
+                                    </Button>
+                                }
+                                <Button
+                                    Variant="ghost"
+                                    Size="sm"
+                                    Class="cursor-pointer"
+                                    OnClick="() => { isOpenFiltros = !isOpenFiltros; StateHasChanged(); }">
+                                    @if (!isOpenFiltros)
+                                    {
+                                        <ChevronDown Class="w-4 h-4"/>
+                                    }
+                                    else
+                                    {
+                                        <ChevronUp Class="w-4 h-4"/>
+                                    }
+                                </Button>
+
+                                @**@
+                            </div>
+                        </div>
+                    </CardTitle>
+                </CardHeader>
+                @if(isOpenFiltros)
+                {
+                    <CardContent>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="flex flex-col gap-4 items-start">
+                                <Label For="estado" Id="estadoLabel">
+                                    Estado
+                                </Label>
+                                <Select TItem="string"
+                                        Items="@OptionsEstados"
+                                        Id="estado"
+                                        Value="EstadoSeleccionado"
+                                        ValueChanged="OnEstadoSelectedChanged!"
+                                        Placeholder="Selecciona el estado del rechazo"
+                                        ItemTextSelector="x => x.ToString()"
+                                        ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                        ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                        EnableSearch="false"
+                                        HeightClass="max-h-[120px]"
+                                        OnDropdownStateChanged="HandleDropdownState">
+                                </Select>
+
+                            </div>
+
+                            <div class="flex flex-col gap-4 items-start">
+                                <Label Id="resolvedLabel" For="resolved">
+                                    Estado de Resolución
+                                </Label>
+                                <Select TItem="string"
+                                        Items="@OptionsResueltos"
+                                        Id="resolved"
+                                        Value="ResolvedSelected"
+                                        ValueChanged="OnResueltosSelectedChanged!"
+                                        Placeholder="Selecciona si fue resuelto o no"
+                                        ItemTextSelector="x => x.ToString()"
+                                        ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                        ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                        EnableSearch="false"
+                                        HeightClass="max-h-[120px]"
+                                        OnDropdownStateChanged="HandleDropdownState">
+                                </Select>
+                            </div>
+
+                            <div class="flex flex-col gap-4 items-start">
+                                <Label Id="reqIdLabel" For="reqId">
+                                    ReqID
+                                </Label>
+                                <div class="relative w-full">
+                                    <FileText Class="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500"/>
+                                    <Input
+                                        Id="reqId"
+                                        MaxLength="6"
+                                        MinLength="1"
+                                        Max="9"
+                                        Min="1"
+                                        Pattern="^[0-9]*$"
+                                        @bind-Value=@filtrosForm.ReqId
+                                        Placeholder="Busque por numero de requerimiento (6 digitos)"
+                                        DigitsOnly
+                                        Class="pl-10 pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end items-center mt-4">
+                            <Button
+                                Variant="ghost"
+                                Size="sm"
+                                Class=@($"cursor-pointer {ColorService.GetButtonClassess()}")
+                                OnClick="async () => await FilterSearch()"
+                                Disabled=@isLoadingFiltros
+                            >
+                                @if (isLoadingFiltros)
+                                {
+                                    <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                    <span>Filtrando...</span>
+                                }
+                                else
+                                {
+                                    <Filter Class="w-4 h-4 mr-2 size-5"/>
+                                    <span>Filtrar</span>
+                                }
+                            </Button>
+                        </div>
+                    </CardContent>
+               }
+            </Card>
+            @* Fin Filtros *@
+            @* Datos *@
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                <CardHeader>
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <CardTitle>
+                                Lista de Rechazos
+                            </CardTitle>
+                        </div>
+
+                        <div class="flex justify-end items-center gap-3">
+                            @if (!IsLoading)
+                            {
+                                <div class="w-16">
+                                    <Select TItem="int"
+                                            Items="@OptionsPaginated"
+                                            Value="@registrosPorPagina"
+                                            ValueChanged="OnPaginatedSelectedChanged"
+                                            Placeholder="Paginado"
+                                            ItemTextSelector="x => x.ToString()"
+                                            ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500"
+                                            ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500">
+                                    </Select>
+                                </div>
+                                <div class="w-44">
+                                    <Select TItem="string"
+                                            Items="@OptionsOrders"
+                                            Value="@ordenar"
+                                            ValueChanged="OnOrderSelectedChanged!"
+                                            Placeholder="Ordenar por"
+                                            ItemTextSelector="x => x"
+                                            ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500"
+                                            ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500">
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Button
+                                        OnClick="() => OnAscendingChanged()"
+                                        Variant=""
+                                        Size=""
+                                        Class="flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50  cursor-pointer font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white dark:hover:bg-gray-500">
+                                        @if (ascending)
+                                        {
+                                            <ArrowUpAz Class="h-4 w-4" />
+                                        }
+                                        else
+                                        {
+                                            <ArrowDownAz Class="h-4 w-4" />
+                                        }
+                                    </Button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    @if (IsLoading)
+                    {
+                        <div class="flex flex-col items-center justify-center py-12 text-center">
+                            <LoaderCircle Class="w-16 h-16 mb-4 animate-spin"/>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                Cargando rechazos
+                            </h3>
+                            <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                                Espere unos segundos ...
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (Rejections.Count == 0 && !SearchEmpty)
+                        {
+                            <div class="flex flex-col items-center justify-center py-12 text-center">
+                                <GraduationCap Class="w-16 h-16 mb-4 text-gray-400"/>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    No hay rechazos
+                                </h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-4">
+                                    No tienes rechazos registradas
+                                </p>
+                                <Button
+                                    Class="@ColorService.GetButtonClassess()"
+                                    Disabled=@(IsLoading)
+                                    OnClick="() => NewModal()"
+                                >
+                                    <Plus class="w-4 h-4 mr-2"/>
+                                    Registrar primer rechazo
+                                </Button>
+                            </div>
+                        }
+                        else if (Rejections.Count == 0 && SearchEmpty)
+                        {
+                            <div class="flex flex-col items-center justify-center py-12 text-center">
+                                <SearchX Class="w-16 h-16 mb-4 text-gray-400"/>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    No se han encontrado resultados para: <span class="font-bold">@filtroSelected</span>
+                                </h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-4">
+                                    Prueba de otra forma u con otro criterio.
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="space-y-4">
+                                @foreach (RejectionResponseDto rejection in Rejections)
+                                {
+                                    <span class="hidden">@rejection.Id</span>
+                                    <div id="@rejection.Id" class="border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700  transition-colors">
+                                        <div class="card-hover flex items-center gap-4 p-4 w-full">
+                                            <Button
+                                                Variant="ghost"
+                                                Size="sm"
+                                                Class="p-1  cursor-pointer"
+                                                OnClick="() => ToggleDetails(rejection.Id)"
+                                            >
+                                                @if (ExpandedRejections.Contains(rejection.Id))
+                                                {
+                                                    <ChevronDown Class="w-4 h-4"/>
+                                                }else{
+                                                    <ChevronRight Class="w-4 h-4" />
+                                                }
+                                            </Button>
+
+                                            <div class="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                                                <div>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">REQ ID</p>
+                                                    <p class="font-medium text-blue-600 dark:text-blue-400">
+                                                        @* @rejection.Requeriment.ReqID *@
+                                                        <Button
+                                                            Variant="ghost"
+                                                            Size="sm"
+                                                            Class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-600 hover:bg-transparent dark:hover:bg-transparent font-medium p-0 h-auto justify-start cursor-pointer"
+                                                            Style="padding: 0 !important;"
+                                                            OnClick="@(() => ShowModal(rejection.Requeriment.Id))"
+                                                        >
+                                                            @rejection.Requeriment.ReqIDDesc
+                                                            <Eye Class="w-3 h-3 ml-1" />
+                                                        </Button>
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Total Rechazos</p>
+                                                    <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                        @rejection.TotalRejections
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Estado General</p>
+                                                    <span class="@($"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {GetStatusColor(rejection.Status)}")">
+                                                        @GetStatusNameR(rejection.Status)
+                                                    </span>
+                                                </div>
+
+                                                <div>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Resuelto por Mí</p>
+                                                    <div class="flex items-center gap-2">
+                                                        @if (rejection.IsResolve)
+                                                        {
+                                                            <CheckCircle Class="w-4 h-4 text-green-500"/>
+                                                            <span class="text-sm text-green-600 dark:text-green-400">Sí</span>
+                                                            @if (rejection.ResolvedDate.HasValue)
+                                                            {
+                                                                <span class="text-xs text-gray-500">
+                                                                    (@FormatDateOnly(rejection.ResolvedDate))
+                                                                </span>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <XCircle Class="w-4 h-4 text-red-500"/>
+                                                            <span class="text-sm text-red-600 dark:text-red-400">No</span>
+                                                        }
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex gap-2 justify-end">
+                                                    @* TODO: ver de poner deshabilitado el boton mas si hay detalles de rechazos sin completar, ya que en teoria no tendria que haber otro rechazo sin haber corregido el anterior *@
+                                                    <Button
+                                                        Variant="outline"
+                                                        Size="sm"
+                                                        OnClick="() => NewDetailModal(rejection.Id, rejection.Requeriment.ReqID)"
+                                                        Class="text-gray-400  dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-green-800/20 dark:hover:border-green-900/50 cursor-pointer">
+                                                        <Plus Class="w-4 h-4"/>
+                                                    </Button>
+                                                    <Enlace
+                                                        Href=@($"/app/rechazo/{rejection.UrlIndetificator}")
+                                                        Target="_self"
+                                                        Rel="noopener noreferer"
+                                                        Class="border-0 hover:bg-gray-100  h-9 px-3 text-sm inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none text-gray-400  dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-orange-800/20 dark:hover:border-orange-900/50 cursor-pointer">
+                                                        <Eye Class="w-4 h-4"/>
+                                                    </Enlace>
+                                                    <Button
+                                                        Variant="outline"
+                                                        Size="sm"
+                                                        Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-blue-800/20 dark:hover:border-blue-900/50 cursor-pointer"
+                                                        OnClick="() => EditModal(rejection.Id, rejection.Requeriment.ReqID)"
+                                                        Id=@($"edit-btn-{rejection.Id}")>
+                                                        <Edit Class="w-4 h-4"/>
+                                                    </Button>
+                                                    <Button
+                                                        Variant="outline"
+                                                        Size="sm"
+                                                        OnClick="@(() => DeleteModal(rejection.Id, rejection.Requeriment.ReqID))"
+                                                        Class="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-500 dark:hover:border-red-900/50 dark:bg-gray-600  cursor-pointer">
+                                                        <Trash2 Class="w-4 h-4"/>
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        @if (ExpandedRejections.Contains(rejection.Id))
+                                        {
+                                            <div class="border-t bg-gray-50 dark:bg-gray-800/50">
+                                                @if (rejection.RejectionsDetails.Count == 0)
+                                                {
+                                                    <div class="p-4 text-center text-gray-800 dark:text-gray-100">
+                                                        <p>No hay detalles de rechazos registrados</p>
+
+                                                        <Button Variant="outline" Size="sm"
+                                                                Class="@($"{@ColorService.GetButtonClassess()} mt-2")"
+                                                                OnClick="() => NewDetailModal(rejection.Id, rejection.Requeriment.ReqID)">
+                                                            <Plus class="w-4 h-4 mr-2" />
+                                                            Agregar primer rechazo
+                                                        </Button>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="space-y-2 p-4">
+                                                        @foreach (RejectionDetailResponseDto detail in rejection.RejectionsDetails)
+                                                        {
+                                                            <span class="hidden">@detail.Id</span>
+                                                            <div class="flex items-center gap-4 p-3 bg-white dark:bg-gray-800 rounded border">
+                                                                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                                                    <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                                                                        @detail.RechazoNro
+                                                                    </span>
+                                                                </div>
+
+                                                                <div class="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+
+                                                                    <div>
+                                                                        <p class="text-sm text-gray-500 dark:text-gray-400">Fecha</p>
+                                                                        <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                                            @detail.RejectionDate.ToString("dd/MM/yyyy")
+                                                                        </p>
+                                                                    </div>
+
+                                                                    <div class=@($"{(detail.SolutionDate is not null ? "md:col-span-1" : "md:col-span-2")}")>
+                                                                        <p class="text-sm text-gray-500 dark:text-gray-400">Motivo</p>
+                                                                        <p class="font-medium text-gray-800 dark:text-gray-100 truncate">
+                                                                            @detail.RejectionReason
+                                                                        </p>
+                                                                    </div>
+
+                                                                    @if (detail.SolutionDate is not null)
+                                                                    {
+                                                                        <div class="md:col-span-1">
+                                                                            <p class="text-sm text-gray-500 dark:text-gray-400">Solucionado el</p>
+                                                                            <p class="font-medium text-gray-800 dark:text-gray-100 truncate">
+                                                                                @detail.SolutionDate
+                                                                            </p>
+                                                                        </div>
+                                                                    }
+                                                                    <div>
+                                                                        <p class="text-sm text-gray-500 dark:text-gray-400">Estado</p>
+                                                                        <span class="@($"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {GetStatusColor(detail.Status)}")">
+                                                                            @GetStatusNameR(detail.Status)
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="flex gap-2">
+                                                                    <Button Variant="outline" Size="sm" Class="cursor-pointer"
+                                                                            OnClick="@(() => EditDetailModal(detail.Id, rejection.Requeriment.ReqID, detail.RechazoNro))"
+                                                                            Disabled="@(detail.Status == "completed")"
+                                                                            >
+                                                                        <Edit class="w-4 h-4" />
+                                                                    </Button>
+
+                                                                    <Button Variant="outline" Size="sm"
+                                                                            Class="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
+                                                                            OnClick="@(() => DeleteDetailModal(detail.Id, rejection.Requeriment.ReqID))">
+                                                                        <Trash2 class="w-4 h-4" />
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+
+                    @if (!IsLoading || !IsLoadingBackend || !IsLoadingDelete)
+                    {
+                        <Paginado T="RejectionResponseDto"
+                                  Content="Rejections"
+                                  PageNumber="pagina"
+                                  Size="registrosPorPagina"
+                                  TotalElements="totalElements"
+                                  CurrentPage="currentPage"
+                                  TotalPages="totalPages"
+                                  MaxVisiblePages="maxVisiblePages"
+                                  IsFirst="isFirst"
+                                  IsLast="isLast"
+                                  ShowCantPages="!IsLoadingBackend"
+                                  FirstPage="First"
+                                  LastPage="Last"
+                                  RewindPage="Rewind"
+                                  ForwardPage="Forward"
+                                  OnSetPage="SetPage" 
+                                  />
+
+                    }
+                </CardContent>
+            </Card>
+            @* Fin Datos *@
+            @* Modales *@
+            <ShowRequeriment @ref="showModalRef" />
+            <NewRejectionModal @ref="newModalRef" OnSaved="HandleNewSaved" />
+            <NewRejectionDetailModal @ref="newDetailModalRef" OnSaved="HandleSaved"/>
+            <EditRejectionModal @ref="editModalRef" OnSaved="HandleSaved"/>
+            <EditRejectionDetailModal @ref="editDetailModalRef" OnSaved="HandleSaved"/>
+            <DeleteRejectionModal @ref="deleteModalRef" OnSaved="HandleDeleted" />
+            <DeleteRejectionDetailModal @ref="deleteDetailModalRef" OnSaved="HandleDeleted"/>
+            @* Fin modales *@
+        </div>
+    </article>
+</div>

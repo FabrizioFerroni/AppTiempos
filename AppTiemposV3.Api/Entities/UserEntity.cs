@@ -23,4 +23,7 @@ public class UserEntity : IdentityUser<Guid>
     public ICollection<ActivitiesEntity> Activities { get; set; } = new List<ActivitiesEntity>();
     
     public ICollection<TrainingEntity> Trainings { get; set; } = new List<TrainingEntity>();
+    
+    public ICollection<RejectionEntity> Rejections { get; set; } = new List<RejectionEntity>();
+    public ICollection<RejectionDetailEntity> RejectionsDetails { get; set; } = new List<RejectionDetailEntity>();
 }

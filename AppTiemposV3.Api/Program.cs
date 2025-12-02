@@ -23,6 +23,8 @@ using AppTiemposV3.Api.Services;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
+using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
+using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.GenericModels;
 // using AppTiemposV3.SharedClases.Utilidades;
@@ -196,6 +198,8 @@ services.AddScoped<IActivityWeeklyContract<ActivitiesByDay>, ActivityWeeklyRepos
 services.AddScoped<IRequerimentContract<RequerimentResponseDto>, RequerimentRepository>();
 services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryRepository>();
 services.AddScoped<ITrainingContract<TrainingResponseDto>, TrainingRepository>();
+services.AddScoped<IRejectionContract<RejectionResponseDto>, RejectionRepository>();
+services.AddScoped<IRejectionDetailContract<RejectionDetailResponseDto>, RejectionDetailsRepository>();
 services.AddScoped<IUserContract, UserContextService>();
 services.AddScoped<IGenericContract, GenericRepository>();
 services.AddScoped<IEmailService, EmailService>();

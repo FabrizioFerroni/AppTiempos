@@ -12,4 +12,22 @@ public static class Helpers
         string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
         Console.WriteLine(json);
     }
+    
+    public static async Task SafeRunAsync(Func<Task> action)
+    {
+        try
+        {
+            await action();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error en fire & forget: {ex}");
+        }
+    }
+    
+    public static string FormatTwoDigits(int? num)
+    {
+        if (num is null) return string.Empty;
+        return num.Value.ToString("D2");
+    }
 }

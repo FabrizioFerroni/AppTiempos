@@ -1,0 +1,95 @@
+@using AppTiemposV3.SharedClases.Enums
+<Modal Method="newRejection" IdElement="Id" Id=@($"dialog-modal-new-training-{IdModalStr}") Class="select-none">
+    <div class="px-6 my-4">
+        <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+            <span class="text-gray-700 dark:text-gray-300 text-md">
+                Cargar un nuevo rechazo
+            </span>
+            <Button
+                Variant="ghost"
+                Size="sm"
+                Command="close"
+                CommandFor=@($"newRejection-{Id}")
+                Class="text-xs cursor-pointer"
+            >
+                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+            </Button>
+        </div>
+
+        @if (isError)
+        {
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative mt-2" role="alert">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                <div class="block sm:inline">
+                    @messageError
+                </div>
+                <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
+                    <Close Class="h-6 w-6 text-red-500"/>
+                </button>
+            </div>
+        }
+        
+        <EditForm Enhance Model=@createDto class="space-y-4 mt-4" novalidate OnValidSubmit=@SendCreateReject FormName="CreateRejectForm">
+            <DataAnnotationsValidator/>
+
+            <div>
+                <Label For="requerimiento" Id="reqIdLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    REQ ID
+                </Label>
+                <Select TItem="string"
+                        Items="@OptionsRequeriments"
+                        Id="requerimiento"
+                        Disabled=@IsRequerimentsNotLoaded
+                        Value="@RequerimientoSeleccionado"
+                        ValueChanged="OnRequerimentSelectedChanged!"
+                        Placeholder=@PlaceholderText
+                        ItemTextSelector="x => x"
+                        ClassButton=@ClassSelect
+                        ClassOption=@ClassSelect
+                        EnableSearch="true"
+                        OnDropdownStateChanged="HandleDropdownStatusRequeriment"
+                        HeightClass="max-h-[120px]"
+                        HeightClassPrin=@($"{(IsSelectClosedRequeriment ? "": "h-[130px]")}")
+                >
+                </Select>
+            </div>
+
+            
+
+            <div class="flex justify-end gap-2 pt-4">
+                <div class="flex gap-2">
+                    <Button
+                        Type="button"
+                        Variant="outline"
+                        Class="text-gray-700 dark:text-gray-300 cursor-pointer"
+                        Command="close"
+                        CommandFor="@($"newRejection-{Id}")"
+                    >
+                        <Close Class="w-4 h-4 mr-2" />
+                        Cancelar
+                    </Button>
+                    <Button Type="submit" Disabled="@(IsLoadingNew || !IsRequerimentIdSelected)"
+                            Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
+
+                        @if (IsLoadingNew)
+                        {
+                            <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                            <span>Guardando...</span>
+                        }
+                        else
+                        {
+                            <Save Class="me-2 size-5" />
+                            <span>
+                                Guardar
+                            </span>
+                        }
+                    </Button>
+                </div>
+            </div>
+        </EditForm>
+        
+    </div>
+</Modal>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNew-{Id}") command="show-modal" commandfor=@($"newRejection-{Id}")></button>      
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalNew-{Id}") command="close" commandfor="@($"newRejection-{Id}")"></button> 

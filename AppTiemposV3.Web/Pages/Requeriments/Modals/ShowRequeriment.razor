@@ -2,6 +2,7 @@
 @using AppTiemposV3.SharedClases.Enums
 @using Microsoft.AspNetCore.Components.Authorization
 @using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
+@using static AppTiemposV3.Web.Utils.Helpers;
 
 @* Modal show requeriment *@
 <Modal Method="show" IdElement="Id" Id=@($"dialog-modal-show-req-{IdModalStr}") Class="select-none">
@@ -58,7 +59,7 @@
                         </p>
                         @if (mensajes.ContainsKey("reqId"))
                         {
-                            var (texto, exito) = mensajes["reqId"];
+                            (string texto, bool exito) = mensajes["reqId"];
                             <span class="text-xs @(exito ? "text-green-600" : "text-red-600")">
                                 @texto
                             </span>
@@ -196,7 +197,7 @@
 
                         @if (mensajes.ContainsKey("conjuntoCambios"))
                         {
-                            var (texto, exito) = mensajes["conjuntoCambios"];
+                            (string texto,bool exito) = mensajes["conjuntoCambios"];
                             <span class="text-xs @(exito ? "text-green-600" : "text-red-600")">
                                 @texto
                             </span>
@@ -211,7 +212,7 @@
                     </label>
                     <div class="flex items-center justify-between mt-1">
                         <div class="flex items-center gap-2">
-                            @if (rechazosCount == 0)
+                            @if (requerimentShow.TotalRejections == 0)
                             {
                                 <CheckCircle class="w-4 h-4 text-green-500"/>
                                 <span class="text-sm text-gray-600 dark:text-gray-300">
@@ -228,17 +229,10 @@
                         </div>
                         <div class="text-right">
                             <span class="text-lg font-semibold text-gray-600 dark:text-gray-300">
-                                @rechazosCount
+                                @requerimentShow.TotalRejections
                             </span>
                             <p class="text-xs text-gray-600 dark:text-gray-300">
-                                @if (rechazosCount == 1)
-                                {
-                                    <span>rechazo</span>
-                                }
-                                else
-                                {
-                                    <span>rechazos</span>
-                                }
+                                @Plural(requerimentShow.TotalRejections, "rechazo","rechazos")
                             </p>
                         </div>
                     </div>

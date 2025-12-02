@@ -1,5 +1,5 @@
 <el-dialog id=@($"{Id}")>
-  <dialog id=@($"delete-{IdElement}") aria-labelledby="dialog-title" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
+  <dialog id=@($"{Method}-{IdElement}") aria-labelledby="dialog-title" class="fixed inset-0 size-auto max-h-none max-w-none overflow-y-auto bg-transparent backdrop:bg-transparent">
     <el-dialog-backdrop class="fixed inset-0 bg-[rgb(31_41_55_/_0.75)] dark:bg-[rgb(17_24_39_/_0.75)] transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"></el-dialog-backdrop>
 
     <div tabindex="0" class="flex min-h-full items-end justify-center p-4 text-center focus:outline-none sm:items-center sm:p-0">
@@ -28,7 +28,7 @@
             Size=""
             Id=@($"delete-button-modal-{Id}")
             Command="close"
-            CommandFor=@($"delete-{IdElement}")
+            CommandFor=@($"{Method}-{IdElement}")
             OnClick="async () => await OnConfirm.InvokeAsync(IdElement)"
             Class="cursor-pointer inline-flex w-full justify-center rounded-md bg-red-600 dark:bg-red-500 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500 dark:hover:bg-red-400 sm:ml-3 sm:w-auto"
             >
@@ -41,7 +41,7 @@
             Size=""
             Id=@($"cancel-button-modal-{Id}")
             Command="close"
-            CommandFor=@($"delete-{IdElement}")
+            CommandFor=@($"{Method}-{IdElement}")
             Class="cursor-pointer mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-white/10 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-white inset-ring inset-ring-gray-300 dark:inset-ring-white/5 hover:bg-gray-50 dark:hover:bg-white/20 sm:mt-0 sm:w-auto"
           >
             Cancelar

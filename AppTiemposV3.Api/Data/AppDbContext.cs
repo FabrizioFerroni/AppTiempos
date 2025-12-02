@@ -20,6 +20,10 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
     public DbSet<TrainingEntity> Trainings { get; set; }
     
     public DbSet<InvitationEntity> Invitations { get; set; }
+    
+    public DbSet<RejectionEntity> Rejections { get; set; }
+    
+    public DbSet<RejectionDetailEntity> RejectionDetails { get; set; }
 
     public AppDbContext(DbContextOptions options) : base(options)
     {
@@ -41,6 +45,8 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
         builder.Entity<ActivitiesEntity>(e => e.ToTable(name: "activities"));
         builder.Entity<TrainingEntity>(e => e.ToTable(name: "trainings"));
         builder.Entity<InvitationEntity>(e => e.ToTable(name: "invitaciones"));
+        builder.Entity<RejectionEntity>(e => e.ToTable(name: "rechazos"));
+        builder.Entity<RejectionDetailEntity>(e => e.ToTable(name: "rechazos_detalles"));
 
         Type[]? excludedTypes = new[] { typeof(CategoriesEntity)};
         
@@ -96,7 +102,6 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
              .HasDatabaseName("IX_Requeriments_UserId_ReqID")
              .IsUnique();
             
-            // ✅ Índice único compuesto para FolderId por usuario
             e.HasIndex(r => new { r.UserId, r.FolderId })
                 .HasDatabaseName("IX_Requeriments_UserId_FolderId")
                 .IsUnique();
@@ -289,6 +294,73 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
             
             i.Property(id => id.Finished)
                 .HasDefaultValue(false);
+        });
+
+        builder.Entity<RejectionEntity>(r =>
+        {
+            r.HasOne(re => re.User)
+                .WithMany(u => u.Rejections)
+                .HasForeignKey(re => re.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            r.HasOne(ar => ar.Requeriment)
+                .WithMany(re => re.Rejections)
+                .HasForeignKey(af => af.RequerimentId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            r.Property(c => c.CreatedAt)
+                .HasColumnType("timestamp")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            r.Property(c => c.IsDeleted)
+                .HasDefaultValue(false);
+        });
+
+        builder.Entity<RejectionDetailEntity>(rd =>
+        {
+            rd.HasOne(ar => ar.Rejection)
+                .WithMany(re => re.RejectionsDetails)
+                .HasForeignKey(af => af.RejectionId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            rd.HasOne(re => re.User)
+                .WithMany(u => u.RejectionsDetails)
+                .HasForeignKey(re => re.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            
+            rd.Property(c => c.CreatedAt)
+                .HasColumnType("timestamp")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            rd.Property(ab => ab.RejectionDate)
+                .HasConversion(
+                    c => c.ToDateTime(TimeOnly.MinValue), 
+                    c => DateOnly.FromDateTime(c))
+                .HasColumnType("date");
+            
+            rd.Property(e => e.EstimatedFixTime)
+                .HasColumnType("time");
+            
+            rd.Property(e => e.ActualFixTime)
+                .HasColumnType("time");
+            
+            rd.Property(ab => ab.EstimatedFixTime)
+                .HasConversion(
+                    c => c.HasValue ? TimeSpan.FromTicks(c.Value.Ticks) : (TimeSpan?)null,
+                    c => c.HasValue ? TimeOnly.FromTimeSpan(c.Value) : (TimeOnly?)null
+                )
+                .HasColumnType("time");
+            
+            rd.Property(ab => ab.ActualFixTime)
+                .HasConversion(
+                    c => c.HasValue ? TimeSpan.FromTicks(c.Value.Ticks) : (TimeSpan?)null,
+                    c => c.HasValue ? TimeOnly.FromTimeSpan(c.Value) : (TimeOnly?)null
+                )
+                .HasColumnType("time");
+
+            rd.Property(rn => rn.RechazoNro)
+                .HasDefaultValueSql("0");
         });
     }
 

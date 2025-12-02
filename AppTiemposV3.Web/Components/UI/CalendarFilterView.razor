@@ -6,12 +6,12 @@
         @DateDropdown
     </Button>
 
-    <div>
+    <div class="@ClassHeight">
         @if (IsOpen)
         {
-            <div class="absolute left-0 mt-2 z-50 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 w-[350px]">
+            <div class="@GetClasessDivCalendar()">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold">
+                    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">
                         @(Mode == CalendarMode.Single ? "Seleccionar fecha" : "Seleccionar rango")
                     </h2>
                 </div>
@@ -20,6 +20,7 @@
                     <CalendarFilterMonth
                         CurrentMonth="@CurrentMonth"
                         AllowFutureDates="AllowFutureDates"
+                        FilterByWeek="FilterByWeek"
                         SelectedStart="@SelectedStart"
                         SelectedEnd="@SelectedEnd"
                         MinDate="@MinDate"

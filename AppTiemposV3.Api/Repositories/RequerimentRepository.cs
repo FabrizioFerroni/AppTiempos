@@ -10,11 +10,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Reflection;
+using System.Text;
 using AppTiemposV3.Api.Utilidades;
 using AppTiemposV3.SharedClases.Annotations;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.Enums;
+using MySqlConnector;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 
 namespace AppTiemposV3.Api.Repositories
 {
@@ -205,6 +208,7 @@ namespace AppTiemposV3.Api.Repositories
             RequerimentResponseDto resReq = _iMapper.Map<RequerimentResponseDto>(req);
 
             resReq.Etapa = await GetEtapaActivity(req.Id);
+            resReq.TotalRejections = await GetRejections(req.Id, user.Id);
 
             return new DataResponse<RequerimentResponseDto> (true, resReq, HttpStatusCode.OK);
         }
@@ -360,6 +364,34 @@ namespace AppTiemposV3.Api.Repositories
                 .MaxAsync(r => (int?)r.FolderId) ?? 0;
             
             return maxFolderId + 1;
+        }
+
+        private async Task<int> GetRejections(Guid requerimentId, Guid userId)
+        {
+            int totalRejections = 0;
+
+            StringBuilder? sb = new StringBuilder();
+            
+            sb.AppendLine("SELECT");
+            sb.AppendLine("  IFNULL(R.TotalRejections, 0) AS TotalRejections");
+            sb.AppendLine("FROM rechazos AS R");
+            sb.AppendLine("WHERE R.RequerimentId = @RequerimentId");
+            sb.AppendLine("  AND R.UserId = @UserId");
+            sb.AppendLine("  AND R.IsDeleted = 0");
+            
+            string sql = sb.ToString();
+        
+            MySqlParameter requerimentFiltro = new MySqlParameter("@RequerimentId", requerimentId);
+            MySqlParameter userFiltro = new MySqlParameter("@UserId", userId);
+        
+            List<Dictionary<string, object?>> sqlResponse = await QueryRawAsync(_dbCxt, sql, requerimentFiltro, userFiltro);
+
+            foreach (Dictionary<string, object?> row in sqlResponse)
+            {
+                totalRejections = Convert.ToInt32(row["TotalRejections"]!.ToString()!);
+            }
+
+            return totalRejections;
         }
     }
 }

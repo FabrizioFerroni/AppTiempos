@@ -27,6 +27,16 @@ public class DateHelpers
         return date.Value.ToString("dd/MM/yyyy");
     }
     
+    public static string FormatDateOnly(DateOnly? date)
+    {
+        if (date is null)
+        {
+            return string.Empty;
+        }
+
+        return date.Value.ToString("dd/MM/yyyy");
+    }
+    
     public static string FormatDateAndTime(DateTime? date)
     {
         if (date is null)

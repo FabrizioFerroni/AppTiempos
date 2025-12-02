@@ -47,6 +47,8 @@ namespace AppTiemposV3.Api.Entities
         
         public ICollection<TrainingEntity> Trainings { get; set; } = new List<TrainingEntity>();
         
+        public ICollection<RejectionEntity> Rejections { get; set; } = new List<RejectionEntity>();
+        
         [Required]
         public required Guid CategoryId { get; set; } = Guid.Empty;
     

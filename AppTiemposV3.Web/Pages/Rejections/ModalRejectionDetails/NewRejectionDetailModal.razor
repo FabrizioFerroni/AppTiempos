@@ -1,0 +1,128 @@
+@using AppTiemposV3.SharedClases.Enums
+<Modal Method="newRejectionDetail" IdElement="Id" Id=@($"dialog-modal-new-training-{IdModalStr}") Class="select-none">
+    <div class="px-6 my-4">
+        <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+            <span class="text-gray-700 dark:text-gray-300 text-md">
+                Cargar un nuevo detalle al rechazo del requerimiento @($"ReqID{ReqId}")
+            </span>
+            <Button
+                Variant="ghost"
+                Size="sm"
+                Command="close"
+                CommandFor=@($"newRejectionDetail-{Id}")
+                Class="text-xs cursor-pointer"
+            >
+                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+            </Button>
+        </div>
+
+        @if (isError)
+        {
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative mt-2" role="alert">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                <div class="block sm:inline">
+                    @messageError
+                </div>
+                <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
+                    <Close Class="h-6 w-6 text-red-500"/>
+                </button>
+            </div>
+        }
+        
+        <EditForm Enhance Model=@createDto class="space-y-4 mt-4" novalidate OnValidSubmit=@SendCreateRejectDetail FormName="CreateRejectDetailForm">
+            <DataAnnotationsValidator/>
+
+            <div class="space-y-2">
+                <Label For="rejectionDate" Id="rejectionDateLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Fecha del rechazo
+                </Label>
+                <CalendarFilterView
+                    Id="solutionDate"
+                    weekNumber="weekNumberSelected"
+                    Mode="CalendarMode.Single"
+                    OnDateSelected="DateChangedFrom"
+                    OnDropdownStateChanged="HandleDropdownState"
+                    SelectedStart="SolutionDateForInput"
+                    ClassDiv="w-full"
+                    With="w-full"
+                    Disabled
+                    ClassHeight=@($"{(IsSelectClosed ? "": "h-[240px]")}")
+                    ClassButton="w-full font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 h-10  px-3 py-2"
+                />
+                <ValidationMessage For="() => createDto.RejectionDate" class="text-xs text-red-600"/>
+            </div>
+
+            <div class="space-y-2">
+                <Label For="rejectionReason" Id="rejectionReasonLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Motivo del rechazo
+                </Label>
+                <Input
+                    Type="text"
+                    @bind-Value="createDto.RejectionReason"
+                    Id="rejectionReason"
+                    Name="rejectionReason"
+                    Placeholder="Ej: Error en la validación de datos"
+                    Autocomplete="off"
+                    Required
+                    Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+                <ValidationMessage For="() => createDto.RejectionReason" class="text-xs text-red-600"/>
+            </div>
+
+            <div class="space-y-2">
+                <Label For="rejectionDetails" Id="rejectionDetailsLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Detalles del rechazo
+                </Label>
+                <TextArea
+                    Id="rejectionDetails"
+                    Placeholder="Describe detalladamente el problema encontrado por testing ..."
+                    @bind-Value=@createDto.RejectionDetails
+                    Required
+                    Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    Rows="3"
+                >
+                </TextArea>
+                <ValidationMessage For="() => createDto.RejectionDetails" class="text-xs text-red-600"/>
+            </div>
+
+            
+
+            
+
+            <div class="flex justify-end gap-2 pt-4">
+                <div class="flex gap-2">
+                    <Button
+                        Type="button"
+                        Variant="outline"
+                        Class="text-gray-700 dark:text-gray-300 cursor-pointer"
+                        Command="close"
+                        CommandFor="@($"newRejectionDetail-{Id}")"
+                    >
+                        <Close Class="w-4 h-4 mr-2" />
+                        Cancelar
+                    </Button>
+                    <Button Type="submit" Disabled="@(IsLoadingNew)"
+                            Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
+
+                        @if (IsLoadingNew)
+                        {
+                            <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                            <span>Guardando...</span>
+                        }
+                        else
+                        {
+                            <Save Class="me-2 size-5" />
+                            <span>
+                                Guardar
+                            </span>
+                        }
+                    </Button>
+                </div>
+            </div>
+        </EditForm>
+        
+    </div>
+</Modal>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNew-{Id}") command="show-modal" commandfor=@($"newRejectionDetail-{Id}")></button>      
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalNew-{Id}") command="close" commandfor="@($"newRejectionDetail-{Id}")"></button> 

@@ -1,0 +1,25 @@
+<DeleteModal
+    IdElement="@Id"
+    Method="delete-Detail"
+    Id=@($"dialog-delete-detail-{ReqID}")
+    Title="Deseas eliminar el detalle del rechazo"
+    Subtitle=@($"¿Estas seguro que deseas eliminar el detalle del rechazo para el requerimiento con ReqID{ReqID}?")
+    OnConfirm="async () => await DeleteRejectionDetailAc(Id)"
+/>
+
+
+<Modal Method="deleteDetailLoading" IdElement="IdShow" Id=@($"dialog-modal-delete-Detail-loading-req-{IdModalStr}")>
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+        <LoaderCircle Class="w-16 h-16 mb-4 animate-spin text-gray-900 dark:text-gray-100"/>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            Eliminando el detalle del rechazo para el requerimiento con @($"ReqID{ReqID}")
+        </h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+            Espere unos segundos ...
+        </p>
+    </div>
+</Modal>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalDetailLoad-{Id}") command="show-modal" commandfor=@($"deleteDetailLoading-{IdShow}")></button>
+<button type="button" @ref="showModalRef2" class="hidden" id=@($"showModalLDetailDelete-{Id}") command="show-modal" commandfor=@($"delete-Detail-{Id}")></button>
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalDetailLoad-{Id}") command="close" commandfor="@($"deleteDetailLoading-{IdShow}")"></button>
