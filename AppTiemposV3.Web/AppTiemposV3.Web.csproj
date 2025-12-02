@@ -26,6 +26,10 @@
     <ItemGroup>
       <_ContentIncludedByDefault Remove="wwwroot\data\colors.json" />
       <_ContentIncludedByDefault Remove="Components\UI\SidebarProvider\Sidebar.razor" />
+      <_ContentIncludedByDefault Remove="Pages\Rejections\Components\RejectionFilters.razor" />
+      <_ContentIncludedByDefault Remove="Pages\Rejections\Components\RejectionKpis.razor" />
+      <_ContentIncludedByDefault Remove="Pages\Rejections\Components\RejectionPagination.razor" />
+      <_ContentIncludedByDefault Remove="Pages\Rejections\Components\RejectionsTable.razor" />
     </ItemGroup>
 
     <ItemGroup>

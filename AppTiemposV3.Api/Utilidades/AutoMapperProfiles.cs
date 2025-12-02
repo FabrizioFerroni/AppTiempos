@@ -2,6 +2,8 @@
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
+using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
+using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.Enums;
@@ -19,6 +21,8 @@ namespace AppTiemposV3.Api.Utilidades
             MappingActivities();
             MappingTraining();
             MappingInvitations();
+            MappingRejections();
+            MappingRejectionDetails();
         }
 
         public void MappingRequeriments()
@@ -99,6 +103,33 @@ namespace AppTiemposV3.Api.Utilidades
         public void MappingInvitations()
         {
             CreateMap<InviteDto, InvitationEntity>();
+        }
+
+        public void MappingRejections()
+        {
+            CreateMap<CreateRejectionDto, RejectionEntity>();
+            CreateMap<UpdateRejectionDto, RejectionEntity>()
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<RejectionEntity, RejectionResponseDto>()
+                .ForMember(d => d.Requeriment, o => o.MapFrom(s => s.Requeriment))
+                .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User))
+                .ForMember(d => d.RejectionsDetails, o => o.MapFrom(s => s.RejectionsDetails));
+            
+            CreateMap<RequerimentsEntity, RequerimentDtoRej>();
+            CreateMap<UserEntity, UserDtoARej>();
+            CreateMap<CategoriesEntity, CategoryDtoResRej>();
+        }
+
+        public void MappingRejectionDetails()
+        {
+            CreateMap<CreateRejectionDetailDto, RejectionDetailEntity>();
+            CreateMap<UpdateRejectionDetailDto, RejectionDetailEntity>();
+
+            CreateMap<RejectionDetailEntity, RejectionDetailResponseDto>();
+            
+            CreateMap<RequerimentsEntity, RequerimentDtoRej>();
         }
     }
 }

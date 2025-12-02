@@ -53,7 +53,8 @@ public static class Generics
             AllowTrailingCommas = true,
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip
+            UnmappedMemberHandling = JsonUnmappedMemberHandling.Skip,
+            Converters = { new JsonStringEnumConverter() } 
         };
     }
 

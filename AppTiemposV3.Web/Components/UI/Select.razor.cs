@@ -35,11 +35,13 @@ public partial class Select<TItem> : ComponentBase
     
     [Parameter] public bool EnableSearch { get; set; } = false;
     [Parameter] public string HeightClass { get; set; } = "max-h-96";
+    [Parameter] public string HeightClassPrin { get; set; } = "";
+    
+    
 
     private string searchText = "";
     
-    [Parameter]
-    public EventCallback<bool> OnDropdownStateChanged { get; set; }
+    [Parameter] public EventCallback<bool> OnDropdownStateChanged { get; set; }
     private string? SelectedText => Value != null ? ItemTextSelector(Value) : null;
     
     private DotNetObjectReference<Select<TItem>>? selfRef;
@@ -52,6 +54,13 @@ public partial class Select<TItem> : ComponentBase
             Console.WriteLine(elementId);
             await JS.InvokeVoidAsync("selectHelper.register", selfRef, elementId);
         }
+    }
+
+    private string GetClassesDivPrin()
+    {
+        string classesDivPrin = "relative inline-block w-full ";
+
+        return Cn(classesDivPrin, HeightClassPrin);
     }
 
     private async Task Toggle()
@@ -118,20 +127,32 @@ public partial class Select<TItem> : ComponentBase
         IsOpen = false;
         await JS.InvokeVoidAsync("selectHelper.unregister");
         selfRef?.Dispose();
+        if (OnDropdownStateChanged.HasDelegate)
+        {
+            await OnDropdownStateChanged.InvokeAsync(!IsOpen); // true = cerrado
+        }
         StateHasChanged();
     }
     
     [JSInvokable]
     public void OnEscapePressed()
     {
-        IsOpen = false;
+        if (IsOpen)
+        {
+            IsOpen = false;
+            OnDropdownStateChanged.InvokeAsync(!IsOpen);
+        }
         StateHasChanged();
     }
 
     [JSInvokable]
     public void OnOutsideClick()
     {
-        IsOpen = false;
+        if (IsOpen)
+        {
+            IsOpen = false;
+            OnDropdownStateChanged.InvokeAsync(!IsOpen);
+        }
         StateHasChanged();
     }
 

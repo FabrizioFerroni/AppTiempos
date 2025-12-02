@@ -1,0 +1,238 @@
+@using AppTiemposV3.SharedClases.Enums
+<Modal Method="editRejectionDetail" IdElement="Id" Id=@($"dialog-modal-edit-rejection-detail-{IdModalStr}") Class="select-none">
+    <div class="px-6 my-4">
+        <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+            <span class="text-gray-700 dark:text-gray-300 text-md">
+                Editar detalle del rechazo N°: @RejectionNumber
+            </span>
+            <Button
+                Variant="ghost"
+                Size="sm"
+                Command="close"
+                CommandFor=@($"editRejectionDetail-{Id}")
+                Class="text-xs cursor-pointer"
+            >
+                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+            </Button>
+        </div>
+
+        @if (IsLoadingData)
+        {
+            <div class="flex flex-col items-center justify-center py-12 text-center">
+                <LoaderCircle Class="w-16 h-16 mb-4 animate-spin text-gray-900 dark:text-gray-100"/>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                    Cargando datos del detalle del rechazo para el requerimiento @ReqID
+                </h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                    Espere unos segundos ...
+                </p>
+            </div>
+        }
+        else
+        {
+            @if (isError)
+            {
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative mt-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                    <div class="block sm:inline">
+                        @messageError
+                    </div>
+                    <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
+                        <Close Class="h-6 w-6 text-red-500"/>
+                    </button>
+                </div>
+            }
+            
+            
+            <EditForm Enhance Model=@updateDto class="space-y-4 mt-4" novalidate OnValidSubmit=@SendEditRejectDetail FormName="EditRejectDetailForm">
+                <DataAnnotationsValidator/>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label For="rejectionDate" Id="rejectionDateLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Fecha del rechazo
+                        </Label>
+                        <Input
+                            Type="date"
+                            @bind-Value="RejectionDateString"
+                            InputMode="date"
+                            Id="rejectionDate"
+                            Name="date"
+                            Placeholder="Fecha del rechazo"
+                            Autocomplete="off"
+                            Required
+                            Disabled
+                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        <ValidationMessage For="() => updateDto.RejectionDate" class="text-xs text-red-600"/>
+                    </div>
+
+                    <div>
+                        <Label For="statusRechazo" Id="statusRechazoLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Estado del rechazo
+                        </Label>
+                        <div class="relative">
+                            <Select TItem="string"
+                                    Items="@OptionsEstados"
+                                    Id="statusRechazo"
+                                    Value="EstadoSeleccionado"
+                                    ValueChanged="OnEstadoSelectedChanged!"
+                                    Placeholder="Selecciona el estado del rechazo"
+                                    ItemTextSelector="x => x.ToString()"
+                                    ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                    ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                    EnableSearch="false"
+                                    HeightClass="max-h-[120px]"
+                            >
+                            </Select>
+                        </div>
+                        <ValidationMessage For="() => updateDto.Status" class="text-xs text-red-600"/>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <Label For="rejectionReason" Id="rejectionReasonLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Detalles del rechazo
+                    </Label>
+                    <Input
+                        Type="text"
+                        @bind-Value="updateDto.RejectionReason"
+                        Id="rejectionReason"
+                        Name="rejectionReason"
+                        Placeholder="Ej: Error en la validación de datos"
+                        Autocomplete="off"
+                        Required
+                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    />
+                    <ValidationMessage For="() => updateDto.RejectionReason" class="text-xs text-red-600"/>
+                </div>
+
+                <div class="space-y-2">
+                    <Label For="rejectionDetails" Id="rejectionDetailsLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Detalles del rechazo
+                    </Label>
+                    <TextArea
+                        Id="rejectionDetails"
+                        Placeholder="Describe detalladamente el problema encontrado por testing ..."
+                        @bind-Value=@updateDto.RejectionDetails
+                        Required
+                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        Rows="3"
+                    >
+                    </TextArea>
+                    <ValidationMessage For="() => updateDto.RejectionDetails" class="text-xs text-red-600"/>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label For="extimatedTime" Id="extimatedTimeLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Tiempo Estimado de Solución
+                        </Label>
+                        <Input
+                            Type="time"
+                            @bind-Value="EstimatedFixTimeString"
+                            Id="extimatedTime"
+                            Name="hour"
+                            Placeholder="Hora de la actividad"
+                            Autocomplete="off"
+                            Required
+                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        <ValidationMessage For="() => updateDto.EstimatedFixTime" class="text-xs text-red-600"/>
+                    </div>
+
+                    <div>
+                        <Label For="actualFix" Id="actualFixLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Tiempo Real de Solución
+                        </Label>
+                        <Input
+                            Type="time"
+                            @bind-Value="ActualFixTimeString"
+                            Id="actualFix"
+                            Name="hour"
+                            Placeholder="Hora de la actividad"
+                            Autocomplete="off"
+                            Required
+                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                        <ValidationMessage For="() => updateDto.ActualFixTime" class="text-xs text-red-600"/>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <Label For="solutionDate" Id="solutionDateLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Fecha del Solución
+                    </Label>
+                    <CalendarFilterView
+                        Id="solutionDate"
+                        weekNumber="weekNumberSelected"
+                        Mode="CalendarMode.Single"
+                        OnDateSelected="DateChangedFrom"
+                        OnDropdownStateChanged="HandleDropdownState"
+                        SelectedStart="SolutionDateForInput"
+                        ClassDiv="w-full"
+                        With="w-full"
+                        Disabled="@(updateDto.Status != "completed")"
+                        ClassHeight=@($"{(IsSelectClosed ? "": "h-[240px]")}")
+                        ClassButton="w-full font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 h-10  px-3 py-2"
+                    />
+                    <ValidationMessage For="() => updateDto.SolutionDate" class="text-xs text-red-600"/>
+                </div>
+
+                <div class="space-y-2">
+                    <Label For="solutionDetails" Id="solutionDetailsLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Detalles de la solución
+                    </Label>
+                    <TextArea
+                        Id="solutionDetails"
+                        Placeholder="Describe como se soluciono el problema ..."
+                        @bind-Value=@updateDto.SolutionDetails
+                        Required
+                        Disabled="@(updateDto.Status != "completed")"
+                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        Rows="3"
+                    >
+                    </TextArea>
+                    <ValidationMessage For="() => updateDto.SolutionDetails" class="text-xs text-red-600"/>
+                </div>
+
+                
+
+                <div class="flex justify-end gap-2 pt-4">
+                    <div class="flex gap-2">
+                        <Button
+                            Type="button"
+                            Variant="outline"
+                            Class="text-gray-700 dark:text-gray-300 cursor-pointer"
+                            Command="close"
+                            CommandFor="@($"editRejectionDetail-{Id}")"
+                        >
+                            <Close Class="w-4 h-4 mr-2" />
+                            Cancelar
+                        </Button>
+                        <Button Type="submit" Disabled="@(IsLoadingEdit)"
+                                Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
+
+                            @if (IsLoadingEdit)
+                            {
+                                <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                <span>Guardando...</span>
+                            }
+                            else
+                            {
+                                <Save Class="me-2 size-5" />
+                                <span>
+                                    Guardar
+                                </span>
+                            }
+                        </Button>
+                    </div>
+                </div>
+                
+            </EditForm>
+        }
+    </div>
+</Modal>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalEdit-{Id}") command="show-modal" commandfor=@($"editRejectionDetail-{Id}")></button>      
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalEdit-{Id}") command="close" commandfor="@($"editRejectionDetail-{Id}")"></button> 

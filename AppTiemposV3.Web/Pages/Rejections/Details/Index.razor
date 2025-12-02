@@ -1,0 +1,285 @@
+@page "/app/rechazo/{urlId}"
+@using AppTiemposV3.SharedClases.DTOs.RejectionDetails
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
+@using AppTiemposV3.Web.Pages.Rejections.ModalRejectionDetails
+@using static AppTiemposV3.Web.Utils.Helpers;
+@using AppTiemposV3.Web.Pages.Requeriments.Modals
+
+<PageTitle>
+    Detalle del rechazo | TimeTracker Pro
+</PageTitle>
+
+<div class="flex flex-col w-full">
+    <Navbar Title="Detalles del Rechazo" Subtitle="Información completa del rechazo" OnToggleSidebar="HandleSidebarToggle">
+        <div class="text-right flex items-center gap-2">
+            <Enlace Href="/app/rechazos" Target="_self" Class="border border-gray-300  dark:hover:bg-gray-700 h-9 px-3 text-sm inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none text-gray-400  dark:text-gray-300 dark:border-gray-500 cursor-pointer">
+                <ArrowLeft Class="h-4 w-4 mr-2"/>
+                Volver
+            </Enlace>
+        </div>
+    </Navbar>
+
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            @if (IsLoadingData)
+            {
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <LoaderCircle Class="w-16 h-16 mb-4 animate-spin text-gray-900 dark:text-gray-100"/>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        Cargando datos del rechazo
+                    </h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                        Espere unos segundos ...
+                    </p>
+                </div>
+            }
+            else
+            {
+                // Info general
+                <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40 select-none">
+                    <CardHeader>
+                        <CardTitle Class="flex items-center gap-2">
+                            <FileText Class="w-5 h-5 text-blue-600"/>
+                            Información del rechazo
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent Class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400">Req ID</span>
+                            <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                @* @($"ReqID{RejectionRes.Requeriment.ReqID}") *@
+                                <Button
+                                    Variant="ghost"
+                                    Size="sm"
+                                    Class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-600 hover:bg-transparent dark:hover:bg-transparent font-medium p-0 h-auto justify-start cursor-pointer"
+                                    Style="padding: 0 !important;"
+                                    OnClick="@(() => ShowModal(RejectionRes.Requeriment.Id))"
+                                >
+                                    @RejectionRes.Requeriment.ReqIDDesc
+                                    <Eye Class="w-3 h-3 ml-1" />
+                                </Button>
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Estado General</p>
+                            <span class="@($"inline-flex items-center px-3 py-1 mt-1 rounded-full text-sm font-medium {GetStatusColor(RejectionRes.Status)}")">
+                                @GetStatusNameR(RejectionRes.Status)
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400">Total rechazos</span>
+                            <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                @RejectionRes.TotalRejections
+                            </p>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400">Resuelto por mí</span>
+                            <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                @($"{(RejectionRes.IsResolve ? "Si": "No")}")
+                            </p>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-500 dark:text-gray-400">Fecha que se resolvio</span>
+                            <p class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                @if (RejectionRes.ResolvedDate.HasValue)
+                                {
+                                    @FormatDateOnly(RejectionRes.ResolvedDate)
+                                }
+                                else
+                                {
+                                    <span>Aun no fue resuelto</span>
+                                }
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+                // Fin info general
+                // Detalles del rechazo
+                <Card Class="border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40 select-none mb-6">
+                    <CardHeader>
+                        <div class="flex justify-between items-center">
+                            <div class="flex-1">
+                                <CardTitle>
+                                    Historial de Rechazos
+                                </CardTitle>
+                            </div>
+
+                            <div class="flex justify-end items-center gap-3">
+                                <Button
+                                    Class="@ColorService.GetButtonClassess()"
+                                    Disabled=@(IsLoadingData)
+                                    OnClick="() => NewDetailModal(RejectionRes.Id, RejectionRes.Requeriment.ReqID)"
+                                >
+                                    <Plus Class="h-4 w-4 mr-2"/>
+                                    Nuevo rechazo
+                                </Button>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                            @if (RejectionRes.RejectionsDetails.Count == 0)
+                            {
+                            
+                            
+                                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                    <p>No hay detalles de rechazo registrados</p>
+                                    <Button Variant="outline" Size="sm"
+                                            Class="@($"{@ColorService.GetButtonClassess()} mt-2")"
+                                            OnClick="() => NewDetailModal(RejectionRes.Id, RejectionRes.Requeriment.ReqID)">
+                                        <Plus class="w-4 h-4 mr-2" />
+                                        Agregar primer rechazo
+                                    </Button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="space-y-4 p-4">
+                                    @foreach (RejectionDetailResponseDto detail in RejectionRes.RejectionsDetails)
+                                    {
+                                        <span class="hidden">@detail.Id</span>
+                                        <Card Id="@detail.Id.ToString()" Class="border shadow-xl border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-700  backdrop-blur-sm z-40 select-none">
+                                            <CardContent class="pt-6">
+                                                <div class="flex items-start justify-between mb-4">
+                                                    <div class="flex items-center gap-3">
+                                                        
+                                                        <div class=@($"p-2 rounded-lg {GetStatusColor(detail.Status)}")>
+                                                            @if (detail.Status == "completed")
+                                                            {
+                                                                <CheckCircle Class="w-5 h-5"/>
+                                                            }
+                                                            else
+                                                            {
+                                                                <Clock Class="w-5 h-5"/>
+                                                            }
+                                                        </div>
+                                                        <div>
+                                                            <p class="font-semibold text-lg">
+                                                                @detail.RejectionReason
+                                                            </p>
+                                                            <div class="flex gap-2 items-center justify-start">
+                                                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                                    Fecha:
+                                                                    <span>
+                                                                        @FormatDateOnly(detail.RejectionDate)
+                                                                    </span>
+                                                                </p>
+                                                                <p class="text-sm text-gray-600 dark:text-gray-400">-</p>
+                                                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                                    Rechazo N°:
+                                                                    <span>
+                                                                        @FormatTwoDigits(detail.RechazoNro)
+                                                                    </span>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex gap-2">
+                                                        <Button Variant="outline" Size="sm" Class="cursor-pointer"
+                                                                OnClick="@(() => EditDetailModal(detail.Id, RejectionRes.Requeriment.ReqID, detail.RechazoNro))"
+                                                                Disabled="@(detail.Status == "completed")"
+                                                        >
+                                                            <Edit class="w-4 h-4" />
+                                                        </Button>
+
+                                                        <Button Variant="outline" Size="sm"
+                                                                Class="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
+                                                                OnClick="@(() => DeleteDetailModal(detail.Id, RejectionRes.Requeriment.ReqID))">
+                                                            <Trash2 class="w-4 h-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="space-y-3 text-sm">
+                                                    <div>
+                                                        <p class="text-gray-600 dark:text-gray-400">
+                                                            Descripción del Problema
+                                                        </p>
+                                                        <p class="mt-1">
+                                                            @detail.RejectionDetails
+                                                        </p>
+                                                    </div>
+
+                                                    @if (detail.SolutionDetails is not null)
+                                                    {
+                                                        <div>
+                                                            <p class="text-gray-600 dark:text-gray-400">
+                                                                Solución Implementada
+                                                            </p>
+                                                            <p class="mt-1">
+                                                                @detail.SolutionDetails
+                                                            </p>
+                                                        </div>
+                                                    }
+
+                                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-gray-200 dark:border-gray-600">
+                                                        @if (detail.EstimatedFixTime is not null)
+                                                        {
+                                                            <div>
+                                                                <p class="text-gray-600 dark:text-gray-400">
+                                                                    Tiempo Estimado
+                                                                </p>
+                                                                <p class="font-semibold">
+                                                                    @detail.EstimatedFixTime
+                                                                </p>
+                                                            </div>
+                                                        }
+
+                                                        @if (detail.ActualFixTime is not null)
+                                                        {
+                                                            <div>
+                                                                <p class="text-gray-600 dark:text-gray-400">
+                                                                    Tiempo Real
+                                                                </p>
+                                                                <p class="font-semibold">
+                                                                    @detail.ActualFixTime
+                                                                </p>
+                                                            </div>
+                                                        }
+
+                                                        @if (detail.SolutionDate is not null)
+                                                        {
+                                                            <div>
+                                                                <p class="text-gray-600 dark:text-gray-400">
+                                                                    Fecha Solución
+                                                                </p>
+                                                                <p class="font-semibold">
+                                                                    @detail.SolutionDate
+                                                                </p>
+                                                            </div>
+                                                        }
+
+                                                        <div>
+                                                            <p class="text-gray-600 dark:text-gray-400">
+                                                                Estado
+                                                            </p>
+                                                            <p class=@($"inline-flex items-center px-2 py-1 mt-1 rounded-full text-xs font-medium {GetStatusColor(detail.Status)}")>
+                                                                @GetStatusNameR(detail.Status)
+                                                            </p>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    }
+                                </div>
+                            }
+                    </CardContent>
+                </Card>
+                // Fin Detalles del rechazo
+            
+            }
+        </div>
+    </article>
+</div>
+
+@* Modales *@
+<ShowRequeriment @ref="showModalRef" />
+<NewRejectionDetailModal @ref="newDetailModalRef" OnSaved="HandleSaved"/>
+<EditRejectionDetailModal @ref="editDetailModalRef" OnSaved="HandleSaved"/>
+<DeleteRejectionDetailModal @ref="deleteDetailModalRef" OnSaved="HandleDeleted"/>
+@* Fin modales *@

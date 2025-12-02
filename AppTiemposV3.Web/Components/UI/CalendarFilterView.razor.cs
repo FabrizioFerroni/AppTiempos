@@ -15,15 +15,17 @@ public partial class CalendarFilterView : ComponentBase
     [Parameter] public string? ClassDiv {get; set;}
     [Parameter] public string? Style {get; set;}
     [Parameter] public string? Id {get; set;}
-
+    [Parameter] public string? With { get; set; } = "w-[350px]";
+    [Parameter] public string? ClassHeight {get; set;} = string.Empty;
     [Parameter] public int weekNumber { get; set; } = 1;
     [Parameter] public CalendarMode Mode { get; set; } = CalendarMode.Single;
     [Parameter] public bool AllowFutureDates { get; set; } = false;
+    [Parameter] public bool FilterByWeek { get; set; } = false;
     [Parameter] public bool Disabled { get; set; } = false;
     [Parameter] public EventCallback<DateTime?> OnDateSelected { get; set; }
     [Parameter] public EventCallback<(DateTime? Start, DateTime? End)> OnRangeSelected { get; set; }
     [Parameter] public EventCallback<bool> OnDropdownStateChanged { get; set; }
-    protected DateTime? SelectedStart { get; set; }
+    [Parameter] public DateTime? SelectedStart { get; set; }
     protected DateTime? SelectedEnd { get; set; }
     protected DateTime CurrentMonth { get; set; } = DateTime.Today;
     
@@ -81,6 +83,13 @@ public partial class CalendarFilterView : ComponentBase
      #region Funciones
      private void SetWeekRange()
      {
+         if (!FilterByWeek)
+         {
+             MinDate = null;
+             MaxDate = null;
+             return;
+         }
+         
          // Calcula lunes como inicio de la semana
          DateTime firstDayOfYear = new DateTime(DateTime.Today.Year, 1, 1);
          int daysOffset = DayOfWeek.Monday - firstDayOfYear.DayOfWeek;
@@ -99,6 +108,13 @@ public partial class CalendarFilterView : ComponentBase
          string baseOpen = IsOpen ? " bg-gray-100 dark:bg-gray-700" : "";
 
          return Cn(baseClasses, baseOpen, ClassButton);
+     }
+     
+     private string GetClasessDivCalendar()
+     {
+         string baseClasses = "absolute left-0 mt-2 z-50 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700";
+
+         return Cn(baseClasses, With);
      }
 
      private string GetClassesDiv()

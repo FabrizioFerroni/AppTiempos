@@ -142,10 +142,9 @@ public partial class Sidebar : ComponentBase, IDisposable
         {
             if (url == "/app/actividades" && currentUrl.StartsWith("/app/actividad/", StringComparison.OrdinalIgnoreCase))
                 isActive = true;
-
-            // Podés agregar más casos similares:
-            // if (url == "/app/usuarios" && currentUrl.StartsWith("/app/usuario/", StringComparison.OrdinalIgnoreCase))
-            //     isActive = true;
+            
+            if (url == "/app/rechazos" && currentUrl.StartsWith("/app/rechazo/", StringComparison.OrdinalIgnoreCase))
+                isActive = true;
         }
 
         ColorModel? currentColor = ColorService.GetCurrentColor();

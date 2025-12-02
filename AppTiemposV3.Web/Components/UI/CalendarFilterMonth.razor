@@ -5,7 +5,7 @@
         <Button OnClick="PreviousMonth" Class="px-2 py-1 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded cursor-pointer">
             <ChevronLeft Class="w-4 h-4 rtl:rotate-180" />
         </Button>
-        <div class="font-semibold text-center capitalize select-none">
+        <div class="font-semibold text-center capitalize select-none text-gray-700 dark:text-gray-300">
             @CurrentMonth.ToString("MMMM yyyy", new CultureInfo("es-ES"))
         </div>
         <Button OnClick="NextMonth" Class="px-2 py-1 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded cursor-pointer">
@@ -13,14 +13,14 @@
         </Button>
     </div>
 
-    <div class="grid grid-cols-7 text-xs text-gray-500 mb-1 text-center">
+    <div class="grid grid-cols-7 text-xs text-gray-700 dark:text-gray-300 mb-1 text-center">
         @foreach (string day in new[] { "L", "M", "X", "J", "V", "S", "D" })
         {
             <div>@day</div>
         }
     </div>
 
-    <div class="grid grid-cols-7 gap-1 text-center text-sm">
+    <div class="grid grid-cols-7 gap-1 text-center text-sm text-gray-700 dark:text-gray-300">
         @foreach (DateTime? d in GetDaysForMonth())
         {
             if (d == null)
@@ -29,9 +29,13 @@
             }
             else
             {
-                //bool isDisabled = !AllowFutureDates && d > DateTime.Today;
-                bool isDisabled = (MinDate.HasValue && d < MinDate.Value.Date) ||
-                                  (MaxDate.HasValue && d > MaxDate.Value.Date);
+                bool futureBlocked = !AllowFutureDates && d > DateTime.Today;
+                bool weekFiltered =
+                    FilterByWeek && (
+                        (MinDate.HasValue && d < MinDate.Value.Date) ||
+                        (MaxDate.HasValue && d > MaxDate.Value.Date)
+                    );
+                bool isDisabled = futureBlocked || weekFiltered;
                 string? cls = GetDayClass(d.Value, isDisabled);
                 <Button Size="sm" Variant="ghost" Disabled="@isDisabled"
                         Class="@($"{cls} {(isDisabled ? "cursor-not-allowed" : "cursor-pointer")}")"

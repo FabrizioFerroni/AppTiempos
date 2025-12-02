@@ -51,7 +51,7 @@ namespace AppTiemposV3.SharedClases.DTOs.Requeriments
         
         public TimeSpan WorkedTime { get; set; }
         
-       
+       public int TotalRejections { get; set; } = 0;
     }
 
     public class UserDto

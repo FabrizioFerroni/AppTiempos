@@ -121,6 +121,25 @@ cursor: pointer;
     border: 1px solid #fef08a !important;
 }
 .card-progress-dark {
-    background: linear-gradient(to bottom right, rgba(113,63,18,0.25), rgba(113,63,18,0.3)) !important;
-    border-color: rgba(202,138,4,0.4) !important;
+    background: linear-gradient(to bottom right, rgba(113, 63, 18, 0.25), rgba(113, 63, 18, 0.3)) !important;
+    border-color: rgba(202, 138, 4, 0.4) !important;
+}
+
+.card-pending-light {
+    background: linear-gradient(to bottom right, #fef2f2, #ffe2e2) !important;
+    border: 1px solid #ffc9c9 !important;
+}
+.card-pending-dark {
+    background: linear-gradient(to bottom right, rgba(130,24,26,0.25), rgba(159,7,18,0.3)) !important;
+    border-color: rgba(251,44,54,0.4) !important;
+}
+
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
+input[type="date"] {
+    appearance: none;
+    -webkit-appearance: none;
 }

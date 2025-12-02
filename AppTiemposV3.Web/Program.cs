@@ -4,6 +4,8 @@ using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
+using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
+using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.Utilidades;
@@ -52,6 +54,8 @@ services.AddScoped<IActivityWeeklyContract<ActivitiesByDay>, ActivityWeeklyServi
 services.AddScoped<IDashboardContract<DashboardKPIDto>, DashboardService>();
 services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryService>();
 services.AddScoped<ITrainingContract<TrainingResponseDto>, TrainingService>();
+services.AddScoped<IRejectionContract<RejectionResponseDto>, RejectionService>();
+services.AddScoped<IRejectionDetailContract<RejectionDetailResponseDto>, RejectionDetailService>();
 services.AddScoped<LayoutState>();
 services.AddScoped<ColorService>();
 services.AddSingleton<NotificationService>();

@@ -13,6 +13,7 @@ public partial class CalendarFilterMonth : ComponentBase, IDisposable
     [Parameter] public DateTime? MinDate { get; set; }
     [Parameter] public DateTime? MaxDate { get; set; }
     [Parameter] public bool AllowFutureDates { get; set; } = false;
+    [Parameter] public bool FilterByWeek { get; set; } = false;
     [Parameter] public EventCallback<DateTime> OnDateSelected { get; set; }
     [Parameter] public EventCallback<DateTime> OnMonthChanged { get; set; }
 
@@ -60,7 +61,7 @@ public partial class CalendarFilterMonth : ComponentBase, IDisposable
         if (disabled) return "text-gray-400 cursor-not-allowed opacity-50";
 
         if (isStart || isEnd)
-            return $"{ColorService.GetButtonClassess()} text-white rounded-full px-2 py-1 ";
+            return $"{ColorService.GetButtonClassess()} text-gray-700 dark:text-gray-300 rounded-full px-2 py-1 ";
         if (inRange)
             return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full px-2 py-1";
         return "hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full px-2 py-1";
