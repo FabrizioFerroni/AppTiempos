@@ -45,7 +45,7 @@ namespace AppTiemposV3.SharedClases.DTOs.Requeriments
         
         public string? FolderPath => _folderId + " - " + ReqID + " - " + SanitizeTitulo(Titulo);
 
-        public UserDto Usuario { get; set; } = new UserDto();
+        public UserDtoR Usuario { get; set; } = new UserDtoR();
         
         public CategoryDtoA Category { get; set; } = new CategoryDtoA();
         
@@ -54,7 +54,7 @@ namespace AppTiemposV3.SharedClases.DTOs.Requeriments
        public int TotalRejections { get; set; } = 0;
     }
 
-    public class UserDto
+    public class UserDtoR
     {
         public Guid Id { get; set; }
 

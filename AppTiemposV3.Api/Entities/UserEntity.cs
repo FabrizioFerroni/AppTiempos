@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using AppTiemposV3.SharedClases.Enums;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace AppTiemposV3.Api.Entities;
 
@@ -14,6 +15,9 @@ public class UserEntity : IdentityUser<Guid>
     public Areas Area { get; set; }
 
     public DateTime LastPasswordChange { get; set; } = DateTime.Now;
+    /*[Unicode(false)] 
+    public string? ImageUrl { get; set; } = string.Empty;
+    public string ImageName { get; set; } = string.Empty;*/
 
 
     // Relations
