@@ -1,0 +1,691 @@
+@using AppTiemposV3.SharedClases.Enums
+@page "/app/perfil"
+
+<PageTitle>Mi perfil | TimeTracker Pro</PageTitle>
+
+<div class="flex flex-col w-full select-none">
+    <Navbar Title="Mi Perfil" Subtitle="Gestiona tu información personal y configuración de seguridad" OnToggleSidebar="HandleSidebarToggle" />
+    @if (IsLoadingData)
+    {
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+            <LoaderCircle Class="w-16 h-16 mb-4 animate-spin"/>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                Cargando datos del usuario
+            </h3>
+            <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                Espere unos segundos ...
+            </p>
+        </div>
+    }
+    else
+    {
+        <div class="px-6 py-8 space-y-6">
+            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  {(IsSelectClosed ? "backdrop-blur-sm" : "")} z-40")>
+                <CardHeader>
+                    <CardTitle Class="flex items-center gap-2">
+                        <User Class="h-5 w-5"/>
+                        Información Personal
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <EditForm Model="updateUser" novalidate class="space-y-4 mt-4" OnValidSubmit=@SendEditUserProfile FormName="EditUserInfoForm">
+                        <DataAnnotationsValidator/>
+
+
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="relative">
+                                    <Avatar Class="w-20 h-20">
+                                        @* TODO: Proximamente agregar a usuario una foto de perfil para que pueda poner su foto *@
+                                        @if (!string.IsNullOrWhiteSpace(avatarUrl))
+                                        {
+                                            <AvatarImage Src="@avatarUrl" Alt="@User!.FullName"/>
+                                        }
+                                        else
+                                        {
+                                            <AvatarFallback Class=@($"{Gradient} text-white text-lg")>
+                                                @GetInitials(User!.FullName)
+                                            </AvatarFallback>
+                                        }
+                                    </Avatar>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold">
+                                        @User!.FullName
+                                    </h3>
+                                    <p class="text-gray-500 dark:text-gray-400  mb-2">
+                                        @User!.Rol
+                                    </p>
+                                    <div class="flex gap-2">
+                                        <Button
+                                            Type="button"
+                                            Variant="outline"
+                                            Size="sm"
+                                            Disabled
+                                            Class="text-sm bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                                            OnClick="() => OpenFileExplorer()">
+                                            <Camera Class="h-3 w-3 mr-1"/>
+                                            Cambiar foto
+                                        </Button>
+                                        @if (!string.IsNullOrWhiteSpace(avatarUrl))
+                                        {
+                                            <Button
+                                                Type="button"
+                                                Variant="outline"
+                                                Size="sm"
+                                                Class="text-sm text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent cursor-pointer">
+                                                <Trash2 Class="h-3 w-3 mr-1"/>
+                                                Eliminar
+                                            </Button>
+                                        }
+                                    </div>
+                                    <input
+                                        @ref="fileInput"
+                                        type="file"
+                                        accept="image/*"
+                                        class="hidden"/>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <Label For="fullName" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                        Nombre Completo
+                                    </Label>
+                                    <Input
+                                        Type="text"
+                                        @bind-Value="updateUser.FullName"
+                                        Id="fullName"
+                                        Name="fullName"
+                                        Placeholder="Juan Perez"
+                                        Autocomplete="off"
+                                        Required
+                                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"/>
+                                    <ValidationMessage For="() => updateUser.FullName" class="text-xs text-red-600"/>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label For="email" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                        Email
+                                    </Label>
+                                    <Input
+                                        Type="email"
+                                        @bind-Value="updateUser.Email"
+                                        Id="email"
+                                        Name="email"
+                                        Placeholder="juanperez@gmail.com"
+                                        Autocomplete="off"
+                                        Disabled
+                                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"/>
+                                    <ValidationMessage For="() => updateUser.Email" class="text-xs text-red-600"/>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <Label For="areas" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                        Área
+                                    </Label>
+                                    <Select TItem="Areas"
+                                            Items="@OptionsAreas"
+                                            Id="areas"
+                                            Value="AreaSeleccionada"
+                                            ValueChanged="OnAreaSelectedChanged!"
+                                            Placeholder="Selecciona el area al que perteneces"
+                                            ItemTextSelector="x => x.ToString()"
+                                            ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                            ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                            EnableSearch="false"
+                                            HeightClass="max-h-[120px]"
+                                            OnDropdownStateChanged="HandleDropdownState">
+                                    </Select>
+                                    <ValidationMessage For="() => updateUser.Area" class="text-xs text-red-600"/>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <Label For="role" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                        Rol
+                                    </Label>
+                                    <Input
+                                        Type="text"
+                                        Id="role"
+                                        Name="role"
+                                        @bind-Value="@User.Rol"
+                                        Placeholder="Usuario"
+                                        Autocomplete="off"
+                                        Disabled
+                                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"/>
+                                </div>
+                            </div>
+
+                        <div class="flex justify-start gap-2 pt-4">
+                            <Button Type="submit" Disabled="@(IsLoading)"
+                                    Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
+
+                                @if (IsLoading)
+                                {
+                                    <LoaderCircle Class="mr-3 size-5 animate-spin"/>
+                                    <span>Guardando cambios...</span>
+                                }
+                                else
+                                {
+                                    <Save Class="me-2 size-5"/>
+                                    <span>
+                                        Guardar Cambios
+                                    </span>
+                                }
+                            </Button>
+                        </div>
+                    </EditForm>
+                </CardContent>
+            </Card>
+
+
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                <CardHeader>
+                    <CardTitle Class="flex items-center gap-2">
+                        <Lock Class="h-5 w-5"/>
+                        Cambiar Contraseña
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <EditForm Model="updatePassword" novalidate class="space-y-4 mt-4" OnValidSubmit=@SendEditUserPassword FormName="EditUserPasswordForm">
+                        <DataAnnotationsValidator/>
+
+                        <div class="space-y-2">
+                            <Label For="password-hide" Id="password" Class="text-gray-700 dark:text-gray-300 mb-3 block">Contraseña Actual</Label>
+                            <div class="relative">
+                                <Input
+                                    Type="@(showPassword ? "text" : "password")"
+                                    @bind-Value="updatePassword.ActualPassword"
+                                    Id="@(showPassword ? "password-show" : "password-hide")"
+                                    Name="password"
+                                    Placeholder="****************"
+                                    Autocomplete="off"
+                                    Required
+                                    Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"/>
+
+                                <ShowPassword @bind-IsVisible="showPassword"/>
+                            </div>
+                            <ValidationMessage For="() => updatePassword.ActualPassword" class="text-xs text-red-600"/>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <Label For="passwordNew-hide" Id="passwordNew" Class="text-gray-700 dark:text-gray-300 mb-3 block">Nueva Contraseña</Label>
+                                <div class="relative">
+                                    <Input
+                                        Type="@(showPasswordNew ? "text" : "password")"
+                                        @bind-Value="updatePassword.NewPassword"
+                                        Id="@(showPasswordNew ? "passwordNew-show" : "passwordNew-hide")"
+                                        Name="passwordNew"
+                                        Placeholder="****************"
+                                        Autocomplete="off"
+                                        Required
+                                        Disabled=@(updatePassword.ActualPassword == "")
+                                        Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"/>
+
+                                    <ShowPassword @bind-IsVisible="showPasswordNew"/>
+                                </div>
+                                <ValidationMessage For="() => updatePassword.NewPassword" class="text-xs text-red-600"/>
+                            </div>
+                            <div class="space-y-2">
+                                <Label For="passwordConfirm-hide" Id="passwordConfirm" Class="text-gray-700 dark:text-gray-300 mb-3 block">Confirmar Contraseña</Label>
+                                <div class="relative">
+                                    <Input
+                                        Type="@(showPasswordConfirm ? "text" : "password")"
+                                        @bind-Value="updatePassword.ConfirmPassword"
+                                        Id="@(showPasswordConfirm ? "passwordConfirm-show" : "passwordConfirm-hide")"
+                                        Name="passwordConfirm"
+                                        Placeholder="****************"
+                                        Autocomplete="off"
+                                        Required
+                                        Disabled=@(updatePassword.ActualPassword == "")
+                                        Class="pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"/>
+
+                                    <ShowPassword @bind-IsVisible="showPasswordConfirm"/>
+                                </div>
+                                <ValidationMessage For="() => updatePassword.ConfirmPassword" class="text-xs text-red-600"/>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-start gap-2 pt-4">
+                            <Button Type="submit" Disabled="@(IsLoadingConfirm)"
+                                    Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
+
+                                @if (IsLoadingConfirm)
+                                {
+                                    <LoaderCircle Class="mr-3 size-5 animate-spin"/>
+                                    <span>Cambiando contraseña...</span>
+                                }
+                                else
+                                {
+                                    <Lock Class="me-2 size-5"/>
+                                    <span>
+                                        Cambiar contraseña
+                                    </span>
+                                }
+                            </Button>
+                        </div>
+                    </EditForm>
+                </CardContent>
+            </Card>
+
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                <CardHeader>
+                    <CardTitle Class="flex items-center gap-2">
+                        <Shield Class="h-5 w-5"/>
+                        Autenticación de Dos Factores
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-1">
+                            <h4 class="text-sm font-medium">
+                                Habilitar 2FA
+                            </h4>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                Agrega una capa extra de seguridad a tu cuenta
+                            </p>
+                        </div>
+                        <Switch Checked="twoFactorEnabled" CheckedChanged="HandleResolveCheck" Disabled="IsLoading2fa"/>
+                    </div>
+
+                    @if (twoFactorEnabled)
+                    {
+                        <div class="mt-4 p-4 bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-500/40 rounded-lg">
+                            <p class="text-sm text-green-800 dark:text-green-300">
+                                ✅ La autenticación de dos factores está activada. Tu cuenta está más segura.
+                            </p>
+                        </div>
+                    }
+                </CardContent>
+            </Card>
+
+            @* Ver luego cuando este implementado lo de auditoria *@
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                <CardHeader>
+                    <CardTitle Class="flex items-center gap-2">
+                        <Clock Class="h-5 w-5"/>
+                        Historial de Sesiones
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700">
+                        <Table>
+                            <TableHeader Class="[&_tr]:border-b-gray-200 [&_tr]:dark:border-b-gray-700">
+                                <TableRow Class="hover:bg-gray-400 dark:hover:bg-gray-700">
+                                    <TableHead>Fecha y Hora</TableHead>
+                                    <TableHead>Dispositivo</TableHead>
+                                    <TableHead>Ubicación</TableHead>
+                                    <TableHead>IP</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody Class="[&_tr]:border-b-gray-200 [&_tr]:dark:border-b-gray-700">
+                                <TableRow Id="@_guidBorrar.ToString()" Class="hover:bg-gray-400 dark:hover:bg-gray-700">
+                                    <TableCell Class="font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <Clock class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            2025-01-15 09:23
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <Monitor class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            Chrome en Windows
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <MapPin Class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            Buenos Aires, Argentina
+                                        </div>
+                                    </TableCell>
+                                    <TableCell Class="text-gray-500 dark:text-gray-400">
+                                        192.168.1.45
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge Class="bg-green-100 text-green-800 hover:bg-green-100">
+                                            Exitoso
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                                
+                                @* Borrar dsp *@
+                                <TableRow Id="@_guidBorrar.ToString()" Class="hover:bg-gray-400 dark:hover:bg-gray-700">
+                                    <TableCell Class="font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <Clock class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            2025-01-14 18:45
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <Smartphone class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            Safari en iPhone 15
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <MapPin Class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            Buenos Aires, Argentina
+                                        </div>
+                                    </TableCell>
+                                    <TableCell Class="text-gray-500 dark:text-gray-400">
+                                        192.168.1.102
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge Class="bg-green-100 text-green-800 hover:bg-green-100">
+                                            Exitoso
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+
+                                <TableRow Id="@_guidBorrar.ToString()" Class="hover:bg-gray-400 dark:hover:bg-gray-700">
+                                    <TableCell Class="font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <Clock class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            2025-01-14 08:12
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <Monitor class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            Chrome en Windows
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <MapPin Class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            Buenos Aires, Argentina
+                                        </div>
+                                    </TableCell>
+                                    <TableCell Class="text-gray-500 dark:text-gray-400">
+                                        192.168.1.45
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge Class="bg-green-100 text-green-800 hover:bg-green-100">
+                                            Exitoso
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+
+                                <TableRow Id="@_guidBorrar.ToString()" Class="hover:bg-gray-400 dark:hover:bg-gray-700">
+                                    <TableCell Class="font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <Clock class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            2025-01-13 14:33
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <Monitor class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            Firefox en Mac
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <MapPin Class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            Córdoba, Argentina
+                                        </div>
+                                    </TableCell>
+                                    <TableCell Class="text-gray-500 dark:text-gray-400">
+                                        10.0.0.23
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge Class="bg-red-100 text-red-800 hover:bg-red-100">
+                                            Fallido
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+
+                                <TableRow Id="@_guidBorrar.ToString()" Class="hover:bg-gray-400 dark:hover:bg-gray-700">
+                                    <TableCell Class="font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <Clock class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            2025-01-13 09:05
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <Monitor class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            Chrome en Windows
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div class="flex items-center gap-2">
+                                            <MapPin Class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                                            Buenos Aires, Argentina
+                                        </div>
+                                    </TableCell>
+                                    <TableCell Class="text-gray-500 dark:text-gray-400">
+                                        192.168.1.45
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge Class="bg-green-100 text-green-800 hover:bg-green-100">
+                                            Exitoso
+                                        </Badge>
+                                    </TableCell>
+                                </TableRow>
+                                @* Fin borrar dsp *@
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                <CardHeader>
+                    <div class="flex items-center justify-between">
+                        <CardTitle Class="flex items-center gap-2">
+                            <Smartphone Class="h-5 w-5"/>
+                            Dispositivos Conectados
+                        </CardTitle>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            Class="text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent cursor-pointer"
+                        >
+                            <LogOut Class="h-4 w-4 mr-2" />
+                            Cerrar todas las sesiones
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div class="space-y-4">
+                        <div id="@_guidBorrar.ToString()"
+                             class="p-4 rounded-lg border bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-500/40">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start gap-3">
+                                    <Monitor Class="h-5 w-5 text-gray-500 dark:text-gray-400 mt-1" />
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="font-semibold text-gray-500 dark:text-gray-400">
+                                                PC de Escritorio
+                                            </h4>
+                                            <Badge Class="bg-blue-500 hover:bg-blue-500">Sesión actual</Badge>
+                                        </div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            Chrome en Windows 11
+                                        </p>
+                                        <div class="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            <span class="flex items-center gap-1">
+                                                <Clock Class="h-3 w-3" />
+                                                Activo ahora
+                                            </span>
+                                            <span class="flex items-center gap-1">
+                                                <MapPin Class="h-3 w-3" />
+                                                Buenos Aires, Argentina
+                                            </span>
+                                            <span>192.168.1.45</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                @* <Button *@
+                                @*     Type="button" *@
+                                @*     Variant="ghost" *@
+                                @*     Size="sm" *@
+                                @*     Class="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer" *@
+                                @* > *@
+                                @*     <LogOut Class="h-4 w-4" /> *@
+                                @* </Button> *@
+                            </div>
+                        </div>
+                        
+                        @* Borrar dsp *@
+                        <div id="@_guidBorrar.ToString()"
+                             class="p-4 rounded-lg border bg-white border-gray-200 dark:bg-gray-700 dark:border-gray-600">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start gap-3">
+                                    <Smartphone Class="h-5 w-5 text-gray-500 dark:text-gray-400 mt-1" />
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="font-semibold text-gray-500 dark:text-gray-400">
+                                                iPhone Personal
+                                            </h4>
+                                        </div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            Safari en iOS 18
+                                        </p>
+                                        <div class="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            <span class="flex items-center gap-1">
+                                                <Clock Class="h-3 w-3" />
+                                                Hace 2 horas
+                                            </span>
+                                            <span class="flex items-center gap-1">
+                                                <MapPin Class="h-3 w-3" />
+                                                Buenos Aires, Argentina
+                                            </span>
+                                            <span>
+                                                192.168.1.102
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <Button
+                                    Type="button"
+                                    Variant="ghost"
+                                    Size="sm"
+                                    Class="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                                >
+                                    <LogOut Class="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                        <div id="@_guidBorrar.ToString()"
+                             class="p-4 rounded-lg border bg-white border-gray-200 dark:bg-gray-700 dark:border-gray-600">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start gap-3">
+                                    <Monitor Class="h-5 w-5 text-gray-500 dark:text-gray-400 mt-1" />
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="font-semibold">
+                                                Laptop Trabajo
+                                            </h4>
+                                        </div>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            Chrome en Ubuntu
+                                        </p>
+                                        <div class="flex items-center gap-4 mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            <span class="flex items-center gap-1">
+                                                <Clock Class="h-3 w-3" />
+                                                Hace 1 día
+                                            </span>
+                                            <span class="flex items-center gap-1">
+                                                <MapPin Class="h-3 w-3" />
+                                                Buenos Aires, Argentina
+                                            </span>
+                                            <span>
+                                                10.0.0.87
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <Button
+                                    Type="button"
+                                    Variant="ghost"
+                                    Size="sm"
+                                    Class="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                                >
+                                    <LogOut Class="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                        @* Fin Borrar dsp *@
+                    </div>
+                </CardContent>
+            </Card>
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                <CardHeader>
+                    <CardTitle Class="flex items-center gap-2">
+                        <Activity Class="h-5 w-5"/>
+                        Actividad Reciente
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="space-y-4">
+                        <div id="@_guidBorrar.ToString()" class="flex items-start gap-3 pb-4 border-b border-b-gray-200 dark:border-b-gray-700  last:border-0">
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full">
+                                <Lock Class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium">
+                                    Cambió contraseña
+                                </p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    2025-01-10 a las 15:22
+                                </p>
+                            </div>
+                        </div>
+                        
+                        @* Borrar dsp *@
+                        <div id="@_guidBorrar.ToString()" class="flex items-start gap-3 pb-4 border-b border-b-gray-200 dark:border-b-gray-700 last:border-0">
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full">
+                                <User Class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium">
+                                    Actualizó información de perfil
+                                </p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    2025-01-08 a las 10:15
+                                </p>
+                            </div>
+                        </div>
+
+                        <div id="@_guidBorrar.ToString()" class="flex items-start gap-3 pb-4 border-b border-b-gray-200 dark:border-b-gray-700 last:border-0">
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full">
+                                <Shield Class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium">
+                                    Activó autenticación 2FA
+                                </p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    2025-01-05 a las 09:30
+                                </p>
+                            </div>
+                        </div>
+
+                        <div id="@_guidBorrar.ToString()" class="flex items-start gap-3 pb-4 border-b border-b-gray-200 dark:border-b-gray-700 last:border-0">
+                            <div class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full">
+                                <User Class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium">
+                                    Cambió email de recuperación
+                                </p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    2025-01-02 a las 14:45
+                                </p>
+                            </div>
+                        </div>
+                        @* Fin Borrar dsp *@
+                    </div>
+                </CardContent>
+            </Card>
+
+            @* Fin Ver luego cuando este implementado lo de auditoria *@
+        </div>
+    }
+</div>

@@ -6,9 +6,9 @@ using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
+using AppTiemposV3.SharedClases.DTOs.Users;
 using AppTiemposV3.SharedClases.Enums;
 using AutoMapper;
-using UserDto = AppTiemposV3.SharedClases.DTOs.Requeriments.UserDto;
 
 namespace AppTiemposV3.Api.Utilidades
 {
@@ -23,6 +23,7 @@ namespace AppTiemposV3.Api.Utilidades
             MappingInvitations();
             MappingRejections();
             MappingRejectionDetails();
+            MappingUsers();
         }
 
         public void MappingRequeriments()
@@ -40,7 +41,7 @@ namespace AppTiemposV3.Api.Utilidades
                 .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado));
          
             CreateMap<CategoriesEntity, CategoryDtoA>();
-            CreateMap<UserEntity, UserDto>();
+            CreateMap<UserEntity, UserDtoR>();
         }
 
         public void MappingCategories()
@@ -130,6 +131,13 @@ namespace AppTiemposV3.Api.Utilidades
             CreateMap<RejectionDetailEntity, RejectionDetailResponseDto>();
             
             CreateMap<RequerimentsEntity, RequerimentDtoRej>();
+        }
+
+        public void MappingUsers()
+        {
+            CreateMap<UserEntity, UserResponseDto>();
+            CreateMap<UpdateUserDto, UserEntity>();
+            CreateMap<UpdatePasswordUserDto, UserEntity>();
         }
     }
 }

@@ -1,9 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using AppTiemposV3.SharedClases.Enums;
 
-namespace AppTiemposV3.SharedClases.DTOs;
+namespace AppTiemposV3.SharedClases.DTOs.Users;
 
-public class UserDto
+public class UserResponseDto
 {
     [Required]
     [Length(2, 150)]
@@ -15,16 +15,9 @@ public class UserDto
     [EmailAddress]
     [DataType(DataType.EmailAddress)]
     public string Email { get; set; } = string.Empty;
-
-    [Required]
-    [DataType(DataType.Password)]
-    public string Password { get; set; } = string.Empty;
-
-    [Required]
-    [DataType(DataType.Password)]
-    [Compare(nameof(Password))]
-    public string ConfirmPassword { get; set; } = string.Empty; 
     
     //public string? ImageUrl { get; set; } = string.Empty;
     public string? Rol { get; set; } = string.Empty;
+    
+    public bool TwoFactorEnable  { get; set; } = false;
 }

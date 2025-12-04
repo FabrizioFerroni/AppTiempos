@@ -18,3 +18,7 @@ window.registerThemeChangeHandler = (dotNetHelper) => {
     const html = document.documentElement;
     observer.observe(html, { attributes: true, attributeFilter: ['class'] });
 };
+
+window.openFileDialog = (input) => {
+    input.click();
+};

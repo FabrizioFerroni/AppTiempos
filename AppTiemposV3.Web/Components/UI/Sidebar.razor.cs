@@ -154,6 +154,27 @@ public partial class Sidebar : ComponentBase, IDisposable
                    : $"{currentColor.Hover} text-gray-700 dark:text-gray-300 hover:text-gray-300");
     }
     
+    private string GetPerfilClass(string url, bool isClosed)
+    {
+        string currentUrl = CurrentUrl;
+
+        bool isActive = CurrentUrl == url;
+        
+        if (!isActive)
+        {
+            if (url == "/app/perfil" && currentUrl.StartsWith("/app/perfil/", StringComparison.OrdinalIgnoreCase))
+                isActive = true;
+        }
+
+        ColorModel? currentColor = ColorService.GetCurrentColor();
+        return $"flex items-center gap-3 mb-3 w-full rounded-lg hover:bg-gray-100  cursor-pointer { currentColor!.Hover} " +
+               (isClosed ? " ": " p-2 ") +
+               (isActive
+                   ? $" {currentColor.Gradient} text-gray-100"
+                   : $" {currentColor.Hover} text-gray-700 dark:text-gray-300 hover:text-gray-300");
+    }
+    
+    
     private static RenderFragment GetItemIcon(string menu) => builder =>
     {
         switch (menu)
