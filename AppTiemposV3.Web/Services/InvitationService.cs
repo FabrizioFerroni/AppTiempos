@@ -145,16 +145,7 @@ public class InvitationService : IInvitationContract<InvitationResponseDto>
 
         return await response.Content.ReadFromJsonAsync<GeneralResponse>() ??  new GeneralResponse(false, "Hubo un error."); 
     }
-
-    /*public async Task<DataResponse<EstadosInvitaciones>> VerifyInvitation(string token)
-    {
-        DataResponse<EstadosInvitaciones>? invitation = await _httpClient.GetFromJsonAsync<DataResponse<EstadosInvitaciones>>($"{BaseUrl}/invitations/verify/{token}", options);
-        
-        if (invitation is null) 
-            return new DataResponse<EstadosInvitaciones>(true, EstadosInvitaciones.SinAceptar, HttpStatusCode.OK);
-        
-        return invitation;
-    }*/
+    
     public async Task<DataResponse<EstadosInvitaciones>> VerifyInvitation(string token)
     {
         var responseString = await _httpClient
