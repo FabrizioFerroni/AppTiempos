@@ -1,0 +1,123 @@
+<Modal Method="newInvitation" IdElement="Id" Id=@($"dialog-modal-new-invitation-{IdModalStr}") Class="select-none">
+    <div class="px-6 my-4">
+        <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+            <span class="text-gray-700 dark:text-gray-300 text-md flex items-center gap-2">
+                <Mail Class="h-5 w-5" />
+                Solicitar Acceso al Sistema
+            </span>
+            <Button
+                Variant="ghost"
+                Size="sm"
+                Command="close"
+                CommandFor=@($"newInvitation-{Id}")
+                Class="text-xs cursor-pointer"
+                Disabled="@(IsLoadingNew)"
+            >
+                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+            </Button>
+        </div>
+
+        @if (isError)
+        {
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative mt-2" role="alert">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                <div class="block sm:inline">
+                    @messageError
+                </div>
+                <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
+                    <Close Class="h-6 w-6 text-red-500"/>
+                </button>
+            </div>
+        }
+        
+        <EditForm Enhance Model=@createDto class="space-y-4 mt-4" novalidate OnValidSubmit=@SendCreateInvitation FormName="CreateInvitationForm">
+            <DataAnnotationsValidator/>
+
+            <div class="space-y-2">
+                <Label For="nombreCompleto" Id="nombreCompletoLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Nombre Completo
+                </Label>
+                <Input
+                    Type="text"
+                    @bind-Value="createDto.FullName"
+                    Id="nombreCompleto"
+                    Name="nombreCompleto"
+                    Placeholder="Ej: Jhon Doe"
+                    Autocomplete="off"
+                    Required
+                    Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+                <ValidationMessage For="() => createDto.FullName" class="text-xs text-red-600"/>
+            </div>
+
+            <div class="space-y-2">
+                <Label For="Email" Id="EmailLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Email
+                </Label>
+                <Input
+                    Type="email"
+                    @bind-Value="createDto.Email"
+                    Id="Email"
+                    Name="Email"
+                    Placeholder="Ej: jhondoe@gmail.com"
+                    Autocomplete="off"
+                    Required
+                    Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+                <ValidationMessage For="() => createDto.Email" class="text-xs text-red-600"/>
+            </div>
+
+            <div class="space-y-2">
+                <Label For="Reason" Id="ReasonLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Motivo de la solicitud
+                </Label>
+                <TextArea
+                    Id="Reason"
+                    Placeholder="Explica por qué necesitas acceso al sistema ..."
+                    @bind-Value=@createDto.Reason
+                    Required
+                    Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    Rows="3"
+                >
+                </TextArea>
+                <ValidationMessage For="() => createDto.Reason" class="text-xs text-red-600"/>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+                <div class="flex gap-2">
+                    <Button
+                        Type="button"
+                        Variant="outline"
+                        Disabled="@(IsLoadingNew)"
+                        Class="text-gray-700 dark:text-gray-300 cursor-pointer"
+                        Command="close"
+                        CommandFor="@($"newInvitation-{Id}")"
+                    >
+                        <Close Class="w-4 h-4 mr-2" />
+                        Cancelar
+                    </Button>
+                    <Button Type="submit" Disabled="@(IsLoadingNew)"
+                            Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
+
+                        @if (IsLoadingNew)
+                        {
+                            <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                            <span>Creando solicitud...</span>
+                        }
+                        else
+                        {
+                            <Plus Class="me-2 size-5" />
+                            <span>
+                                Crear solicitud
+                            </span>
+                        }
+                    </Button>
+                </div>
+            </div>
+        </EditForm>
+        
+    </div>
+</Modal>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNew-{Id}") command="show-modal" commandfor=@($"newInvitation-{Id}")></button>      
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalNew-{Id}") command="close" commandfor="@($"newInvitation-{Id}")"></button> 

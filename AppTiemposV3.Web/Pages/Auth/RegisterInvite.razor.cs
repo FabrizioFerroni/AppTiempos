@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.Web.Services;
 using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
@@ -11,16 +12,18 @@ using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
 namespace AppTiemposV3.Web.Pages.Auth;
 
-public partial class RegisterInvite : ComponentBase
+public partial class RegisterInvite : ComponentBase, IDisposable
 {
     [Parameter]
     public string Token { get; set; } = string.Empty;
     
     [Inject] private IAuthContract? AuthService { get; set; }
+    [Inject] private IInvitationContract<InvitationResponseDto> InvitationService { get; set; }
     [Inject] private ColorService ColorService { get; set; } = null!;
     public bool IsCreated { get; set; } = false;
     public bool IsTokenInvalid { get; set; } = false;
     private bool isLoading = false;
+    private bool isLoadingData = false;
     private bool isError = false;
     private MarkupString messageError = new MarkupString("");
     private bool showPassword = false;
@@ -38,6 +41,7 @@ public partial class RegisterInvite : ComponentBase
         .ToList();
     
     private Areas? AreaSeleccionadaNullable = null;
+    private EstadosInvitaciones _status = EstadosInvitaciones.SinAceptar;
     
     private Areas AreaSeleccionada
     {
@@ -59,6 +63,8 @@ public partial class RegisterInvite : ComponentBase
     
     protected override async void OnInitialized()
     {
+        await ValidateToken(Token);
+
         Dictionary<string, string>? datos = LeerToken<Dictionary<string, string>>(Token);
         
         if (datos == null || !datos.ContainsKey("nombre") || !datos.ContainsKey("email"))
@@ -93,7 +99,36 @@ public partial class RegisterInvite : ComponentBase
 
         register!.FullName = nombre;
         register!.Email = email;
+        StateHasChanged();
     }
+
+    private async Task ValidateToken(string token)
+    {
+        try
+        {
+            isLoadingData = true;
+            StateHasChanged();
+            
+            DataResponse<EstadosInvitaciones> response = await InvitationService.VerifyInvitation(token);
+
+            if (response.Success)
+            {
+                _status = response.Data;
+            }
+            
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        finally
+        {
+            isLoadingData = false;
+            StateHasChanged();
+        }
+    } 
     
     private async void HandleColorChanged()
     {

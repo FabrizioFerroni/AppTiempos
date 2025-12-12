@@ -23,6 +23,7 @@ using AppTiemposV3.Api.Services;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
+using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
@@ -201,6 +202,7 @@ services.AddScoped<ICategoryContract<CategoryResponseDto>, CategoryRepository>()
 services.AddScoped<ITrainingContract<TrainingResponseDto>, TrainingRepository>();
 services.AddScoped<IRejectionContract<RejectionResponseDto>, RejectionRepository>();
 services.AddScoped<IRejectionDetailContract<RejectionDetailResponseDto>, RejectionDetailsRepository>();
+services.AddScoped<IInvitationContract<InvitationResponseDto>, InvitationRepository>();
 services.AddScoped<IUserCContract<UserResponseDto>, UserRepository>();
 services.AddScoped<IUserContract, UserContextService>();
 services.AddScoped<IGenericContract, GenericRepository>();

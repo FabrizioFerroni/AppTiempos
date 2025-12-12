@@ -2,6 +2,7 @@
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Categories;
+using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
@@ -24,6 +25,7 @@ namespace AppTiemposV3.Api.Utilidades
             MappingRejections();
             MappingRejectionDetails();
             MappingUsers();
+            MappingInvitation();
         }
 
         public void MappingRequeriments()
@@ -138,6 +140,13 @@ namespace AppTiemposV3.Api.Utilidades
             CreateMap<UserEntity, UserResponseDto>();
             CreateMap<UpdateUserDto, UserEntity>();
             CreateMap<UpdatePasswordUserDto, UserEntity>();
+        }
+
+        private void MappingInvitation()
+        {
+            CreateMap<CreateInvitationDto, InvitationEntity>();
+            CreateMap<InvitationEntity, InvitationResponseDto>();
+            CreateMap<AcceptOrDeclineInvitationDto, InvitationEntity>();
         }
     }
 }

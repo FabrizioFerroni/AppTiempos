@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.Web.Services;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using Microsoft.AspNetCore.Components;
@@ -10,7 +11,7 @@ namespace AppTiemposV3.Web.Pages.Auth;
 
 public partial class Invite : ComponentBase
 {
-    [Inject] private IAuthContract? AuthService { get; set; }
+    [Inject] private IInvitationContract<InvitationResponseDto> InvitationService { get; set; } = null!;
     [Inject] private ColorService ColorService { get; set; } = null!;
     private bool isSubmitted = false;
     private bool isLoading = false;
@@ -19,7 +20,7 @@ public partial class Invite : ComponentBase
     private MarkupString messageError = new MarkupString("");
     [Inject] private IJSRuntime? Js { get; set; }
     
-    private InviteDto invite = new InviteDto
+    private CreateInvitationDto invite = new ()
     {
         FullName = null,
         Email = null,
@@ -43,7 +44,7 @@ public partial class Invite : ComponentBase
             isLoading = true;
             StateHasChanged();
             
-            GeneralResponse? response = await AuthService!.Invite(invite);
+            GeneralResponse? response = await InvitationService!.CreateInvitation(invite);
             
             if (response?.Flag == true)
             {

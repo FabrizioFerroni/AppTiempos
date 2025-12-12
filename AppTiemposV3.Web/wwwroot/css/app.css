@@ -143,3 +143,7 @@ input[type="date"] {
     appearance: none;
     -webkit-appearance: none;
 }
+
+.pacciones{
+    padding-right: 60px !important;
+}

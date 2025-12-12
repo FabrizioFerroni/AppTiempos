@@ -18,10 +18,11 @@ public class InvitationEntity : BaseEntity
     
     public bool Accepted { get; set; } = false;
     
+    public bool Declined { get; set; } = false;
+    
     public bool Finished { get; set; } = false;
     
-    [Required]
-    public required string Token { get; set; }
+    public string? Token { get; set; }
     
     public DateTime DateReceived { get; set; } = DateTime.Now;
     

@@ -8,6 +8,7 @@ public partial class SearchInput : ComponentBase
     [Parameter] public EventCallback<string?> ValueChanged { get; set; }
     [Parameter] public string? Placeholder { get; set; }
     [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Id { get; set; }
     [Parameter] public EventCallback<string?> OnSearch { get; set; }
     [Parameter] public int Delay { get; set; } = 500;
     [Parameter] public bool Disabled { get; set; }
