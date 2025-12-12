@@ -1357,6 +1357,9 @@
   .border-purple-200 {
     border-color: var(--color-purple-200);
   }
+  .border-red-300 {
+    border-color: var(--color-red-300);
+  }
   .border-red-400 {
     border-color: var(--color-red-400);
   }
@@ -3004,6 +3007,11 @@
       }
     }
   }
+  .dark\:border-red-500 {
+    &:where(.dark, .dark *) {
+      border-color: var(--color-red-500);
+    }
+  }
   .dark\:border-b-gray-700 {
     &:where(.dark, .dark *) {
       border-bottom-color: var(--color-gray-700);
@@ -3935,6 +3943,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 input[type="date"] {
   appearance: none;
   -webkit-appearance: none;
+}
+.pacciones {
+  padding-right: 60px !important;
 }
 @property --tw-translate-x {
   syntax: "*";

@@ -1,0 +1,304 @@
+
+@page "/app/invitaciones"
+@using AppTiemposV3.SharedClases.DTOs.Invitations
+@using AppTiemposV3.SharedClases.Enums
+@using static AppTiemposV3.Web.Utils.Helpers
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
+@using AppTiemposV3.Web.Pages.Invitations.Modales
+
+<PageTitle>Solicitud de Registro| TimeTracker Pro</PageTitle>
+
+<div class="flex flex-col w-full select-none">
+    <Navbar Title="Gestión de Invitaciones" Subtitle="Administra las solicitudes de acceso al sistema" OnToggleSidebar="HandleSidebarToggle">
+        <div class="text-right flex items-center gap-2">
+            @* <WorkHoursConfig /> *@
+            <Button
+                Class="@($"{ColorService.GetButtonClassess()} {((IsLoading) ? "cursor-not-allowed" : "cursor-default")}")"
+                Disabled=@(IsLoading)
+                OnClick="() => NewModal()"
+                Id="btn-NewInvitacion"
+            >
+                <UserPlus Class="h-4 w-4 mr-2"/>
+                Nueva Solicitud
+            </Button>
+        </div>
+    </Navbar>
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            @* Filtros *@
+            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                <CardHeader>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <CardTitle Class="text-lg flex items-center gap-2">
+                                <Filter Class="w-5 h-5" />
+                                Filtros Avanzados
+                            </CardTitle>
+                            @if (activeFiltersCount > 0)
+                            {
+                                <Badge Variant="secondary" Class="bg-blue-100 text-blue-800">
+                                    @($"{activeFiltersCount} {Plural(activeFiltersCount, "activo", "activos")}")
+                                </Badge>
+                            }
+                        </div>
+                        <div className="flex items-center gap-2">
+                            @if (activeFiltersCount > 0)
+                            {
+                                <Button Variant="outline" Size="sm" OnClick="() => LimpiarFiltros()"  Class="cursor-pointer">
+                                    <Close Class="w-4 h-4 mr-1" />
+                                    Limpiar
+                                </Button>
+                            }
+                            <Button
+                                Variant="ghost"
+                                Size="sm"
+                                Class="cursor-pointer"
+                                OnClick="() => { isOpenFiltros = !isOpenFiltros; StateHasChanged(); }">
+                                @if (!isOpenFiltros)
+                                {
+                                    <ChevronDown Class="w-4 h-4"/>
+                                }
+                                else
+                                {
+                                    <ChevronUp Class="w-4 h-4"/>
+                                }
+                            </Button>
+                        </div>
+                    </div>
+                </CardHeader>
+
+                @if (isOpenFiltros)
+                {
+                    <CardContent>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <div>
+                                <Label For="search" Id="searchLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                   Nombre o Email
+                                </Label>
+                                <div class="relative">
+                                    <Search Class="absolute left-3 top-1/2 -translate-y-1/2 transform  text-gray-400 w-4 h-4 "/>
+                                    <SearchInput
+                                        @bind-Value="search"
+                                        Placeholder="Buscar por nombre o email..."
+                                        OnSearch="@DoSearch"
+                                        Delay="400"
+                                        Id="search"
+                                        Class="pl-10 pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"/>
+                                </div>
+                            </div>
+                        
+                            <div>
+                                <Label For="dateIn" Id="dateLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                    Fecha Desde
+                                </Label>
+                                <CalendarFilterView
+                                    Id="dateIn"
+                                    weekNumber=@weekNumberSelected
+                                    Mode="CalendarMode.Single"
+                                    AllowFutureDates="false"
+                                    OnDateSelected="DateChangedFrom"
+                                    OnDropdownStateChanged="HandleDropdownState"
+                                    ClassDiv="w-full"
+                                    ClassButton="w-full font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 h-10  px-3 py-2"
+                                />
+                            </div>
+
+                            <div>
+                                <Label For="dateHasta" Id="dateHastaLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                    Fecha Hasta
+                                </Label>
+                                <CalendarFilterView
+                                    Id="dateHasta"
+                                    weekNumber=@weekNumberSelected
+                                    Mode="CalendarMode.Single"
+                                    Disabled=@(filterDto.DateReceivedFrom is null)
+                                    OnDateSelected="DateChangedTo"
+                                    OnDropdownStateChanged="HandleDropdownState"
+                                    ClassDiv="w-full"
+                                    ClassButton="w-full font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 h-10  px-3 py-2"
+                                />
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end items-center mt-4">
+                            <Button
+                                Variant="ghost"
+                                Size="sm"
+                                Class=@($"cursor-pointer {ColorService.GetButtonClassess()}")
+                                OnClick="async () => await FilterSearch()"
+                                Disabled=@isLoadingFiltros
+                            >
+                                @if (isLoadingFiltros)
+                                {
+                                    <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                    <span>Filtrando...</span>
+                                }
+                                else
+                                {
+                                    <Filter Class="w-4 h-4 mr-2 size-5"/>
+                                    <span>Filtrar</span>
+                                }
+                            </Button>
+                        </div>
+                    </CardContent>
+                }
+            </Card>
+            @* Fin filtros *@
+            @* Card Datos *@
+            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90")>
+                <CardHeader>
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <CardTitle class="flex items-center gap-2">
+                                <UserPlus Class="h-5 w-5" />
+                                Solicitudes de Acceso
+                            </CardTitle>
+                        </div>
+
+                        <div class="flex justify-end items-center gap-3">
+                            @if (!IsLoading)
+                            {
+                                <div class="w-16">
+                                    <Select TItem="int"
+                                            Items="@OptionsPaginated"
+                                            Value="@registrosPorPagina"
+                                            ValueChanged="OnPaginatedSelectedChanged"
+                                            Placeholder="Paginado"
+                                            ItemTextSelector="x => x.ToString()"
+                                            ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500"
+                                            ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500">
+                                    </Select>
+                                </div>
+                                <div class="w-44">
+                                    <Select TItem="string"
+                                            Items="@OptionsOrders"
+                                            Value="@ordenar"
+                                            ValueChanged="OnOrderSelectedChanged!"
+                                            Placeholder="Ordenar por"
+                                            ItemTextSelector="x => x"
+                                            ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500"
+                                            ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500">
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Button
+                                        OnClick="() => OnAscendingChanged()"
+                                        Variant=""
+                                        Size=""
+                                        Class="flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50  cursor-pointer font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white dark:hover:bg-gray-500">
+                                        @if (ascending)
+                                        {
+                                            <ArrowUpAz Class="h-4 w-4" />
+                                        }
+                                        else
+                                        {
+                                            <ArrowDownAz Class="h-4 w-4" />
+                                        }
+                                    </Button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    @if (IsLoading)
+                    {
+                        <div class="flex flex-col items-center justify-center py-12 text-center">
+                            <LoaderCircle Class="w-16 h-16 mb-4 animate-spin"/>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                Cargando invitaciones
+                            </h3>
+                            <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                                Espere unos segundos ...
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (Invitations.Count == 0)
+                        {
+                            <div class="flex flex-col items-center justify-center py-12 text-center">
+                                <UserPlus Class="w-16 h-16 mb-4 text-gray-400"/>
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    No hay invitaciones
+                                </h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-4">
+                                    No tienes invitaciones registradas
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="overflow-x-auto rounded-md border border-gray-200 dark:border-gray-700">
+                                <Table>
+                                    <TableHeader Class="[&_tr]:border-b-gray-200 [&_tr]:dark:border-b-gray-700">
+                                        <TableRow Class="hover:bg-gray-400 dark:hover:bg-gray-700">
+                                            <TableHead>Nombre Completo</TableHead>
+                                            <TableHead>Email</TableHead>
+                                            <TableHead>Fecha de Solicitud</TableHead>
+                                            <TableHead Class="text-center flex justify-end items-center pacciones">Acciones</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody Class="[&_tr]:border-b-gray-200 [&_tr]:dark:border-b-gray-700">
+                                        @foreach (InvitationResponseDto item in Invitations)
+                                        {
+                                            <TableRow Id="@item.Id.ToString()" Class="hover:bg-gray-400 dark:hover:bg-gray-700">
+                                                <TableCell Class="font-medium text-gray-700 dark:text-gray-300">
+                                                    @item.FullName
+                                                </TableCell>
+                                                <TableCell Class="text-gray-700 dark:text-gray-300">
+                                                    @item.Email
+                                                </TableCell>
+                                                <TableCell Class="text-gray-700 dark:text-gray-300">
+                                                    @FormatDateOnly(item.DateReceived)
+                                                </TableCell>
+                                                <TableCell Class="text-center flex justify-end items-center">
+                                                    <Button
+                                                        Variant="ghost"
+                                                        Size="sm"
+                                                        OnClick="() => ShowModal(item.Id)"
+                                                        Class="cursor-pointer text-gray-700 dark:text-gray-300"
+                                                    >
+                                                        <Eye Class="h-4 w-4 mr-2" />
+                                                        Ver Detalles
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        }
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        }
+                    }
+
+                    @if (!IsLoading || !IsLoadingBackend)
+                    {
+                        <Paginado T="InvitationResponseDto"
+                                  Content="Invitations"
+                                  PageNumber="pagina"
+                                  Size="registrosPorPagina"
+                                  TotalElements="totalElements"
+                                  CurrentPage="currentPage"
+                                  TotalPages="totalPages"
+                                  MaxVisiblePages="maxVisiblePages"
+                                  IsFirst="isFirst"
+                                  IsLast="isLast"
+                                  ShowCantPages="!IsLoadingBackend"
+                                  FirstPage="First"
+                                  LastPage="Last"
+                                  RewindPage="Rewind"
+                                  ForwardPage="Forward"
+                                  OnSetPage="SetPage"
+                        />
+
+                    }
+                </CardContent>
+            </Card>
+            @* Fin Card Datos *@
+            @* Modales *@
+            <NewInvitationAdminModal @ref="newModalRef" OnSaved="HandleSaved" />
+            <DetailsInvitationModal @ref="detailModalRef" OnSaved="HandleSaved"/>
+            @* Fin Modales *@
+        </div>
+    </article>
+</div>

@@ -1,0 +1,121 @@
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
+
+<Modal Method="showInvitation" IdElement="Id" Id=@($"dialog-modal-show-invitation-{IdModalStr}") Class="select-none">
+    <div class="px-6 my-4">
+        <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+            <span class="text-gray-700 dark:text-gray-300 text-md flex items-center gap-2">
+                <Eye Class="h-5 w-5" />
+                Detalle de la Solicitud
+            </span>
+            <Button
+                Variant="ghost"
+                Size="sm"
+                Command="close"
+                CommandFor=@($"showInvitation-{Id}")
+                Disabled="@(IsLoadingD || IsLoadingA)"
+                Class="text-xs cursor-pointer"
+            >
+                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+            </Button>
+        </div>
+        @if (IsLoadingData)
+        {
+            <div class="flex flex-col items-center justify-center py-12 text-center">
+                <LoaderCircle Class="w-16 h-16 mb-4 animate-spin text-gray-900 dark:text-gray-100"/>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                    Cargando datos de la invitación
+                </h3>
+                <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                    Espere unos segundos ...
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="space-y-4">
+                <div>
+                    <Label Class="text-sm font-medium text-gray-800 dark:text-gray-400">
+                        Nombre Completo
+                    </Label>
+                    <p class="text-base font-medium mt-1 text-gray-700 dark:text-gray-300">
+                        @Invitation.FullName
+                    </p>
+                </div>
+
+                <div>
+                    <Label Class="text-sm font-medium text-gray-800 dark:text-gray-400">
+                        Email
+                    </Label>
+                    <p class="text-base mt-1 text-gray-700 dark:text-gray-300">
+                        @Invitation.Email
+                    </p>
+                </div>
+
+                <div>
+                    <Label Class="text-sm font-medium text-gray-800 dark:text-gray-400">
+                        Fecha de Solicitud
+                    </Label>
+                    <p class="text-base mt-1 text-gray-700 dark:text-gray-300">
+                        @FormatDateOnly(Invitation.DateReceived)
+                    </p>
+                </div>
+
+                <div>
+                    <Label Class="text-sm font-medium text-gray-800 dark:text-gray-400">
+                        Motivo de la Solicitud
+                    </Label>
+                    <div class="mt-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600">
+                        <p class="text-sm mt-1 text-gray-700 dark:text-gray-300 leading-relaxed">
+                            @Invitation.Reason
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 pt-4">
+                    <Button
+                        Variant="outline"
+                        Class="flex-1 border-red-300 cursor-pointer dark:border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        OnClick="() => AcceptOrDeclineInvitation(false)"
+                        Disabled="@(IsLoadingD || IsLoadingA)"
+                    >
+                        @if (IsLoadingD)
+                        {
+                            <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                            <span>Denegando solicitud...</span>
+                        }
+                        else
+                        {
+                            <XCircle Class="h-4 w-4 mr-2" />
+                            <span>
+                                Denegar
+                            </span>
+                        }
+                    </Button>
+
+                    <Button
+                        Variant="outline"
+                        Class=@($"{ColorService.GetButtonClassess()} flex-1")
+                        OnClick="() => AcceptOrDeclineInvitation(true)"
+                        Disabled="@(IsLoadingA || IsLoadingD)"
+                    >                        
+                        @if (IsLoadingA)
+                        {
+                            <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                            <span>Aceptando solicitud...</span>
+                        }
+                        else
+                        {
+                            <CheckCircle Class="h-4 w-4 mr-2" />
+                            <span>
+                                Aceptar Solicitud
+                            </span>
+                        }
+                    </Button>
+                </div>
+            </div>
+        }
+    </div>
+</Modal>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNew-{Id}") command="show-modal" commandfor=@($"showInvitation-{Id}")></button>      
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalNew-{Id}") command="close" commandfor="@($"showInvitation-{Id}")"></button> 
