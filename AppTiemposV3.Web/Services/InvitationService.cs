@@ -148,13 +148,12 @@ public class InvitationService : IInvitationContract<InvitationResponseDto>
     
     public async Task<DataResponse<EstadosInvitaciones>> VerifyInvitation(string token)
     {
-        var responseString = await _httpClient
+        DataResponse<string>? responseString = await _httpClient
             .GetFromJsonAsync<DataResponse<string>>($"{BaseUrl}/invitations/verify/{token}", options);
 
         if (responseString is null)
             return new DataResponse<EstadosInvitaciones>(true, EstadosInvitaciones.SinAceptar, HttpStatusCode.OK);
 
-        // Convertimos el string a enum
         EstadosInvitaciones estado = Enum.Parse<EstadosInvitaciones>(responseString.Data);
 
         return new DataResponse<EstadosInvitaciones>(responseString.Success, estado, responseString.Status);
