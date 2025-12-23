@@ -1,22 +1,20 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Net;
-using System.Security.Claims;
-using System.Text;
 using AppTiemposV3.Api.Data;
 using AppTiemposV3.Api.Entities;
 using AppTiemposV3.Api.Files.MailTemplates.Models;
 using AppTiemposV3.SharedClases.Constants;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
-using static AppTiemposV3.Api.Utilidades.DateUtils;
-using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
 using AppTiemposV3.SharedClases.Exceptions;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Security.Claims;
+using System.Text;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
 
 namespace AppTiemposV3.Api.Repositories;
 
@@ -165,7 +163,6 @@ public class AuthRepository : IAuthContract
             
             _dbContext.Invitations.Update(invitation);
             await EnsureSavedAsync("Hubo un error al actualizar la invitacion. Intente mas tarde");
-            
 
             return new GeneralResponse(true, "El usuario ha sido registrado");
         }
@@ -212,13 +209,12 @@ public class AuthRepository : IAuthContract
         _dbContext.Invitations.Update(invitation);
         await EnsureSavedAsync("Hubo un error al actualizar la invitacion. Intente mas tarde");
 
-
         return new GeneralResponse(true, "Se actualizo con exito la invitacion");
     }
 
     public async Task<LoginResponse?> Login(LoginDto dto, string origin)
     {
-            if (dto == null) throw new BadRequestException( "El dto está vacío");
+            if (dto == null) throw new BadRequestException("El dto está vacío");
 
             UserEntity? user = await _userManager.FindByEmailAsync(dto.Email);
 
@@ -244,7 +240,8 @@ public class AuthRepository : IAuthContract
                 string code = await _userManager.GenerateTwoFactorTokenAsync(user, "Email");
 
                 await Send2FaCode(user.Email!, code, user.UserName!, user.FullName);
-                
+
+           
                 _logger.LogInformation($"Se ha enviado el codigo al email {user.Email} para que pueda iniciar sesión");
                 return new LoginResponse(true, true, null!, $"Se te ha enviado el codigo al email {user.Email} para que puedas iniciar sesión");
                 
@@ -286,6 +283,7 @@ public class AuthRepository : IAuthContract
     public async Task<GeneralResponse> activate2FA(Activate2FA dto)
     {
         UserEntity? user = await _userManager.FindByEmailAsync(dto.Email);
+        UserEntity? oldUser = await _userManager.FindByEmailAsync(dto.Email);
 
         if (user is null) throw new NotFoundException("El usuario no existe");
         
@@ -299,14 +297,8 @@ public class AuthRepository : IAuthContract
             throw new BadRequestException($"No se ha podido actualizar al usuario {user.UserName} con éxito");
         }
 
-        if (dto.IsActivated == false)
-        {
-            _logger.LogInformation($"El usuario {user.UserName} desactivo la verificación en dos pasos con éxito");
-            return new GeneralResponse(true, $"El usuario {user.UserName} desactivo la verificación en dos pasos con éxito");
-        }
-
-        _logger.LogInformation($"El usuario {user.UserName} activo la verificación en dos pasos con éxito");
-        return new GeneralResponse(true,$"El usuario {user.UserName} activo la verificación en dos pasos con éxito" );
+        _logger.LogInformation($"El usuario {user.UserName} {(dto.IsActivated ? "activo" : "desactivo")} la verificación en dos pasos con éxito");
+        return new GeneralResponse(true,$"El usuario {user.UserName} {(dto.IsActivated ? "activo" : "desactivo")} la verificación en dos pasos con éxito" );
     }
 
     public async Task<LoginResponse?> Login2FA(Login2FA dto)
@@ -324,14 +316,15 @@ public class AuthRepository : IAuthContract
            userRole.First(), user!.LastPasswordChange);
 
        TokenDto token = GenerateToken(userSession);
-
+        
        return new LoginResponse(true, true, token, "Te has logueado con éxito");
     }
 
     public async Task<GeneralResponse> ForgotPassword(ForgotPasswordDto dto)
     {
         UserEntity? user = await _userManager.FindByEmailAsync(dto.Email);
-        
+        UserEntity? oldUser = await _userManager.FindByEmailAsync(dto.Email);
+
         if (user == null || !user.EmailConfirmed)
         {
             _logger.LogWarning("No se encontro el usuario que pidio el cambio de clave");
@@ -368,7 +361,8 @@ public class AuthRepository : IAuthContract
         }
         
         UserEntity? user = await _userManager.FindByEmailAsync(email);
-        
+        UserEntity? oldUser = await _userManager.FindByEmailAsync(email);
+
         if (user == null || !user.EmailConfirmed)
         {
             _logger.LogWarning("No se encontro el usuario que pidio el cambio de clave");
@@ -399,7 +393,7 @@ public class AuthRepository : IAuthContract
         user.LastPasswordChange = DateTime.Now;
 
         await _userManager.UpdateAsync(user);
-        
+
         return new GeneralResponse(true, "Se ha cambiado con éxito la contraseña.");
     }
 
@@ -567,10 +561,12 @@ public class AuthRepository : IAuthContract
         
         return true;
     }
+
     private async Task EnsureSavedAsync(string errorMessage)
     {
         int result = await _dbContext.SaveChangesAsync();
         if (result <= 0)
             throw new InternalServerErrorException(errorMessage);
     }
+
 }

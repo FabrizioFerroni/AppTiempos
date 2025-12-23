@@ -24,6 +24,8 @@ public partial class ShowRequeriment : ComponentBase
     
     private RequerimentResponseDto requerimentShow = new RequerimentResponseDto();
     private Dictionary<string, (string Mensaje, bool EsExitoso)> mensajes = new();
+    //private int resultCopyCC = 0;
+    private Dictionary<string, int> resultCopy = new();
     
     private bool IsLoadingData = true;
     private string IdModalStr = Generate(LowercaseLettersAndDigits, 10);
@@ -87,14 +89,16 @@ public partial class ShowRequeriment : ComponentBase
     private async Task  CopyToClipboard(string copy, string label, string id)
     {
         bool resultado = await JS!.InvokeAsync<bool>("copyToClipboard", copy);
-
+        
         if (resultado)
         {
             mensajes[id] = ($"{label}: Texto copiado al portapapeles", true);
+            resultCopy[id] = 1;
         }
         else
         {
             mensajes[id] = ($"Error al copiar el texto de {label} al portapapeles", false);
+            resultCopy[id] = 2;
         }
         
         StateHasChanged(); 
@@ -102,6 +106,7 @@ public partial class ShowRequeriment : ComponentBase
         await Task.Delay(10000);
 
         mensajes.Remove(id);
+        resultCopy.Remove(id);
         StateHasChanged(); 
     }
     

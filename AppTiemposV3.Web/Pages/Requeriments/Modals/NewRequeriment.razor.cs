@@ -1,4 +1,4 @@
-using AppTiemposV3.SharedClases.Contracts;
+﻿using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Categories;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
@@ -47,7 +47,8 @@ public partial class NewRequeriment : ComponentBase
     private List<string> OptionsCategories = new() {};
     private bool IsCategoryIdSelected = false;
     private bool IsLoadingNew = false;
-    
+    private string _cssConjuntosCambios = "flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-[hsl(var(--base))] ring-offset-[hsl(var(--background))] file:border-0 file:bg-[hsl(var(--transparent))] file:text-sm file:font-medium file:text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400";
+
     private Dictionary<string, (string Mensaje, bool EsExitoso)> mensajes = new();
 
     private readonly Guid[] IdsCategoriasCC = new[]
@@ -200,5 +201,28 @@ public partial class NewRequeriment : ComponentBase
             Url = null,
             StoryPoint = null!
         };
+    }
+
+    private void HandleInput(ChangeEventArgs e)
+    {
+        string value = e.Value?.ToString() ?? string.Empty;
+
+        value = new string(value.Where(c => char.IsDigit(c) || c == ',').ToArray());
+
+        if (value.EndsWith(","))
+        {
+            string numero = value.TrimEnd(',');
+
+            if (!string.IsNullOrWhiteSpace(numero))
+            {
+                requerimentDto.CambioInput = numero;
+                requerimentDto.AddCambioFromInput();
+            }
+
+            requerimentDto.CambioInput = "";
+            return;
+        }
+
+        requerimentDto.CambioInput = value;
     }
 }

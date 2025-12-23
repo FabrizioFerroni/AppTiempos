@@ -1,18 +1,24 @@
-using System.Net;
-using System.Text;
 using AppTiemposV3.Api.Data;
 using AppTiemposV3.Api.Entities;
 using AppTiemposV3.SharedClases.Annotations;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.SharedClases.DTOs.Audits;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
+using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
+using AppTiemposV3.SharedClases.Utilidades.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using Org.BouncyCastle.Ocsp;
+using System.Net;
+using System.Text;
 using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using static AppTiemposV3.Api.Helpers.Helpers;
+using static AppTiemposV3.Api.Helpers.MetadataHelper;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
 namespace AppTiemposV3.Api.Repositories;
 
@@ -23,15 +29,20 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
     private readonly UserManager<UserEntity> _userManager;
     private readonly IGenericContract _genericContract;
     private readonly IUserContract _userContext;
+    private readonly IEntityIdProvider _entityIdProvider;
+    private readonly IAuditHelperService _auditHelperService;
     private Guid _userId => _userContext.GetUserId();
 
-    public TrainingRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IGenericContract genericContract, IUserContract userContext)
+    public TrainingRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IGenericContract genericContract, IUserContract userContext, IEntityIdProvider entityIdProvider, IAuditHelperService auditHelperService)
     {
         _dbCxt = dbCxt;
         _iMapper = iMapper;
         _userManager = userManager;
         _genericContract = genericContract;
         _userContext = userContext;
+        _entityIdProvider = entityIdProvider;
+        _auditHelperService = auditHelperService;
+
     }
 
     public async Task<DataResponse<TrainingKpiResponse>> GetTrainingKpi()
@@ -95,7 +106,7 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
 
     public async Task<Pageable<List<TrainingResponseDto>>> GetAllTrainings(PaginationDtoAdvanced pagination)
     {
-        Pageable<List<TrainingResponseDto>> response =  await _genericContract.GetAllPaginatedFAAsync<TrainingEntity, TrainingResponseDto>(pagination, _userId);
+        Pageable<List<TrainingResponseDto>> response =  await _genericContract.GetAllPaginatedFaAsync<TrainingEntity, TrainingResponseDto>(pagination, _userId);
         
         List<Guid> trainingIds = response.Content.Select(a => a.Id).ToList();
 
@@ -156,11 +167,33 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         TrainingEntity training = _iMapper.Map<TrainingEntity>(dto);
         
         training.UserId = _userId;
-        
+
+        UserEntity? user = await GetUserByIdAsync(_userId);
+        RequerimentsEntity? req = await GetRequerimentByIdAsync(dto.RequerimentId, _userId);
+
         await _dbCxt.Trainings.AddAsync(training);
 
         await EnsureSavedAsync("Hubo un error al crear la capacitación");
 
+        try
+        {
+            string reqId = !string.IsNullOrWhiteSpace(req.ReqID) ? $"Se creo una nueva capacitación para el ReqID{req.ReqID}" : $"Se creo una nueva capacitación";
+
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                reqId,
+                AuditAction.Created.ToString(),
+                nameof(TrainingEntity),
+                "trainings",
+                BuildChanges(training),
+                BuildCreateMetadata(user.Id, "CREATE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+        
         return new GeneralResponse(true, "Capacitación creada correctamente");
     }
 
@@ -169,6 +202,7 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         UserEntity user = await GetUserByIdAsync(_userId);
         
         TrainingEntity training = await GetTrainingByIdAsync(id, user.Id);
+        TrainingEntity oldtTraining = await GetTrainingByIdAsync(id, user.Id);
         
         if (await TrainingExists(dto.RequerimentId!, _userId, training.Id))
             throw new BadRequestException("Hay una capacitación pendiente de poner hora de fin para ese requerimiento");
@@ -182,6 +216,23 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         _dbCxt.Entry(training).State = EntityState.Modified;
         
         await EnsureSavedAsync("Hubo un problema para eliminar el registro");
+        
+        try
+        {
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                $"Se edito la capacitación {oldtTraining.Description}",
+                AuditAction.Updated.ToString(),
+                nameof(TrainingEntity),
+                "trainings",
+                BuildChanges(training),
+                BuildCreateMetadata(user.Id, "UPDATE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
 
         return new GeneralResponse(true, "Capacitación actualizada con éxito");
     }
@@ -198,6 +249,24 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         _dbCxt.Entry(training).State = EntityState.Modified;
 
         await EnsureSavedAsync("Hubo un problema para eliminar el registro");
+        
+
+        try
+        {
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                $"Se elimino la capacitación {training.Description}",
+                AuditAction.Deleted.ToString(),
+                nameof(TrainingEntity),
+                "trainings",
+                BuildChanges(training),
+                BuildCreateMetadata(user.Id, "DELETE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
 
         return new GeneralResponse(true, "Capacitación eliminada con éxito");
     }
@@ -214,7 +283,24 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         
         _dbCxt.Entry(training).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo un problema para eliminar el registro");
+        await EnsureSavedAsync("Hubo un problema para restaurar el registro");
+        
+        try
+        {
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                $"Se restauro la capacitación {training.Description}",
+                AuditAction.Restored.ToString(),
+                nameof(TrainingEntity),
+                "trainings",
+                BuildChanges(training),
+                BuildCreateMetadata(user.Id, "RESTORE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
 
         return new GeneralResponse(true, "Capacitación restaurada con éxito");
     }
@@ -273,9 +359,7 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         TrainingEntity? training = await query.FirstOrDefaultAsync();
 
         return training ?? throw new NotFoundException("Capacitación no encontrada");
-    }
-
-    
+    }    
     
     /// <summary>
     /// Intenta guardar los cambios pendientes en el contexto de la base de datos.
@@ -290,4 +374,98 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         if (result <= 0)
             throw new InternalServerErrorException(errorMessage);
     }
+
+    private async Task<RequerimentsEntity> GetRequerimentByIdAsync(Guid id, Guid userId)
+    {
+        RequerimentsEntity? requeriment = await _dbCxt.Requeriments
+            .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+
+        return requeriment ?? throw new NotFoundException("Requerimiento no encontrado");
+    }
+
+    private static List<AuditChangeDto> BuildChanges(
+            TrainingEntity newTraining,
+            TrainingEntity? oldTraining = null,
+            UpdateTrainingDto? dto = null)
+        {
+            List<AuditChangeDto> changes = new();
+
+            if (oldTraining is null)
+            {
+                AddCreate(nameof(newTraining.RequerimentId), newTraining.RequerimentId);
+                AddCreate(nameof(newTraining.IsLoaded), newTraining.IsLoaded);
+                AddCreate(nameof(newTraining.Notes), newTraining.Notes);
+                AddCreate(nameof(newTraining.StartDate), newTraining.StartDate);
+                AddCreate(nameof(newTraining.StartTime), newTraining.StartTime);
+                AddCreate(nameof(newTraining.Status), newTraining.Status);
+                AddCreate(nameof(newTraining.UserId), newTraining.UserId);
+                AddCreate(nameof(newTraining.EndTime), newTraining.EndTime);
+                AddCreate(nameof(newTraining.CapacitationTime), newTraining.CapacitationTime);
+                AddCreate(nameof(newTraining.Capacitator), newTraining.Capacitator);
+                AddCreate(nameof(newTraining.Description), newTraining.Description);
+                return changes;
+            }
+
+            if (dto is not null)
+            {
+                if (dto.RequerimentId != Guid.Empty &&
+                    dto.RequerimentId != oldTraining.RequerimentId)
+                    AddUpdate(nameof(newTraining.RequerimentId), oldTraining.RequerimentId, newTraining.RequerimentId);
+
+                if (dto.IsLoaded &&
+                    dto.IsLoaded != oldTraining.IsLoaded)
+                    AddUpdate(nameof(newTraining.IsLoaded), oldTraining.IsLoaded, newTraining.IsLoaded);
+
+                if (!string.IsNullOrWhiteSpace(dto.Notes) &&
+                    dto.Notes != oldTraining.Notes)
+                    AddUpdate(nameof(newTraining.Notes), oldTraining.Notes, newTraining.Notes);
+
+                if (dto.StartDate != oldTraining.StartDate)
+                    AddUpdate(nameof(newTraining.StartDate), oldTraining.StartDate, newTraining.StartDate);
+
+                if (dto.StartTime != oldTraining.StartTime)
+                    AddUpdate(nameof(newTraining.StartTime), oldTraining.StartTime, newTraining.StartTime);
+
+                if (dto.EndTime != oldTraining.EndTime)
+                    AddUpdate(nameof(newTraining.EndTime), oldTraining.EndTime, newTraining.EndTime);
+
+                if (!string.IsNullOrWhiteSpace(dto.Status) && dto.Status != oldTraining.Status)
+                    AddUpdate(nameof(newTraining.Status), oldTraining.Status, newTraining.Status);
+
+                if (!string.IsNullOrWhiteSpace(dto.Capacitator) &&
+                    dto.Capacitator != oldTraining.Capacitator)
+                    AddUpdate(nameof(newTraining.Capacitator), oldTraining.Capacitator, newTraining.Capacitator);
+
+                if (!string.IsNullOrWhiteSpace(dto.Description) &&
+                    dto.Description != oldTraining.Description)
+                    AddUpdate(nameof(newTraining.Description), oldTraining.Description, newTraining.Description);
+            }
+
+            return changes;
+
+            void AddCreate(string field, object? value)
+            {
+                changes.Add(new AuditChangeDto
+                {
+                    Field = field,
+                    NewValue = NormalizeValue(value?.ToString())
+                });
+            }
+            
+            void AddUpdate(string field, object? oldValue, object? newValue)
+            {
+                string? oldVal = oldValue?.ToString();
+                string? newVal = newValue?.ToString();
+                
+                if (oldVal != newVal)
+                {
+                    changes.Add(new AuditChangeDto
+                    {
+                        Field = field,
+                        OldValue = NormalizeValue(oldValue),
+                        NewValue = NormalizeValue(newValue)
+                    });
+                }
+            }
+        }
 }

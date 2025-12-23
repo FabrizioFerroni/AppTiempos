@@ -1,5 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11312.151 d18.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppTiemposV3.AppHost", "AppTiemposV3.AppHost\AppTiemposV3.AppHost.csproj", "{E1362633-F9AA-4E1A-9A58-4FCE3528B382}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppTiemposV3.Api", "AppTiemposV3.Api\AppTiemposV3.Api.csproj", "{D3D731C0-AD74-4A6F-A62F-7746AA114011}"
@@ -42,5 +45,11 @@ Global
 		{0A5B25F6-B748-4839-BCDE-FBFD0FB7E998}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A5B25F6-B748-4839-BCDE-FBFD0FB7E998}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A5B25F6-B748-4839-BCDE-FBFD0FB7E998}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7A177529-82AD-4BAD-B8D7-C1F075E1B022}
 	EndGlobalSection
 EndGlobal

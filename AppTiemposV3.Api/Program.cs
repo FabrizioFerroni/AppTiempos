@@ -22,6 +22,7 @@ using AppTiemposV3.Api.Middlewares;
 using AppTiemposV3.Api.Services;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
+using AppTiemposV3.SharedClases.DTOs.Audits;
 using AppTiemposV3.SharedClases.DTOs.Categories;
 using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
@@ -29,6 +30,10 @@ using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.DTOs.Users;
 using AppTiemposV3.SharedClases.GenericModels;
+using AppTiemposV3.SharedClases.Utilidades;
+using AppTiemposV3.SharedClases.Utilidades.Interfaces;
+using TimeOnlyJsonConverter = AppTiemposV3.Api.Utilidades.TimeOnlyJsonConverter;
+
 // using AppTiemposV3.SharedClases.Utilidades;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -194,6 +199,7 @@ services.AddAuthentication(opt =>
 services.AddHttpContextAccessor();
 // Services and repositories
 services.AddScoped<IAuthContract, AuthRepository>();
+services.AddScoped<IAuditContract<AuditsResponseDto>, AuditRepository>();
 services.AddScoped<IActivityContract<ActivityResponseDto>, ActivityRepository>();
 services.AddScoped<IDashboardContract<DashboardKPIDto>, DashboardRepository>();
 services.AddScoped<IActivityWeeklyContract<ActivitiesByDay>, ActivityWeeklyRepository>();
@@ -206,7 +212,9 @@ services.AddScoped<IInvitationContract<InvitationResponseDto>, InvitationReposit
 services.AddScoped<IUserCContract<UserResponseDto>, UserRepository>();
 services.AddScoped<IUserContract, UserContextService>();
 services.AddScoped<IGenericContract, GenericRepository>();
+services.AddScoped<IAuditHelperService, AuditHelperService>();
 services.AddScoped<IEmailService, EmailService>();
+services.AddScoped<IEntityIdProvider, EntityIdProvider>();
 services.AddScoped<IGenericSContract<ColorModel>, GenericService>();
 // Ending Services and repositories
 

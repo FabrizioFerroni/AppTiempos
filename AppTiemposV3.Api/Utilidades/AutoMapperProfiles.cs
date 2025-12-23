@@ -1,6 +1,7 @@
 ﻿using AppTiemposV3.Api.Entities;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
+using AppTiemposV3.SharedClases.DTOs.Audits;
 using AppTiemposV3.SharedClases.DTOs.Categories;
 using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
@@ -26,13 +27,16 @@ namespace AppTiemposV3.Api.Utilidades
             MappingRejectionDetails();
             MappingUsers();
             MappingInvitation();
+            MappingAudits();
         }
 
         public void MappingRequeriments()
         {
-            CreateMap<CreateRequerimentDto, RequerimentsEntity>();
+            CreateMap<CreateRequerimentDto, RequerimentsEntity>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<UpdateRequerimentDto, RequerimentsEntity>()
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(d => d.Descripcion, o => o.MapFrom(s => s.Descripcion))
                 .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.HasValue ? (Estados?)src.Estado.Value : null))
                 .ForMember(dest => dest.EtapaActual, opt => opt.MapFrom(src => src.EtapaActual.HasValue ? (Etapas?)src.EtapaActual.Value : null))
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
@@ -147,6 +151,21 @@ namespace AppTiemposV3.Api.Utilidades
             CreateMap<CreateInvitationDto, InvitationEntity>();
             CreateMap<InvitationEntity, InvitationResponseDto>();
             CreateMap<AcceptOrDeclineInvitationDto, InvitationEntity>();
+        }
+
+        private void MappingAudits()
+        {
+            CreateMap<CreateAuditDto, AuditEntity>();
+            CreateMap<AuditEntity, AuditUserResponseDto>()
+                .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User));
+            CreateMap<AuditEntity, AuditsResponseDto>()
+                .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User))
+                .ForMember(d => d.UserName, o => o.MapFrom(s => s.UserName))
+                .ForMember(d => d.Changes, o => o.MapFrom(s => s.Changes))
+                .ForMember(d => d.Metadata, o => o.MapFrom(s => s.Metadata));
+            CreateMap<UserEntity, UserDtoAu>();
+            CreateMap<AuditChangeDto, AuditChange>();
+            CreateMap<AuditChange, AuditChangeDto>();
         }
     }
 }

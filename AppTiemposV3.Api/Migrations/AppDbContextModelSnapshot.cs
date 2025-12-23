@@ -105,6 +105,77 @@ namespace AppTiemposV3.Api.Migrations
                     b.ToTable("activities", (string)null);
                 });
 
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.AuditEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("ActionActivity")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Changes")
+                        .IsRequired()
+                        .HasColumnType("json");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Entity")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Metadata")
+                        .IsRequired()
+                        .HasColumnType("json");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("UserId")
+                        .HasMaxLength(100)
+                        .HasColumnType("char(100)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("auditorias", (string)null);
+                });
+
             modelBuilder.Entity("AppTiemposV3.Api.Entities.CategoriesEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -354,7 +425,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("ConjuntoCambios")
-                        .HasColumnType("longtext");
+                        .HasColumnType("json");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -377,7 +448,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasColumnType("int")
                         .HasDefaultValueSql("1");
 
-                    b.Property<int>("FolderId")
+                    b.Property<int?>("FolderId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
@@ -718,6 +789,17 @@ namespace AppTiemposV3.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.AuditEntity", b =>
+                {
+                    b.HasOne("AppTiemposV3.Api.Entities.UserEntity", "User")
+                        .WithMany("Audits")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("AppTiemposV3.Api.Entities.RejectionDetailEntity", b =>
                 {
                     b.HasOne("AppTiemposV3.Api.Entities.RejectionEntity", "Rejection")
@@ -867,6 +949,8 @@ namespace AppTiemposV3.Api.Migrations
             modelBuilder.Entity("AppTiemposV3.Api.Entities.UserEntity", b =>
                 {
                     b.Navigation("Activities");
+
+                    b.Navigation("Audits");
 
                     b.Navigation("Rejections");
 

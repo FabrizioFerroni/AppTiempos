@@ -32,8 +32,8 @@ public class RejectionDetailEntity : BaseEntity
     
     [Required]
     public required Guid RejectionId { get; set; }
-    
-    public RejectionEntity? Rejection { get; set; } 
+
+    public RejectionEntity Rejection { get; set; } = null!;
     
     [Required] public required Guid UserId { get; set; }
 

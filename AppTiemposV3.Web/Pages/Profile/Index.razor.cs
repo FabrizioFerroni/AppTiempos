@@ -1,10 +1,11 @@
 using AppTiemposV3.SharedClases.Contracts;
-using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Users;
 using AppTiemposV3.SharedClases.Enums;
+using AppTiemposV3.Web.Authentication;
 using AppTiemposV3.Web.Services;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
@@ -23,6 +24,8 @@ public partial class Index : ComponentBase, IDisposable
     [Inject] private NotificationService Toltip { get; set; } = default!;
     [Inject] private ColorService ColorService { get; set; } = null!;
     [Inject] private ILocalStorageService _localStorageService { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+    [Inject] private NavigationManager Nav { get; set; } = null!;
     private string? theme = "light";
 
     #endregion
@@ -107,6 +110,7 @@ public partial class Index : ComponentBase, IDisposable
             StateHasChanged();
         }
     }
+
     
     private void FillDataCamps(UserResponseDto userDto)
     {
@@ -275,6 +279,10 @@ public partial class Index : ComponentBase, IDisposable
                 updatePassword.NewPassword = string.Empty;
                 updatePassword.ConfirmPassword = string.Empty;
                 StateHasChanged();
+                await Task.Delay(5000);
+                CustomAuthenticationProvider? customAuthStateProvider = (CustomAuthenticationProvider)AuthStateProvider;
+                await customAuthStateProvider.UpdateAuthenticationState(null!);
+                Nav.NavigateTo("/");
             }
             else
             {

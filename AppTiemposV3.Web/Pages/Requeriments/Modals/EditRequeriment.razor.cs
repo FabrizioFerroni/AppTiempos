@@ -5,10 +5,12 @@ using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.Web.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using static NanoidDotNet.Nanoid;
 using static NanoidDotNet.Nanoid.Alphabets;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.Web.Utils.Helpers;
 
 namespace AppTiemposV3.Web.Pages.Requeriments.Modals;
 
@@ -30,7 +32,7 @@ public partial class EditRequeriment : ComponentBase
     private string Titulo { get; set; } = string.Empty;
     private bool IsLoadingData = true;
     private bool IsLoading = false;
-    
+    private string _cssConjuntosCambios = "flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-[hsl(var(--base))] ring-offset-[hsl(var(--background))] file:border-0 file:bg-[hsl(var(--transparent))] file:text-sm file:font-medium file:text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400";
     private Dictionary<string, (string Mensaje, bool EsExitoso)> mensajes = new();
     
     private UpdateRequerimentDto requerimentUpDto = new()
@@ -261,5 +263,32 @@ public partial class EditRequeriment : ComponentBase
         });
 
         return Task.CompletedTask;
+    }
+    
+    
+    private void HandleInput(ChangeEventArgs e)
+    {
+        string value = e.Value?.ToString() ?? string.Empty;
+
+        // 1️⃣ limpiar todo lo que NO sea dígito ni coma
+        value = new string(value.Where(c => char.IsDigit(c) || c == ',').ToArray());
+
+        // 2️⃣ si termina en coma → agregar cambio
+        if (value.EndsWith(","))
+        {
+            string numero = value.TrimEnd(',');
+
+            if (!string.IsNullOrWhiteSpace(numero))
+            {
+                requerimentUpDto.CambioInput = numero;
+                requerimentUpDto.AddCambioFromInput();
+            }
+
+            requerimentUpDto.CambioInput = "";
+            return;
+        }
+
+        // 3️⃣ seguir escribiendo normalmente
+        requerimentUpDto.CambioInput = value;
     }
 }

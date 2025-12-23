@@ -54,7 +54,23 @@
                                 Size="sm"
                                 Class="cursor-pointer text-gray-600 dark:text-gray-300"
                                 OnClick="@(() => CopyToClipboard(reqId, "ReqID", "reqId"))">
-                                <ClipboardCopy Class="h-4 w-4"/>
+                                @{
+                                    string? id = $"reqId";
+                                    int estado = resultCopy.ContainsKey(id) ? resultCopy[id] : 0;
+                                }
+                                
+                                @if (estado == 0)
+                                {
+                                    <ClipboardCopy Class="h-4 w-4"/>
+                                }
+                                else if (estado == 1)
+                                {
+                                    <Check Class="h-4 w-4 text-green-600"/>
+                                }
+                                else if (estado == 2)
+                                {
+                                    <Close Class="h-4 w-4 text-red-600"/>
+                                }
                             </Button>
                         </p>
                         @if (mensajes.ContainsKey("reqId"))
@@ -175,31 +191,62 @@
                     </div>
                 }
 
-                @if (!String.IsNullOrWhiteSpace(requerimentShow.ConjuntoCambios))
+                @if (requerimentShow.ConjuntoCambios is { Length: > 0 })
                 {
                     <div>
-                        <label class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <span class="text-sm font-medium text-gray-900 dark:text-gray-100">
                             Conjunto de Cambios
-                        </label>
-                        <p id="conjuntoCambios" class="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg mt-1 flex items-center justify-between">
-                            <span>
-                                @requerimentShow.ConjuntoCambios
-                            </span>
-                            <Button
-                                Variant="ghost"
-                                Size="sm"
-                                Class="cursor-pointer"
-                                OnClick="@(() => CopyToClipboard(requerimentShow.ConjuntoCambios, "Conjuntos de cambios", "conjuntoCambios"))"
-                            >
-                                <ClipboardCopy Class="h-4 w-4" />
-                            </Button>
-                        </p>
+                        </span>
 
-                        @if (mensajes.ContainsKey("conjuntoCambios"))
+                        <div class="flex flex-wrap gap-2">
+                            @{
+                                string message = string.Empty;
+                                bool isSuccess = false;
+                            }
+                            @foreach (string cambio in requerimentShow.ConjuntoCambios ?? [])
+                            {
+                                <div class="cursor-default flex items-center justify-start gap-2 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded text-sm px-2 py-1 ">
+                                    <span id=@($"conjuntoCambios-{cambio}")>
+                                        @cambio
+                                    </span>
+                                    <Button
+                                        Variant="ghost"
+                                        Size="sm"
+                                        Class=@($"cursor-pointer p-0 m-0")
+                                        OnClick="@(() => CopyToClipboard(cambio, "Conjuntos de cambios", $"conjuntoCambios-{cambio}"))">
+
+                                        @{
+                                            string? id = $"conjuntoCambios-{cambio}";
+                                            int estado = resultCopy.ContainsKey(id) ? resultCopy[id] : 0;
+                                        }
+
+                                        @if (estado == 0)
+                                        {
+                                            <ClipboardCopy Class="h-4 w-4"/>
+                                        }
+                                        else if (estado == 1)
+                                        {
+                                            <Check Class="h-4 w-4 text-green-600"/>
+                                        }
+                                        else if (estado == 2)
+                                        {
+                                            <Close Class="h-4 w-4 text-red-600"/>
+                                        }
+                                    </Button>
+                                </div>
+                                @if (mensajes.ContainsKey($"conjuntoCambios-{cambio}"))
+                                {
+                                    (string texto, bool exito) = mensajes[$"conjuntoCambios-{cambio}"];
+                                    message = texto;
+                                    isSuccess = exito;
+                                }
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(message))
                         {
-                            (string texto,bool exito) = mensajes["conjuntoCambios"];
-                            <span class="text-xs @(exito ? "text-green-600" : "text-red-600")">
-                                @texto
+                            <span class="text-xs @(isSuccess ? "text-green-600" : "text-red-600")">
+                                @message
                             </span>
                         }
                     </div>

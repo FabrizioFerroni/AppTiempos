@@ -28,7 +28,7 @@ namespace AppTiemposV3.SharedClases.DTOs.Requeriments
         public Etapas EtapaActual { get; set; } = Etapas.Alta;
         
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string? ConjuntoCambios { get; set; } = null;
+        public string[]? ConjuntoCambios { get; set; } = null;
         
         public DateTime CreatedAt { get; set; }
 
@@ -43,7 +43,9 @@ namespace AppTiemposV3.SharedClases.DTOs.Requeriments
             set => _folderId = value;
         }
         
-        public string? FolderPath => _folderId + " - " + ReqID + " - " + SanitizeTitulo(Titulo);
+        // public string? FolderPath => _folderId + " - " + ReqID + " - " + SanitizeTitulo(Titulo);
+        public string? FolderPath => _folderId == null ? null : $"{_folderId} - {ReqID} - {SanitizeTitulo(Titulo)}";
+
 
         public UserDtoR Usuario { get; set; } = new UserDtoR();
         

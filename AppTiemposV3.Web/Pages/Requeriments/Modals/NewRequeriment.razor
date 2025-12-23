@@ -195,7 +195,7 @@
                     <Label For="conjuntocambios" Id="conjuntocambiosLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
                         Conjunto de cambios
                     </Label>
-                    <div class="relative">
+                    @*<div class="relative">
                         <Input
                             Type="text"
                             @bind-Value="requerimentDto.ConjuntoCambios"
@@ -211,7 +211,34 @@
                             Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                         />
                     </div>
-                    <ValidationMessage For="() => requerimentDto.ConjuntoCambios" class="text-xs text-red-600"/>
+                    <ValidationMessage For="() => requerimentDto.ConjuntoCambios" class="text-xs text-red-600"/>*@
+                    <div class="relative">
+                        <input id="conjuntoCambiosInput"
+                               type="text"
+                               value="@requerimentDto.CambioInput"
+                               @oninput="HandleInput"
+                               class=@_cssConjuntosCambios
+                               inputmode="numeric"
+                               pattern="[0-9]*"
+                               placeholder="Conjunto de cambios (Ej: 25300) (Utiliza la coma (,) para agregar nuevos conjunto de cambios)" />
+                    </div>
+                    <div class="flex flex-wrap gap-2 @($"{(requerimentDto.ConjuntoCambios is not null && requerimentDto.ConjuntoCambios.Length > 0 ? "mt-4" : "")}")">
+                        @foreach (string cambio in requerimentDto.ConjuntoCambios ?? [])
+                        {
+                            <div class="cursor-default flex items-center justify-start gap-2 px-2 py-1 @ColorService.GetCurrentColor().Gradient text-white rounded text-sm">
+                                <span>
+                                    @cambio
+                                </span>
+                                <Button Variant="outline"
+                                        Size=""
+                                        Class=@($"cursor-pointer bg-red-500 hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-800 border-0 hover:bg-transparent p-1")
+                                        OnClick="() => requerimentDto.RemoveCambio(cambio)">
+                                    <Close Class="h-4 w-4" />
+                                </Button>
+                            </div>
+                        }
+                    </div>
+                    <ValidationMessage For="() => requerimentDto.ConjuntoCambios" class="text-xs text-red-600" />
                 </div>
             }
 

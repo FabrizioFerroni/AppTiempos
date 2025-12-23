@@ -4,26 +4,28 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
+using System.Text.Json;
 using AppTiemposV3.SharedClases.Enums;
 
 namespace AppTiemposV3.Api.Data;
 
 public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Guid>
 {
-
-    public DbSet<RequerimentsEntity> Requeriments { get; set; }
+    public DbSet<RequerimentsEntity> Requeriments { get; set; } = null!;
     
-    public DbSet<CategoriesEntity> Categories { get; set; }
+    public DbSet<CategoriesEntity> Categories { get; set; } = null!;
     
-    public DbSet<ActivitiesEntity> Activities { get; set; }
+    public DbSet<ActivitiesEntity> Activities { get; set; } = null!;
     
-    public DbSet<TrainingEntity> Trainings { get; set; }
+    public DbSet<TrainingEntity> Trainings { get; set; } = null!;
     
-    public DbSet<InvitationEntity> Invitations { get; set; }
+    public DbSet<InvitationEntity> Invitations { get; set; } = null!;
     
-    public DbSet<RejectionEntity> Rejections { get; set; }
+    public DbSet<RejectionEntity> Rejections { get; set; } = null!;
     
-    public DbSet<RejectionDetailEntity> RejectionDetails { get; set; }
+    public DbSet<RejectionDetailEntity> RejectionDetails { get; set; } = null!;
+    
+    public DbSet<AuditEntity> Audits { get; set; } = null!;
 
     public AppDbContext(DbContextOptions options) : base(options)
     {
@@ -31,6 +33,7 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        builder.ApplyConfiguration(new AuditEntityConfiguration());
         base.OnModelCreating(builder);
 
         builder.Entity<UserEntity>(e => e.ToTable(name: "usuarios"));
@@ -68,8 +71,14 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
                 // 2. Indice automatico para UserId si existe
                 
                 IMutableProperty? userIdProp = entityType.FindProperty("UserId");
-                bool alreadyHasIndex = entityType.GetIndexes().Any(i => i.Properties.Contains(userIdProp));
+                /*bool alreadyHasIndex = entityType.GetIndexes().Any(i => i.Properties.Contains(userIdProp));
                 if (userIdProp != null && userIdProp.ClrType == typeof(Guid) && !excludedTypes.Contains(clrType) && !alreadyHasIndex)
+                {
+                    entityType.AddIndex(userIdProp);
+                }*/
+
+
+                if (userIdProp != null && userIdProp.ClrType == typeof(Guid) && !excludedTypes.Contains(clrType) && !entityType.GetIndexes().Any(i => i.Properties.Contains(userIdProp)))
                 {
                     entityType.AddIndex(userIdProp);
                 }
@@ -95,6 +104,10 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
                 .HasForeignKey(rf => rf.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            e.HasMany(t => t.Trainings)
+                .WithOne(r => r.Requeriment)
+                .HasForeignKey(f => f.RequerimentId);
+
             e.HasIndex(r => r.UserId)
              .HasDatabaseName("IX_Requeriments_UserId");
 
@@ -112,6 +125,9 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
 
             e.Property(id => id.IsDeleted)
             .HasDefaultValue(false);
+            
+            e.Property(r => r.ConjuntoCambios)
+                .HasColumnType("json");
             
             e.Property(id => id.Descripcion)
                 .HasDefaultValueSql(null);
@@ -307,7 +323,12 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
                 .WithMany(re => re.Rejections)
                 .HasForeignKey(af => af.RequerimentId)
                 .OnDelete(DeleteBehavior.Restrict);
-            
+
+            r.HasMany(r => r.RejectionsDetails)
+                .WithOne(d => d.Rejection)
+                .HasForeignKey(d => d.RejectionId);
+
+
             r.Property(c => c.CreatedAt)
                 .HasColumnType("timestamp")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -322,6 +343,7 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
                 .WithMany(re => re.RejectionsDetails)
                 .HasForeignKey(af => af.RejectionId)
                 .OnDelete(DeleteBehavior.Restrict);
+
             
             rd.HasOne(re => re.User)
                 .WithMany(u => u.RejectionsDetails)
@@ -362,6 +384,7 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
             rd.Property(rn => rn.RechazoNro)
                 .HasDefaultValueSql("0");
         });
+
     }
 
 }

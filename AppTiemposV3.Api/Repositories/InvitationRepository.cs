@@ -1,18 +1,23 @@
-using System.Net;
 using AppTiemposV3.Api.Data;
 using AppTiemposV3.Api.Entities;
 using AppTiemposV3.Api.Files.MailTemplates.Models;
 using AppTiemposV3.SharedClases.Annotations;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.SharedClases.DTOs.Audits;
 using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
+using static AppTiemposV3.Api.Helpers.Helpers;
+using static AppTiemposV3.Api.Helpers.MetadataHelper;
+using static NanoidDotNet.Nanoid;
+using static NanoidDotNet.Nanoid.Alphabets;
 
 
 namespace AppTiemposV3.Api.Repositories;
@@ -27,8 +32,9 @@ public class InvitationRepository : IInvitationContract<InvitationResponseDto>
     private readonly IGenericContract _genericContract;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _config;
-    
-    public InvitationRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IUserContract userContext, IGenericContract genericContract, IEmailService emailService, IConfiguration config)
+    private readonly IAuditHelperService _auditHelperService;
+
+    public InvitationRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IUserContract userContext, IGenericContract genericContract, IEmailService emailService, IConfiguration config, IAuditHelperService auditHelperService)
     {
         _dbCxt = dbCxt;
         _iMapper = iMapper;
@@ -37,6 +43,8 @@ public class InvitationRepository : IInvitationContract<InvitationResponseDto>
         _genericContract = genericContract;
         _emailService = emailService;
         _config = config;
+        _auditHelperService = auditHelperService;
+
     }
 
     public async Task<Pageable<List<InvitationResponseDto>>> GetAllInvitations(PaginationDtoAdvanced pagination)
@@ -64,7 +72,7 @@ public class InvitationRepository : IInvitationContract<InvitationResponseDto>
 
         pagination.Filters = filtersList.ToArray();
         
-        Pageable<List<InvitationResponseDto>> response =  await _genericContract.GetAllPaginatedFAAsync<InvitationEntity, InvitationResponseDto>(pagination, _userId);
+        Pageable<List<InvitationResponseDto>> response =  await _genericContract.GetAllPaginatedFaAsync<InvitationEntity, InvitationResponseDto>(pagination, _userId);
 
         return response;
     }
@@ -111,7 +119,8 @@ public class InvitationRepository : IInvitationContract<InvitationResponseDto>
     public async Task<GeneralResponse> AcceptOrDeclineInvitation(Guid id, AcceptOrDeclineInvitationDto dto)
     {
         InvitationEntity inv = await GetInvitationById(id);
-        
+        InvitationEntity oldInv = await GetInvitationById(id);
+
         inv.ModifiedAt = DateTime.Now;
 
         if (dto.AcceptDecline)
