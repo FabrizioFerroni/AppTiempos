@@ -23,5 +23,6 @@ public class RejectionEntity : BaseEntity
 
     public UserEntity User { get; set; } = null!;
 
-    public ICollection<RejectionDetailEntity> RejectionsDetails { get; set; } = new List<RejectionDetailEntity>();
+    public ICollection<RejectionDetailEntity>? RejectionsDetails { get; set; }
+
 }

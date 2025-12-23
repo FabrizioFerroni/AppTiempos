@@ -1,18 +1,23 @@
-using System.Net;
-using System.Text;
 using AppTiemposV3.Api.Data;
 using AppTiemposV3.Api.Entities;
 using AppTiemposV3.SharedClases.Annotations;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.SharedClases.DTOs.Audits;
+using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
+using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using System.Net;
+using System.Text;
 using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using static AppTiemposV3.Api.Helpers.Helpers;
+using static AppTiemposV3.Api.Helpers.MetadataHelper;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static NanoidDotNet.Nanoid;
 using static NanoidDotNet.Nanoid.Alphabets;
 
@@ -25,15 +30,17 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
     private readonly UserManager<UserEntity> _userManager;
     private readonly IGenericContract _genericContract;
     private readonly IUserContract _userContext;
+    private readonly IAuditHelperService _auditHelperService;
     private Guid _userId => _userContext.GetUserId();
 
-    public RejectionRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IGenericContract genericContract, IUserContract userContext)
+    public RejectionRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IGenericContract genericContract, IUserContract userContext, IAuditHelperService auditHelper)
     {
         _dbCxt = dbCxt;
         _iMapper = iMapper;
         _userManager = userManager;
         _genericContract = genericContract;
         _userContext = userContext;
+        _auditHelperService = auditHelper;
     }
     
     public async Task<DataResponse<RejectionKpiResponse>> GetRejectionKpi()
@@ -97,16 +104,8 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
 
     public async Task<Pageable<List<RejectionResponseDto>>> GetAllRejections(PaginationDtoAdvanced pagination)
     {
-        Pageable<List<RejectionResponseDto>> response =  await _genericContract.GetAllPaginatedFAAsync<RejectionEntity, RejectionResponseDto>(pagination, _userId);
-        
-        response.Content = response.Content
-            .OrderByDescending(r =>
-                r.RejectionsDetails.Any()
-                    ? r.RejectionsDetails.Max(d => d.RejectionDate)
-                    : DateOnly.MinValue
-            )
-            .ToList();
-        
+        Pageable<List<RejectionResponseDto>> response =  await _genericContract.GetAllPaginatedFaAsync<RejectionEntity, RejectionResponseDto>(pagination, _userId);
+       
         return response;
     }
 
@@ -151,6 +150,7 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
     public async Task<DataResponse<CreateRejectionResponseDto>> CreateRejection(CreateRejectionDto dto)
     {
         UserEntity user = await GetUserByIdAsync(_userId);
+        RequerimentsEntity? req = await GetRequerimentByIdAsync(dto.RequerimentId, _userId);
         
         if (await RejectionExists(dto.RequerimentId, _userId, null))
             throw new BadRequestException("Ese requerimiento ya tiene un rechazo para tu usuario");
@@ -171,7 +171,25 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         };
 
         DataResponse<CreateRejectionResponseDto> response = new DataResponse<CreateRejectionResponseDto>(true, data, HttpStatusCode.Created);
-        
+
+        try
+        {
+            string actionActivity = !string.IsNullOrWhiteSpace(req.ReqID) ? $"Se creo un nuevo rechazo para el ReqID{req.ReqID}" : $"Se creo un nuevo rechazo";
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                actionActivity,
+                AuditAction.Created.ToString(),
+                nameof(RejectionEntity),
+                "rechazos",
+                BuildChanges(rej),
+                BuildCreateMetadata(user.Id, "CREATE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
         return response;
     }
 
@@ -180,7 +198,8 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         UserEntity user = await GetUserByIdAsync(_userId);
 
         RejectionEntity rej = await GetRejectionByIdAsync(id, user.Id);
-        
+        RejectionEntity oldRej = await GetRejectionByIdAsync(id, user.Id);
+
         if (await RejectionExists(dto.RequerimentId!, user.Id, id))
             throw new BadRequestException("El rechazo con ese Id de requerimiento ya existe para tu usuario"); //TODO: ver esto
 
@@ -194,6 +213,23 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
 
         await EnsureSavedAsync("Hubo problemas para actualizar el registro");
 
+        try
+        {
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                $"Se modifico el rechazo para el ReqID{rej.Requeriment.ReqID}",
+                AuditAction.Updated.ToString(),
+                nameof(RejectionEntity),
+                "rechazos",
+                BuildChanges(rej, oldRej, dto),
+                BuildCreateMetadata(user.Id, "UPDATE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
         return new GeneralResponse(true, "Rechazo actualizado con éxito");
     }
 
@@ -202,6 +238,7 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         UserEntity user = await GetUserByIdAsync(_userId);
         
         RejectionEntity rej = await GetRejectionByIdAsync(id, user.Id);
+        RejectionEntity oldRej = await GetRejectionByIdAsync(id, user.Id);
 
         if (rej == null)
             throw new NotFoundException("Rechazo no encontrado");
@@ -211,6 +248,23 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         _dbCxt.Entry(rej).State = EntityState.Modified;
         
         await EnsureSavedAsync("Error al actualizar el rechazo");
+
+        try
+        {
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                $"Se modifico la cantidad de rechazos para el ReqID{rej.Requeriment.ReqID}",
+                AuditAction.Updated.ToString(),
+                nameof(RejectionEntity),
+                "rechazos",
+                BuildChanges(rej, oldRej, dto2: dto),
+                BuildCreateMetadata(user.Id, "UPDATE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
 
         return new GeneralResponse(true, "Actualizado");
     }
@@ -228,6 +282,22 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
 
         await EnsureSavedAsync("Hubo problemas para eliminar el registro");
 
+        try
+        {
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                $"Se elimino el rechazo para el ReqID{rej!.Requeriment.ReqID}",
+                AuditAction.Deleted.ToString(),
+                nameof(RejectionEntity),
+                "rechazos",
+                metadata: BuildCreateMetadata(user.Id, "DELETE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
         return new GeneralResponse(true, "Rechazo eliminado con éxito");
     }
 
@@ -244,6 +314,22 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         _dbCxt.Entry(rej).State = EntityState.Modified;
 
         await EnsureSavedAsync("Hubo problemas para restaurar el registro");
+
+        try
+        {
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                $"Se restauro el rechazo para el ReqID{rej!.Requeriment.ReqID}",
+                AuditAction.Restored.ToString(),
+                nameof(RejectionEntity),
+                "rechazos",
+                metadata: BuildCreateMetadata(user.Id, "RESTORE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
 
         return new GeneralResponse(true, "Rechazo restaurado con éxito");
     }
@@ -317,11 +403,88 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
             throw new InternalServerErrorException(errorMessage);
     }
 
+    private async Task<RequerimentsEntity> GetRequerimentByIdAsync(Guid id, Guid userId)
+    {
+        RequerimentsEntity? requeriment = await _dbCxt.Requeriments
+            .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+
+        return requeriment ?? throw new NotFoundException("Requerimiento no encontrado");
+    }
+
     private async Task<string> GetReqIdByRequerimentId(Guid idRequeriment, Guid userId)
     {
         RequerimentsEntity? requeriment = await _dbCxt.Requeriments
             .FirstOrDefaultAsync(r => r.Id == idRequeriment && r.UserId == userId);
 
         return requeriment!.ReqID ??  throw new BadRequestException("Requerimiento no encontrado");
+    }
+
+    private static List<AuditChangeDto> BuildChanges(
+        RejectionEntity newRejection,
+        RejectionEntity? oldRejection = null,
+        UpdateRejectionDto? dto = null,
+        UpdateRejectionCountDto? dto2 = null)
+    {
+        List<AuditChangeDto> changes = new();
+
+        if (oldRejection is null)
+        {
+            AddCreate("RequerimentId", newRejection.RequerimentId);
+            return changes;
+        }
+
+        if (dto is not null)
+        {
+
+            if(!string.IsNullOrWhiteSpace(dto.Status) &&
+                    dto.Status != oldRejection.Status)
+                AddUpdate(nameof(newRejection.Status), oldRejection.Status, dto.Status);
+
+            if (dto.IsResolve != oldRejection.IsResolve)
+                AddUpdate(nameof(newRejection.IsResolve), oldRejection.IsResolve, dto.IsResolve);
+
+            if (dto.ResolvedDate.HasValue &&
+                    dto.ResolvedDate.Value != oldRejection.ResolvedDate)
+                AddUpdate(nameof(newRejection.ResolvedDate), oldRejection.ResolvedDate, dto.ResolvedDate);
+
+            if (dto.RequerimentId != oldRejection.RequerimentId)
+                AddUpdate(nameof(newRejection.RequerimentId), oldRejection.RequerimentId, dto.RequerimentId);
+
+            if (dto.TotalRejections != oldRejection.TotalRejections)
+                AddUpdate(nameof(newRejection.TotalRejections), oldRejection.TotalRejections, dto.TotalRejections);
+        }
+
+        if (dto2 is not null)
+        {
+            if(dto2.TotalRejections != oldRejection.TotalRejections)
+                AddUpdate(nameof(newRejection.TotalRejections), oldRejection.TotalRejections, dto2.TotalRejections);
+        }
+
+        return changes;
+
+        void AddCreate(string field, object? value)
+        {
+            changes.Add(new AuditChangeDto
+            {
+                Field = field,
+                NewValue = NormalizeValue(value)
+            });
+        }
+
+        void AddUpdate(string field, object? oldValue, object? newValue)
+        {
+            string? oldVal = oldValue?.ToString();
+            string? newVal = newValue?.ToString();
+
+            if (oldVal != newVal)
+            {
+                changes.Add(new AuditChangeDto
+                {
+                    Field = field,
+                    OldValue = NormalizeValue(oldValue),
+                    NewValue = NormalizeValue(newValue)
+                });
+            }
+        }
     }
 }

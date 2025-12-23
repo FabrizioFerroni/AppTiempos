@@ -1,0 +1,497 @@
+@page "/app/auditorias"
+@using AppTiemposV3.SharedClases.DTOs.Audits
+@using AppTiemposV3.SharedClases.Enums
+@using static AppTiemposV3.Web.Utils.Helpers
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
+@using static System.Text.Json.JsonSerializer
+
+<PageTitle>Auditoría del Sistema| TimeTracker Pro</PageTitle>
+
+<div class="flex flex-col w-full select-none">
+    <Navbar Title="Auditoría del Sistema" Subtitle="Historial completo de todas las acciones y cambios" OnToggleSidebar="HandleSidebarToggle">
+        <div class="text-right flex items-center">
+            <Button
+                Class="@($"{ColorService.GetButtonClassess()} {((IsLoading) ? "cursor-not-allowed" : "cursor-default")}")"
+                Disabled=@(IsLoading)
+                Id="btn-Export"
+            >
+                <Download Class="h-4 w-4 mr-2"/>
+                Exportar
+            </Button>
+        </div>
+    </Navbar>
+    
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            @* Tarjeta de resumenes *@
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                <Card Class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/25 dark:to-blue-800/30 border-blue-200 dark:border-blue-500/40">
+                    <CardContent Class="pt-6">
+                        <div class="flex items-center gap-3">
+                            <TrendingUp Class="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                            <div>
+                                <p class="text-sm font-medium text-blue-800 dark:text-blue-300">
+                                    Auditoria Total
+                                </p>
+                                <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                                    @if (IsLoadingKpis)
+                                    {
+                                        <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @kpis.TotalAudits
+                                        </span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card Class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/25 dark:to-green-800/30 border-green-200 dark:border-green-500/40">
+                    <CardContent Class="pt-6">
+                        <div class="flex items-center gap-3">
+                            <Clock Class="w-8 h-8 text-green-600 dark:text-green-400" />
+                            <div>
+                                <p class="text-sm font-medium text-green-800 dark:text-green-300">
+                                    Actividades
+                                </p>
+                                <p class="text-2xl font-bold text-green-900 dark:text-green-100">
+                                    @if (IsLoadingKpis)
+                                    {
+                                        <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @kpis.ActivityData
+                                        </span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card Class="@($"{(theme == "dark" ? "card-progress-dark" : "card-progress-light")}")">
+                    <CardContent Class="pt-6">
+                        <div class="flex items-center gap-3">
+                            <GraduationCap Class="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                            <div>
+                                <p class="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                                    Capacitaciones
+                                </p>
+                                <p class="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
+                                    @if (IsLoadingKpis)
+                                    {
+                                        <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @kpis.TrainingData
+                                        </span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card Class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/25 dark:to-orange-800/30 border-orange-200 dark:border-orange-500/40">
+                    <CardContent Class="pt-6">
+                        <div class="flex items-center gap-3">
+                            <FileText Class="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                            <div>
+                                <p class="text-sm font-medium text-orange-800 dark:text-orange-300">
+                                    Requerimientos
+                                </p>
+                                <p class="text-2xl font-bold text-orange-900 dark:text-orange-100">
+                                    @if (IsLoadingKpis)
+                                    {
+                                        <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @kpis.RequerimentData
+                                        </span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card Class="@($"{(theme == "dark" ? "card-pending-dark" : "card-pending-light")}")" >
+                    <CardContent Class="pt-6">
+                        <div class="flex items-center gap-3">
+                            <XCircle Class="w-8 h-8 text-red-600 dark:text-red-400" />
+                            <div>
+                                <p class="text-sm font-medium text-red-800 dark:text-red-300">
+                                    Rechazos
+                                </p>
+                                <p class="text-2xl font-bold text-red-900 dark:text-red-100">
+                                    @if (IsLoadingKpis)
+                                    {
+                                        <LoaderCircle Class="w-4 h-4 mb-2 animate-spin"/>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @kpis.RejectionData
+                                        </span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+            @* Fin Tarjeta de resumenes *@
+            @* Filtros *@
+            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                <CardHeader>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <CardTitle Class="text-lg flex items-center gap-2">
+                                <Filter Class="w-5 h-5" />
+                                Filtros Avanzados
+                            </CardTitle>
+                            @if (activeFiltersCount > 0)
+                            {
+                                <Badge Variant="secondary" Class="bg-blue-100 text-blue-800">
+                                    @($"{activeFiltersCount} {Plural(activeFiltersCount, "activo", "activos")}")
+                                </Badge>
+                            }
+                        </div>
+                        <div class="flex items-center gap-2">
+                            @if (activeFiltersCount > 0)
+                            {
+                                <Button Variant="outline" Size="sm" OnClick="() => LimpiarFiltros()"  Class="cursor-pointer">
+                                    <Close Class="w-4 h-4 mr-1" />
+                                    Limpiar
+                                </Button>
+                            }
+                            <Button
+                                Variant="ghost"
+                                Size="sm"
+                                Class="cursor-pointer"
+                                OnClick="() => { isOpenFiltros = !isOpenFiltros; StateHasChanged(); }">
+                                @if (!isOpenFiltros)
+                                {
+                                    <ChevronDown Class="w-4 h-4"/>
+                                }
+                                else
+                                {
+                                    <ChevronUp Class="w-4 h-4"/>
+                                }
+                            </Button>
+                        </div>
+                    </div>
+                </CardHeader>
+
+                @if (isOpenFiltros)
+                {
+                    <CardContent>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <div>
+                                <Label For="entity" Id="entityLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                    Tipo de entidad
+                                </Label>
+                                <Select TItem="string"
+                                        Items="@OptionsEntidad"
+                                        Id="entity"
+                                        Value="EntitySelected"
+                                        ValueChanged="OnEntitySelectedChanged!"
+                                        ItemTextSelector="x => x.ToString()"
+                                        ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                        ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                        EnableSearch="false"
+                                        HeightClass="max-h-[120px]"
+                                        OnDropdownStateChanged="HandleDropdownState">
+                                </Select>
+                            </div>
+
+                            <div>
+                                <Label For="action" Id="actionLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                    Tipo de Acción
+                                </Label>
+                                <Select TItem="string"
+                                        Items="@OptionsAction"
+                                        Id="action"
+                                        Value="ActionSelected"
+                                        ValueChanged="OnActionSelectedChanged!"
+                                        ItemTextSelector="x => x.ToString()"
+                                        ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                        ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                        EnableSearch="false"
+                                        HeightClass="max-h-[120px]"
+                                        OnDropdownStateChanged="HandleDropdownState">
+                                </Select>
+                            </div>
+
+                            <div>
+                                <Label For="search" Id="searchLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                    Buscar
+                                </Label>
+                                <div class="relative">
+                                    <Search Class="absolute left-3 top-1/2 -translate-y-1/2 transform  text-gray-400 w-4 h-4 "/>
+                                    <SearchInput
+                                        @bind-Value="search"
+                                        Placeholder="Buscar por nombre o email..."
+                                        OnSearch="@DoSearch"
+                                        Delay="400"
+                                        Id="search"
+                                        Class="pl-10 pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"/>
+                                </div>
+                            </div>
+                        
+                            <div>
+                                <Label For="dateIn" Id="dateLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                    Fecha Desde
+                                </Label>
+                                <CalendarFilterView
+                                    Id="dateIn"
+                                    weekNumber=@weekNumberSelected
+                                    Mode="CalendarMode.Single"
+                                    AllowFutureDates="false"
+                                    OnDateSelected="DateChangedFrom"
+                                    OnDropdownStateChanged="HandleDropdownState"
+                                    ClassDiv="w-full"
+                                    ClassButton="w-full font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 h-10  px-3 py-2"
+                                />
+                            </div>
+                        
+                            <div>
+                                <Label For="dateHasta" Id="dateHastaLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                    Fecha Hasta
+                                </Label>
+                                <CalendarFilterView
+                                    Id="dateHasta"
+                                    weekNumber=@weekNumberSelected
+                                    Mode="CalendarMode.Single"
+                                    Disabled=@(filterDto.StartDate is null)
+                                    OnDateSelected="DateChangedTo"
+                                    OnDropdownStateChanged="HandleDropdownState"
+                                    ClassDiv="w-full"
+                                    ClassButton="w-full font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 h-10  px-3 py-2"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end items-center mt-4">
+                            <Button
+                                Variant="ghost"
+                                Size="sm"
+                                Class=@($"cursor-pointer {ColorService.GetButtonClassess()}")
+                                OnClick="async () => await FilterSearch()"
+                                Disabled=@isLoadingFiltros
+                            >
+                                @if (isLoadingFiltros)
+                                {
+                                    <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                    <span>Filtrando...</span>
+                                }
+                                else
+                                {
+                                    <Filter Class="w-4 h-4 mr-2 size-5"/>
+                                    <span>Filtrar</span>
+                                }
+                            </Button>
+                        </div>
+                    </CardContent>
+                }
+            </Card>
+            @* Fin filtros *@
+            @* Card Datos *@
+            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90")>
+                <CardHeader>
+                    <CardTitle>
+                        Historial de Auditoría
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    @if (IsLoading)
+                    {
+                        <div class="flex flex-col items-center justify-center py-12 text-center">
+                            <LoaderCircle Class="w-16 h-16 mb-4 animate-spin"/>
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                Cargando auditorias
+                            </h3>
+                            <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                                Espere unos segundos ...
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        switch (Audits.Count)
+                        {
+                            case 0 when !SearchEmpty:
+                                <div class="flex flex-col items-center justify-center py-12 text-center">
+                                    <AlertCircle Class="w-16 h-16 mb-4 text-gray-400"/>
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No hay registros de auditoría</h3>
+                                    <p class="text-gray-500 dark:text-gray-400">Los cambios y acciones aparecerán aquí</p>
+                                </div>
+                                break;
+                            case 0 when SearchEmpty:
+                                <div class="flex flex-col items-center justify-center py-12 text-center">
+                                    <SearchX Class="w-16 h-16 mb-4 text-gray-400"/>
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                        No se han encontrado resultados para: <span class="font-bold">@filtroSelected</span>
+                                    </h3>
+                                    <p class="text-gray-500 dark:text-gray-400 mb-4">
+                                        Prueba de otra forma u con otro criterio.
+                                    </p>
+                                </div>
+                                break;
+                            default:
+                                <div class="relative space-y-3">
+                                    <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700">
+                                    </div>
+                                    
+                                    @foreach ((AuditsResponseDto item, int index) in Audits.Select((AuditsResponseDto item, int index) => (item, index)))
+                                    {
+                                        bool hasDetail =
+                                            (item.Changes?.Count > 0) ||
+                                            (item.Metadata?.Count > 0);
+                                        <span class="hidden">@item.Id</span>
+                                        <div id="@item.Id" class="relative pl-14">
+                                            <div class=@($"absolute left-4 w-4 h-4 rounded-full border-2 {GetActionColor(item.Action)} {(index == 0 ? "ring-4 ring-blue-100 dark:ring-blue-900/30" : "")}")></div>
+                                            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 {(index == 0 ? "border-blue-200 dark:border-blue-800" : "")}")>
+                                                <CardContent class="pt-3 pb-3">
+                                                    <div>
+                                                        <div class="space-y-2">
+                                                            <div class="flex items-start justify-between gap-4">
+                                                                <div class="flex-1 min-w-0">
+                                                                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                                                                        <Badge Variant="outline" Class=@($"flex items-center {GetActionColor(item.Action)} text-xs")>
+                                                                            @GetActionIcon(item.Action)
+                                                                            <span class="ml-1">
+                                                                                @GetActionText(item.Action)
+                                                                            </span>
+                                                                        </Badge>
+
+                                                                        <Badge Variant="secondary" Class="flex items-center gap-1 text-xs">
+                                                                            @GetEntityIcon(GetEntityName(item.EntityName))
+                                                                            <span>
+                                                                                @GetEntityName(item.EntityName)
+                                                                            </span>
+                                                                        </Badge>
+
+                                                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                                            @FormatDate(item.CreatedAt)
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div class="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+                                                                        @item.ActionActivity
+                                                                    </div>
+
+                                                                    <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 mt-1">
+                                                                        <User Class="w-3 h-3" />
+                                                                        <span>
+                                                                            @item.UserName
+                                                                        </span>
+                                                                    </div>
+                                                                </div> 
+                                                                
+                                                                @if (hasDetail)
+                                                                {
+                                                                    <Button
+                                                                        Variant="ghost"
+                                                                        Size="sm"
+                                                                        Class="p-1  cursor-pointer"
+                                                                        OnClick="() => ToggleDetails(item.Id)"
+                                                                    >
+                                                                        @if (ExpandedAudits.Contains(item.Id))
+                                                                        {
+                                                                            <ChevronUp Class="w-4 h-4"/>
+                                                                        }else{
+                                                                            <ChevronDown Class="w-4 h-4" />
+                                                                        }
+                                                                    </Button>
+                                                                }
+                                                            </div>
+                                                            
+                                                            @if (ExpandedAudits.Contains(item.Id))
+                                                            {
+                                                                if (item.Changes?.Count > 0)
+                                                                {
+                                                                    <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                        <p class="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">
+                                                                            Cambios realizados:
+                                                                        </p>
+                                                                        <div class="space-y-1.5">
+                                                                            @foreach ((AuditChangeDto change, int idx) in item.Changes.Select((AuditChangeDto change, int idx) => (change, idx)))
+                                                                            {
+                                                                                <div id="@idx" class="flex items-start gap-2 text-xs">
+                                                                                    <span class="font-medium text-gray-700 dark:text-gray-300 min-w-[80px] flex-shrink-0">
+                                                                                        @change.Field:
+                                                                                    </span>
+                                                                                    <div class="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                                                                                        <span class="text-red-600 dark:text-red-400 line-through truncate">
+                                                                                            @($"{(!string.IsNullOrWhiteSpace(change.OldValue) ? change.OldValue : "-")}")
+                                                                                        </span>
+                                                                                        <ArrowRight Class="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                                                                        <span class="text-green-600 dark:text-green-400 font-medium truncate">
+                                                                                            @($"{(!string.IsNullOrWhiteSpace(change.NewValue) ? change.NewValue : "-")}")
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            }
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                                
+                                                                @if (item.Metadata?.Count > 0)
+                                                                {
+                                                                    <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                        <p class="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2">
+                                                                            Detalles adicionales:
+                                                                        </p>
+                                                                        <pre class="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto whitespace-pre-wrap break-words">
+                                                                            @Serialize(item.Metadata, _jsonPretty)
+                                                                        </pre>
+                                                                    </div>
+                                                                }
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    }
+                                </div>
+                                
+                                @if (!IsLoading || !IsLoadingBackend)
+                                {
+                                    <Paginado T="AuditsResponseDto"
+                                              Content="Audits"
+                                              PageNumber="pagina"
+                                              Size="registrosPorPagina"
+                                              TotalElements="totalElements"
+                                              CurrentPage="currentPage"
+                                              TotalPages="totalPages"
+                                              MaxVisiblePages="maxVisiblePages"
+                                              IsFirst="isFirst"
+                                              IsLast="isLast"
+                                              ShowCantPages="!IsLoadingBackend"
+                                              FirstPage="First"
+                                              LastPage="Last"
+                                              RewindPage="Rewind"
+                                              ForwardPage="Forward"
+                                              OnSetPage="SetPage" />
+                                }
+                                break;
+                        }
+                    }
+                </CardContent>
+            </Card>
+            @* Fin Card Datos *@
+        </div>
+    </article>
+</div>

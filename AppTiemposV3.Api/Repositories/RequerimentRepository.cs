@@ -1,23 +1,25 @@
-﻿using System.Linq.Expressions;
-using AppTiemposV3.Api.Data;
+﻿using AppTiemposV3.Api.Data;
 using AppTiemposV3.Api.Entities;
+using AppTiemposV3.SharedClases.Annotations;
 using AppTiemposV3.SharedClases.Contracts;
+using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.SharedClases.DTOs.Audits;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
+using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
+using AppTiemposV3.SharedClases.Utilidades.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Reflection;
-using System.Text;
-using AppTiemposV3.Api.Utilidades;
-using AppTiemposV3.SharedClases.Annotations;
-using AppTiemposV3.SharedClases.DTOs;
-using AppTiemposV3.SharedClases.Enums;
 using MySqlConnector;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using System.Net;
+using System.Text;
 using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using static AppTiemposV3.Api.Helpers.Helpers;
+using static AppTiemposV3.Api.Helpers.MetadataHelper;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+
 
 namespace AppTiemposV3.Api.Repositories
 {
@@ -28,15 +30,29 @@ namespace AppTiemposV3.Api.Repositories
         private readonly UserManager<UserEntity> _userManager;
         private readonly IGenericContract _genericContract;
         private readonly IUserContract _userContext;
+        private readonly IEntityIdProvider _entityIdProvider;
+        private readonly IAuditHelperService _auditHelperService;
+        private readonly string[] _allowedCategoryNames =
+        {
+            "Nuevo",
+            "Nuevo (Alta prioridad)",
+            "Incidente critico",
+            "Incidente no critico",
+            "Nueva configuración",
+            "Nueva configuración con prueba"
+        };
         private Guid _userId => _userContext.GetUserId(); //TODO: Luego cambiar esto a repository
 
-        public RequerimentRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IGenericContract genericContract, IUserContract userContext)
+        public RequerimentRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IGenericContract genericContract, IUserContract userContext, IEntityIdProvider entityIdProvider, IAuditHelperService auditHelperService)
         {
             _dbCxt = dbCxt;
             _iMapper = iMapper;
             _userManager = userManager;
             _genericContract = genericContract;
             _userContext = userContext;
+            _entityIdProvider = entityIdProvider;
+            _auditHelperService = auditHelperService;
+
         }
 
         /// <summary>
@@ -51,16 +67,49 @@ namespace AppTiemposV3.Api.Repositories
             if (await RequerimentExists(dto.ReqID, _userId, null))
                 throw new BadRequestException("El requerimiento con ese ReqId ya existe para tu usuario");
 
+            UserEntity? user = await GetUserByIdAsync(_userId);
 
             RequerimentsEntity req = _iMapper.Map<RequerimentsEntity>(dto);
             req.UserId = _userId;
-            req.FolderId = await FolderIdIdentity(req.UserId);
+            
+            List<Guid> allowedCategoryGuids  = await _dbCxt.Categories
+                .Where(c => _allowedCategoryNames.Contains(c.Name)) 
+                .Select(c => c.Id)
+                .ToListAsync();
+            
+            if (allowedCategoryGuids.Contains(dto.CategoryId))
+            {
+                req.FolderId = await FolderIdIdentity(user.Id);
+            }
+            else
+            {
+                req.FolderId = null;
+            }
+            
             req.Estado = Estados.Pendiente;
             req.EtapaActual = Etapas.Alta;
+            req.ConjuntoCambios = null;
             
             await _dbCxt.Requeriments.AddAsync(req);
 
             await EnsureSavedAsync("Hubo un error al crear el requerimiento");
+
+            try
+            {
+                await _auditHelperService.CreateAuditAsync(
+                    user!.FullName,
+                    $"Se creo un nuevo requerimiento con ReqID{req.ReqID}",
+                    AuditAction.Created.ToString(),
+                    nameof(RequerimentsEntity),
+                    "requeriments",
+                    BuildChanges(req),
+                    BuildCreateMetadata(user!.Id, "CREATE")
+                );
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
 
             return new GeneralResponse(true, "Requerimiento creado correctamente");
         }
@@ -86,6 +135,22 @@ namespace AppTiemposV3.Api.Repositories
 
             await EnsureSavedAsync("Hubo problemas para eliminar el registro");
 
+            try
+            {
+                await _auditHelperService.CreateAuditAsync(
+                    user!.FullName,
+                    $"Se elimino el requerimiento para el ReqID{req.ReqID}",
+                    AuditAction.Deleted.ToString(),
+                    nameof(RequerimentsEntity),
+                    "requeriments",
+                    metadata: BuildCreateMetadata(user!.Id, "DELETE")
+                );
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+
             return new GeneralResponse(true, "Requerimiento eliminado con éxito");
         }
         
@@ -107,6 +172,22 @@ namespace AppTiemposV3.Api.Repositories
             req.DeletedAt = null;
 
             await EnsureSavedAsync("Hubo problemas para restaurar el registro");
+
+            try
+            {
+                await _auditHelperService.CreateAuditAsync(
+                    user!.FullName,
+                    $"Se restauro el requerimiento para el ReqID{req.ReqID}",
+                    AuditAction.Restored.ToString(),
+                    nameof(RequerimentsEntity),
+                    "requeriments",
+                    metadata: BuildCreateMetadata(user!.Id, "RESTORE")
+                );
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
 
             return new GeneralResponse(true, "Requerimiento restaurado con éxito");
         }
@@ -248,6 +329,7 @@ namespace AppTiemposV3.Api.Repositories
             UserEntity user = await GetUserByIdAsync(_userId);
 
             RequerimentsEntity req = await GetRequerimentByIdAsync(id, user.Id);
+            RequerimentsEntity oldReq = await GetRequerimentByIdAsync(id, user.Id);
 
             if (await RequerimentExists(dto.ReqID!, user.Id, id))
                 throw new BadRequestException("El requerimiento con ese ReqId ya existe para tu usuario"); //TODO: ver esto
@@ -266,6 +348,23 @@ namespace AppTiemposV3.Api.Repositories
             _dbCxt.Entry(req).State = EntityState.Modified;
 
             await EnsureSavedAsync("Hubo un error al actualizar el req. Intente mas tarde");
+
+            try
+            {
+                await _auditHelperService.CreateAuditAsync(
+                    user!.FullName,
+                    $"Se edito un requerimiento para el ReqID{req.ReqID}",
+                    AuditAction.Updated.ToString(),
+                    nameof(RequerimentsEntity),
+                    "requeriments",
+                    BuildChanges(req, oldReq, dto),
+                    BuildCreateMetadata(user!.Id, "UPDATE")
+                );
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
 
             return new GeneralResponse(true, "Se actualizo con exito el req");
         }
@@ -360,7 +459,7 @@ namespace AppTiemposV3.Api.Repositories
         private async Task<int> FolderIdIdentity(Guid userId)
         {
             int maxFolderId = await _dbCxt.Requeriments
-                .Where(r => r.UserId == userId)
+                .Where(r => r.UserId == userId && r.FolderId != null)
                 .MaxAsync(r => (int?)r.FolderId) ?? 0;
             
             return maxFolderId + 1;
@@ -392,6 +491,128 @@ namespace AppTiemposV3.Api.Repositories
             }
 
             return totalRejections;
+        }
+        
+        private static List<AuditChangeDto> BuildChanges(
+            RequerimentsEntity newReq,
+            RequerimentsEntity? oldReq = null,
+            UpdateRequerimentDto? dto = null)
+        {
+            List<AuditChangeDto> changes = new();
+
+            if (oldReq is null)
+            {
+                AddCreate(nameof(newReq.ReqID), newReq.ReqID);
+                AddCreate(nameof(newReq.Titulo), newReq.Titulo);
+                AddCreate(nameof(newReq.Cliente), newReq.Cliente);
+                AddCreate(nameof(newReq.Url), newReq.Url);
+                string[]? newCambios = newReq.ConjuntoCambios;
+                if(newCambios is { Length: > 0 })
+                {
+                    AddCreate(nameof(newReq.ConjuntoCambios), string.Join(", ", newCambios));
+                }
+                AddCreate(nameof(newReq.Estado), newReq.Estado);
+                AddCreate(nameof(newReq.EtapaActual), newReq.EtapaActual);
+                return changes;
+            }
+
+            if (dto is not null)
+            {
+                if (!string.IsNullOrWhiteSpace(dto.ReqID) &&
+                    dto.ReqID != oldReq.ReqID)
+                    AddUpdate(nameof(newReq.ReqID), oldReq.ReqID, newReq.ReqID);
+
+                if (!string.IsNullOrWhiteSpace(dto.Titulo) &&
+                    dto.Titulo != oldReq.Titulo)
+                    AddUpdate(nameof(newReq.Titulo), oldReq.Titulo, newReq.Titulo);
+                
+                if (!string.IsNullOrWhiteSpace(dto.StoryPoint) &&
+                    dto.StoryPoint != oldReq.StoryPoint)
+                    AddUpdate(nameof(newReq.StoryPoint), oldReq.StoryPoint, newReq.StoryPoint);
+                
+                if (!string.IsNullOrWhiteSpace(dto.Url) &&
+                    dto.Url != oldReq.Url)
+                    AddUpdate(nameof(newReq.Url), oldReq.Url, newReq.Url);
+                
+                if (dto.CategoryId != Guid.Empty &&
+                    dto.CategoryId != oldReq.CategoryId)
+                    AddUpdate(nameof(newReq.CategoryId), oldReq.CategoryId, newReq.CategoryId);
+                
+                if (!string.IsNullOrWhiteSpace(dto.Descripcion) &&
+                    dto.Descripcion != oldReq.Descripcion)
+                    AddUpdate(nameof(newReq.Descripcion), oldReq.Descripcion, newReq.Descripcion);
+
+                if (!string.IsNullOrWhiteSpace(dto.Cliente) &&
+                    dto.Cliente != oldReq.Cliente)
+                    AddUpdate(nameof(newReq.Cliente), oldReq.Cliente, newReq.Cliente);
+
+                string[]? oldCambios = oldReq.ConjuntoCambios;
+                string[]? newCambios = newReq.ConjuntoCambios;
+
+                if (oldReq.ConjuntoCambios != null)
+                {
+                    if (AreDifferent(oldCambios, newCambios))
+                    {
+                        AddUpdate(
+                            nameof(newReq.ConjuntoCambios),
+                            oldCambios is { Length: > 0 } ? string.Join(", ", oldCambios) : null,
+                            newCambios is { Length: > 0 } ? string.Join(", ", newCambios) : null
+                        );
+                    }
+                }
+                else
+                {
+                    AddCreate(nameof(newReq.ConjuntoCambios), NormalizeValue(newReq.ConjuntoCambios));  
+                }
+                
+                if (dto.Estado.HasValue &&
+                    dto.Estado.Value != oldReq.Estado)
+                    AddUpdate(nameof(newReq.Estado), oldReq.Estado, newReq.Estado);
+
+                if (dto.EtapaActual.HasValue &&
+                    dto.EtapaActual.Value != oldReq.EtapaActual)
+                    AddUpdate(nameof(newReq.EtapaActual), oldReq.EtapaActual, newReq.EtapaActual);
+            }
+
+            return changes;
+
+            void AddCreate(string field, object? value)
+            {
+                changes.Add(new AuditChangeDto
+                {
+                    Field = field,
+                    NewValue = NormalizeValue(value?.ToString())
+                });
+            }
+            
+            void AddUpdate(string field, object? oldValue, object? newValue)
+            {
+                string? oldVal = oldValue?.ToString();
+                string? newVal = newValue?.ToString();
+                
+                if (oldVal != newVal)
+                {
+                    changes.Add(new AuditChangeDto
+                    {
+                        Field = field,
+                        OldValue = NormalizeValue(oldValue),
+                        NewValue = NormalizeValue(newValue)
+                    });
+                }
+            }
+        }
+        
+        private static bool AreDifferent(string[]? oldValue, string[]? newValue)
+        {
+            if (oldValue == null && newValue == null)
+                return false;
+
+            if (oldValue == null || newValue == null)
+                return true;
+
+            return !oldValue
+                .OrderBy(x => x)
+                .SequenceEqual(newValue.OrderBy(x => x));
         }
     }
 }

@@ -1,16 +1,17 @@
-using System.Net;
 using AppTiemposV3.Api.Data;
 using AppTiemposV3.Api.Entities;
 using AppTiemposV3.SharedClases.Contracts;
+using AppTiemposV3.SharedClases.DTOs.Audits;
+using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Users;
+using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using UserDto = AppTiemposV3.SharedClases.DTOs.UserDto;
-using MySqlConnector;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using System.Net;
 using static AppTiemposV3.Api.Helpers.Helpers;
+using static AppTiemposV3.Api.Helpers.MetadataHelper;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
 namespace AppTiemposV3.Api.Repositories;
 
@@ -21,15 +22,17 @@ public class UserRepository : IUserCContract<UserResponseDto>
     private readonly UserManager<UserEntity> _userManager;
     private readonly IUserContract _userContext;
     private readonly ILogger<UserRepository> _logger;
+    private readonly IAuditHelperService _auditHelperService;
     private Guid _userId => _userContext.GetUserId();
 
-    public UserRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IUserContract userContext, ILogger<UserRepository> logger)
+    public UserRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IUserContract userContext, ILogger<UserRepository> logger, IAuditHelperService auditHelperService)
     {
         _dbCxt = dbCxt;
         _iMapper = iMapper;
         _userManager = userManager;
         _userContext = userContext;
         _logger = logger;
+        _auditHelperService = auditHelperService;
     }
     
     public async Task<DataResponse<UserResponseDto>> GetUserLogged()
@@ -50,22 +53,37 @@ public class UserRepository : IUserCContract<UserResponseDto>
     public async Task<GeneralResponse> UpdateUserProfile(UpdateUserDto dto)
     {
         UserEntity user = await GetUserByIdAsync(_userId);
-        
+        UserEntity userOld = await GetUserByIdAsync(_userId);
+
         _iMapper.Map(dto, user);
         
         await _userManager.UpdateAsync(user);
-        
-        // _dbCxt.Entry(user).State = EntityState.Modified;
-        //
-        // await EnsureSavedAsync("Hubo un problema para actualizar el registro");
-        
+
+        try
+        {
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                $"Edito la información del perfil",
+                AuditAction.Updated.ToString(),
+                nameof(UserEntity),
+                "usuarios",
+                BuildChanges(user, userOld, dto: dto),
+                BuildCreateMetadata(user.Id, "UPDATE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
         return new GeneralResponse(true, "Usuario actualizado correctamente");
     }
 
     public async Task<GeneralResponse> UpdateUserPassword(UpdatePasswordUserDto dto)
     {
         UserEntity user = await GetUserByIdAsync(_userId);
-        
+        UserEntity userOld = await GetUserByIdAsync(_userId);
+
         bool isCurrentPasswordValid = await _userManager.CheckPasswordAsync(user, dto.ActualPassword);
 
         if (!isCurrentPasswordValid)
@@ -82,17 +100,52 @@ public class UserRepository : IUserCContract<UserResponseDto>
         
         await ResetUserPassword(user, dto.NewPassword);
 
+        try
+        {
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                $"Cambio la contraseña",
+                AuditAction.Updated.ToString(),
+                nameof(UserEntity),
+                "usuarios",
+                BuildChanges(user, userOld, dto2: dto),
+                BuildCreateMetadata(user.Id, "UPDATE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
         return new GeneralResponse(true, "Contraseña actualizada correctamente");
     }
 
     public async Task<GeneralResponse> UpdateTwoFactor(EnableTwoFactorUser dto)
     {
         UserEntity user = await GetUserByIdAsync(_userId);
+        UserEntity userOld = await GetUserByIdAsync(_userId);
 
         user.TwoFactorEnabled = dto.EnableTwoFactor;
         
         await _userManager.UpdateAsync(user);
-        
+
+        try
+        {
+            await _auditHelperService.CreateAuditAsync(
+                user!.FullName,
+                $"{(dto.EnableTwoFactor ? "Activo" : "Desactivo")} el doble factor",
+                AuditAction.Updated.ToString(),
+                nameof(UserEntity),
+                "usuarios",
+                BuildChanges(user, userOld, dto3: dto),
+                BuildCreateMetadata(user.Id, "UPDATE")
+            );
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
         return new GeneralResponse(true, "Se ha actualizado correctamente");
     }
 
@@ -140,5 +193,64 @@ public class UserRepository : IUserCContract<UserResponseDto>
         int result = await _dbCxt.SaveChangesAsync();
         if (result <= 0)
             throw new InternalServerErrorException(errorMessage);
+    }
+
+    private static List<AuditChangeDto> BuildChanges(
+        UserEntity newUser,
+        UserEntity? oldUser = null,
+        UpdateUserDto? dto = null,
+        UpdatePasswordUserDto? dto2 = null,
+        EnableTwoFactorUser? dto3 = null)
+    {
+        List<AuditChangeDto> changes = new();
+
+        if (dto is not null)
+        {
+            if(!string.IsNullOrEmpty(dto.FullName) && dto.FullName != oldUser?.FullName)
+                AddUpdate(nameof(dto.FullName), oldUser?.FullName, dto.FullName);
+
+            if(!string.IsNullOrEmpty(dto.Email) && dto.Email != oldUser?.Email)
+                AddUpdate(nameof(dto.Email), oldUser?.Email, dto.Email);
+
+            if(dto.Area != oldUser?.Area)
+                AddUpdate(nameof(dto.Area), oldUser?.Area, dto.Area);
+        }
+
+        if (dto2 is not null)
+        {
+            if(dto2.ActualPassword is not null)
+                AddUpdate("Password", "********", "********");
+
+            if (dto2.NewPassword is not null)
+                AddUpdate("Password", "********", "********");
+
+            if (dto2.ConfirmPassword is not null)
+                AddUpdate("Password", "********", "********");
+            
+        }
+
+        if (dto3 is not null)
+        {
+            if(dto3.EnableTwoFactor != oldUser?.TwoFactorEnabled)
+                AddUpdate(nameof(dto3.EnableTwoFactor), oldUser?.TwoFactorEnabled, dto3.EnableTwoFactor);
+        }
+
+        return changes;
+
+        void AddUpdate(string field, object? oldValue, object? newValue)
+        {
+            string? oldVal = oldValue?.ToString();
+            string? newVal = newValue?.ToString();
+
+            if (oldVal != newVal)
+            {
+                changes.Add(new AuditChangeDto
+                {
+                    Field = field,
+                    OldValue = NormalizeValue(oldValue),
+                    NewValue = NormalizeValue(newValue)
+                });
+            }
+        }
     }
 }

@@ -32,20 +32,20 @@ namespace AppTiemposV3.Api.Entities
 
         public UserEntity User { get; set; } = null!;
         
-        public int FolderId { get; set; }
+        public int? FolderId { get; set; }
 
         public Estados Estado { get; set; } = Estados.Pendiente;
         
         public Etapas EtapaActual { get; set; } = Etapas.Alta;
         
-        public string? ConjuntoCambios { get; set; } = null;
+        public string[]? ConjuntoCambios { get; set; } = null;
         
         [NotMapped]
         public TimeSpan WorkedTime { get; set; }
         
         public ICollection<ActivitiesEntity> Activities { get; set; } = new List<ActivitiesEntity>();
         
-        public ICollection<TrainingEntity> Trainings { get; set; } = new List<TrainingEntity>();
+        public ICollection<TrainingEntity>? Trainings { get; set; }
         
         public ICollection<RejectionEntity> Rejections { get; set; } = new List<RejectionEntity>();
         

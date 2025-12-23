@@ -33,18 +33,19 @@ public class ActivityWeeklyRepository: IActivityWeeklyContract<ActivitiesByDay>
     {
         UserEntity user = await GetUserByIdAsync(UserId);
         var (start, end) = GetDateRangeFromWeek(year, weekNumber);
-        
-        List<ActivityResponseDto> activities = await _dbCxt.Activities
-            .Include(a => a.Requeriment)
-            .Include(a => a.User)
-            .Where(u => u.UserId == user.Id)
-            .Where(a => a.StartDate >= start && a.StartDate <= end)
-            .OrderByDescending(o => o.StartDate)
-            .ThenByDescending(o => o.StartTime)
-            .ProjectTo<ActivityResponseDto>(_iMapper.ConfigurationProvider)
-            .ToListAsync();
-        
-        List<ActivitiesByDay> grouped = activities
+
+        List<ActivitiesEntity> activitiesEntities = await _dbCxt.Activities
+              .Include(a => a.User)
+              .Include(a => a.Requeriment)
+              .Where(a => a.UserId == user.Id)
+              .Where(a => a.StartDate >= start && a.StartDate <= end)
+              .OrderByDescending(a => a.StartDate)
+              .ThenByDescending(a => a.StartTime)
+              .ToListAsync();
+
+        List<ActivityResponseDto> activitiesDto = _iMapper.Map<List<ActivityResponseDto>>(activitiesEntities);
+
+        List<ActivitiesByDay> grouped = activitiesDto
             .GroupBy(a => a.StartDate)
             .OrderBy(g => g.Key)
             .Select(g =>

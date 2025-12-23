@@ -30,4 +30,6 @@ public class UserEntity : IdentityUser<Guid>
     
     public ICollection<RejectionEntity> Rejections { get; set; } = new List<RejectionEntity>();
     public ICollection<RejectionDetailEntity> RejectionsDetails { get; set; } = new List<RejectionDetailEntity>();
+    
+    public ICollection<AuditEntity> Audits { get; set; } = new List<AuditEntity>();
 }
