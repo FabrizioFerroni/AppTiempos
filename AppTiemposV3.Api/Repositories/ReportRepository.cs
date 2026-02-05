@@ -108,7 +108,7 @@ namespace AppTiemposV3.Api.Repositories
             IEnumerable<ReportEntity> filteredData = type switch
             {
                 1 => reportData.Where(r => r.IsFavorite),      
-                2 => reportData.Where(r => r.Schedule.Scheduled),      
+                2 => reportData.Where(r => r.IsScheduled),      
                 _ => reportData                                 
             };
 
