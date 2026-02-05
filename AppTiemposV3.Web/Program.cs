@@ -61,6 +61,7 @@ services.AddScoped<ITrainingContract<TrainingResponseDto>, TrainingService>();
 services.AddScoped<IRejectionContract<RejectionResponseDto>, RejectionService>();
 services.AddScoped<IRejectionDetailContract<RejectionDetailResponseDto>, RejectionDetailService>();
 services.AddScoped<IInvitationContract<InvitationResponseDto>, InvitationService>();
+services.AddScoped<IReportContract, ReportService>();
 services.AddScoped<IUserCContract<UserResponseDto>, UserService>();
 services.AddScoped<LayoutState>();
 services.AddScoped<ColorService>();

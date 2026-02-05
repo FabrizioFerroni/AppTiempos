@@ -1,0 +1,302 @@
+﻿@page "/app/reportes"
+@using AppTiemposV3.SharedClases.DTOs.Reports
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
+@using AppTiemposV3.Web.Pages.Reports.Modal
+
+<PageTitle>
+    Reportes | TimeTracker Pro
+</PageTitle>
+
+<div class="flex flex-col w-full select-none">
+    <Navbar Title="Reportes" Subtitle="Gestión de reportes personalizados" OnToggleSidebar="HandleSidebarToggle">
+        <div class="text-right">
+            <Enlace Href="/app/reportes/nuevo" Target="_self" Class="@cssEnlace">
+                <Plus Class="h-4 w-4 mr-2" />
+                Nuevo Reporte
+            </Enlace>
+        </div>
+    </Navbar>
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90 {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                <CardHeader>
+                    <div class="flex justify-between items-center">
+                        <div class="flex flex-col gap-1">
+                            <h2 class="text-2xl font-bold">
+                                Reportes Guardados
+                            </h2>
+                            <p class="text-[hsl(var(--muted-foreground))]">
+                                Gestiona y ejecuta tus reportes personalizados
+                            </p>
+                        </div>
+
+                        <div class="flex gap-2 w-[400px]">
+                            <div class="relative flex-1">
+                                <Search Class="absolute left-3 top-1/2 -translate-y-1/2 transform  text-gray-400 w-4 h-4 " />
+                                <SearchInput @bind-Value="search"
+                                             Placeholder="Buscar reportes"
+                                             OnSearch="@DoSearch"
+                                             Delay="400"
+                                             Disabled="@IsLoading"
+                                             Class="pl-10 pr-10 font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
+                                @if (!string.IsNullOrWhiteSpace(search))
+                                {
+                                    <Button Size="sm" Variant="ghost" Class="absolute right-3 top-1/2 -translate-y-1/2 transform cursor-pointer" OnClick="() => UpdateSearch()">
+                                        <CloseCircle Class="text-gray-400 w-4 h-4 " />
+                                    </Button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div class="space-y-6">
+                        <div class="flex gap-2">
+                            <Button Variant=@($"{(TypeSelected == 0 ? "outline" : "default")}") Size="sm" Class="cursor-pointer" OnClick="async () => await ChangeType(0)">
+                                Todos (@AllsCount)
+                            </Button>
+
+                            <Button Variant=@($"{(TypeSelected == 1 ? "outline" : "default")}") Size="sm" Class="cursor-pointer" OnClick="async () => await ChangeType(1)">
+                                Favoritos (@FavoriteCount)
+                            </Button>
+
+                            <Button Variant=@($"{(TypeSelected == 2 ? "outline" : "default")}") Size="sm" Class="cursor-pointer" OnClick="async () => await ChangeType(2)">
+                                Programados (@ScheduledCount)
+                            </Button>
+                        </div>
+
+                        @if (IsLoading)
+                        {
+                            <div class="flex flex-col items-center justify-center py-12 text-center">
+                                <LoaderCircle Class="w-16 h-16 mb-4 animate-spin" />
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                    Cargando reportes
+                                </h3>
+                                <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                                    Espere unos segundos ...
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            
+                            @if (Reports.Count == 0 && SearchEmpty)
+                            {
+                                <div class="text-center py-12">
+                                <Database Class="w-16 h-16 mx-auto mb-4 text-[hsl(var(--muted-foreground))]/50" />
+                                  <h3 class="text-lg font-medium mb-2">No se encontraron reportes</h3>
+                                  <div class="text-[hsl(var(--muted-foreground))]">                                       
+                                        @if (TypeSelected == 0)
+                                        {
+                                            <p class="m-0 p-0">
+                                                Crea tu primer reporte personalizado
+                                            </p>
+                                        } else if (TypeSelected == 1)
+                                        {
+                                            <p class="m-0 p-0">
+                                               Selecciona tu primer reporte favorito en la pestaña de todos
+                                            </p> 
+                                        }
+                                        else if (TypeSelected == 2)
+                                        {
+                                            <p class="m-0 p-0">
+                                                Edita un reporte en la pestaña de todos para poder programar su envío automatico
+                                            </p>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else if (Reports.Count == 0 && !SearchEmpty)
+                            {
+                                <div class="flex flex-col items-center justify-center py-12 text-center">
+                                    <SearchX Class="w-16 h-16 mb-4 text-gray-400" />
+                                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                        No se han encontrado resultados para: <span class="font-bold">el nombre del reporte</span>
+                                    </h3>
+                                    <p class="text-gray-500 dark:text-gray-400 mb-4">
+                                        Prueba de otra forma u con otro criterio.
+                                    </p>
+                                </div>
+                            }
+                            else
+                            {                            
+                                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                                    @foreach (ListAllReportsDto item in Reports)
+                                    {
+                                        
+                                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700 hover:shadow-md transition-shadow")>
+                                            <CardHeader Class="pb-3">
+                                                <div class="flex items-start justify-between">
+                                                    <div class="flex items-center gap-2">
+                                                        <BarChart3 Class="w-5 h-5 text-primary" />
+                                                        <div>
+                                                            <CardTitle Class="text-lg">
+                                                                @item.Name
+                                                            </CardTitle>
+                                                            <p class="text-sm text-muted-foreground mt-1">
+                                                                @item.Description
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex items-center gap-1">
+                                                        @if (item.IsFavorite)
+                                                        {
+                                                            <Button Variant="ghost" Size="sm" Class="cursor-pointer" OnClick="() => AddOrRemoveFavorite(item.Id, false)">
+                                                                @if (LoadingIdFav == item.Id)
+                                                                {
+                                                                    <LoaderCircle Class="w-4 h-4 size-5 animate-spin" />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <Star Class="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                                                }
+
+                                                            </Button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <Button Variant="ghost" Size="sm" Class="cursor-pointer" OnClick="() => AddOrRemoveFavorite(item.Id, true)">
+                                                                @if (LoadingIdFav == item.Id)
+                                                                {
+                                                                    <LoaderCircle Class="w-4 h-4 size-5 animate-spin" />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <StarOff Class="w-4 h-4" />
+                                                                }
+                                                                
+                                                            </Button>
+                                                        }
+
+                                                        <div>
+                                                            <Button 
+                                                                Variant="outline" 
+                                                                Size="sm" 
+                                                                OnClick="@(() => DeleteModal(item.Id, item.Name))"
+                                                                Class="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-500 dark:hover:border-red-900/50 dark:bg-gray-600  cursor-pointer">
+                                                                <Trash2 Class="w-4 h-4 " />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent Class="space-y-4">
+                                                <div class="flex flex-wrap gap-2">
+
+                                                    @if(item.ReportMode == "custom")
+                                                    {
+                                                        <Badge Variant="secondary"
+                                                               Class="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                                                            <Code Class="w-3 h-3 mr-1" />
+                                                            SQL Personalizado
+                                                        </Badge>
+                                                    }
+                                                    else
+                                                    {
+                                                        <Badge Variant="secondary"
+                                                               Class="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                                                            <BarChart3 Class="w-3 h-3 mr-1" />
+                                                            Constructor Visual
+                                                        </Badge>
+                                                    }
+
+                                                    @if(item.JoinsCount > 0 && item.ReportMode != "custom")
+                                                    {
+                                                        <Badge Variant="outline">
+                                                            @($"+{item.JoinsCount} JOIN")
+                                                        </Badge>
+                                                    }
+
+                                                    @if (item.Schedule.Scheduled)
+                                                    {
+                                                        <Badge Variant="outline" Class="text-green-600 border-green-600">
+                                                            <Calendar Class="w-3 h-3 mr-1" />
+                                                            Programado
+                                                        </Badge>                                                        
+                                                    }
+                                                    <Badge Variant="outline">@item.RunCount ejecuciones</Badge>
+                                                </div>
+
+                                                <div class="text-sm text-muted-foreground space-y-1">
+                                                    <div>Creado: @FormatDateOnly(item.CreatedAt)</div>
+                                                    <div>Última ejecución: @FormatDateOnly(item.LastRun)</div>
+                                                </div>
+
+                                                @if(item.ReportMode != "custom" && item.QueryRequest?.Metrics.Count > 0)
+                                                {
+                                                    <div>
+                                                        <p class="text-sm font-medium mb-2">Métricas:</p>
+                                                        <div class="flex flex-wrap gap-1">
+                                                            @if (item.QueryRequest?.Metrics != null)
+                                                            {
+                                                                @foreach (MetricDTO? metric in item.QueryRequest.Metrics.Take(3))
+                                                                {
+                                                                    <Badge Variant="outline" Class="text-xs">
+                                                                        @metric.Label
+                                                                    </Badge>
+                                                                }
+
+                                                                @if (item.QueryRequest.Metrics.Count > 3)
+                                                                {
+                                                                    <Badge Variant="outline" Class="text-xs">
+                                                                        +@(item.QueryRequest.Metrics.Count - 3) más
+                                                                    </Badge>
+                                                                }
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    
+                                                }
+
+                                                @if (item.ReportMode == "custom" && !string.IsNullOrWhiteSpace(item.QueryRaw))
+                                                {
+                                                     <div style="margin-bottom: 23px;">
+                                                        <p class="text-sm font-medium mb-2">Vista previa SQL:</p>
+                                                        <div class="text-xs font-mono overflow-hidden">
+                                                            <div class="line-clamp-2">
+                                                              @item.QueryRaw
+                                                            </div>
+                                                        </div>
+                                                     </div>
+                                                 }
+
+                                                <Enlace Href=@($"/app/reporte/{item.UrlIdentificator}") Class=@($"{cssEnlace} w-full")>
+                                                    <Play class="w-4 h-4 mr-2" />
+                                                    Ver Reporte
+                                                </Enlace>
+                                            </CardContent>
+                                        </Card>
+
+                            
+                                    }
+                                </div>
+                            }
+                        }
+
+                        @if (!IsLoading || !IsLoadingBackend || !IsLoadingDelete)
+                        {
+                            <Paginado T="ListAllReportsDto"
+                                      Content="Reports"
+                                      PageNumber="pagina"
+                                      Size="registrosPorPagina"
+                                      TotalElements="totalElements"
+                                      CurrentPage="currentPage"
+                                      TotalPages="totalPages"
+                                      MaxVisiblePages="maxVisiblePages"
+                                      IsFirst="isFirst"
+                                      IsLast="isLast"
+                                      ShowCantPages="!IsLoadingBackend"
+                                      FirstPage="First"
+                                      LastPage="Last"
+                                      RewindPage="Rewind"
+                                      ForwardPage="Forward"
+                                      OnSetPage="SetPage" />
+
+                        }
+                    </div>
+                </CardContent>
+            </Card>
+            <DeleteReport @ref="deleteModalRef" OnSaved="HandleReportDeleted" />
+        </div>
+    </article>
+</div>

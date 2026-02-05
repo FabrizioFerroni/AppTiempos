@@ -1,0 +1,152 @@
+﻿@page "/app/reporte/{urlIdentificator}"
+@using AppTiemposV3.SharedClases.Constants
+@using AppTiemposV3.Web.Pages.Requeriments.Modals
+@using AppTiemposV3.Web.Pages.Activities.Modales
+@using Microsoft.AspNetCore.Components.Authorization
+@using static AppTiemposV3.Web.Utils.FormatString
+
+
+<PageTitle>
+    Detalle del reporte | TimeTracker Pro
+</PageTitle>
+
+<div class="flex flex-col w-full select-none">
+    <Navbar Title="Detalle del Reporte" Subtitle="Información completa del reporte" OnToggleSidebar="HandleSidebarToggle">
+        <div class="text-right flex items-center gap-2">
+            <Enlace Href="/app/reportes" Target="_self" Class="border border-gray-300  dark:hover:bg-gray-700 h-9 px-3 text-sm inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none text-gray-400  dark:text-gray-300 dark:border-gray-500 cursor-pointer">
+                <ArrowLeft Class="h-4 w-4 mr-2" />
+                Volver
+            </Enlace>
+        </div>
+    </Navbar>
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            @if (IsLoadingData || Report == null)
+            {
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <LoaderCircle Class="w-16 h-16 mb-4 animate-spin text-gray-900 dark:text-gray-100"/>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                        Cargando datos del reporte
+                    </h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                        Espere unos segundos ...
+                    </p>
+                </div>
+            }
+            else
+            {
+                <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90 mb-5")>
+                    <CardHeader>
+                        <div class="flex justify-between items-center">
+                            <div class="flex flex-col gap-1 items-starg justify-start">
+                                <CardTitle>
+                                    @Report.Name
+                                </CardTitle>
+                                <span class="text-[hsl(var(--muted-foreground))] text-xs">
+                                    @Report.QueryResult registros encontrados
+                                </span>
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <Button Variant="outline"
+                                        Size="sm"
+                                        Disabled="@IsLoadingExcel"
+                                        Class="flex items-center gap-2 cursor-pointer"
+                                        OnClick="() => DownloadExcelReport(Report.Id)"
+                                        Id=@($"download-excel-{Report.UrlIdentificator}")>
+
+                                    @if (IsLoadingExcel)
+                                    {
+                                        <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                        <span>Descargando Excel...</span>
+                                    }
+                                    else
+                                    {
+                                        <Download Class="w-4 h-4 mr-2" />
+                                        <span>
+                                            Descargar Excel
+                                        </span>
+                                    }
+                                </Button>
+                                <Button Variant="outline"
+                                        Size="sm"
+                                        Disabled="@IsLoadingPDF"
+                                        OnClick="() => DownloadPdfReport(Report.Id)" 
+                                        Class=@($"flex items-center gap-2 cursor-pointer {ColorService.GetButtonClassess()}")
+                                        Id=@($"download-pdf-{Report.UrlIdentificator}")>
+                                    @if (IsLoadingPDF)
+                                    {
+                                        <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                        <span>Descargando PDF...</span>
+                                    }
+                                    else
+                                    {
+                                        <Download Class="w-4 h-4 mr-2" />
+                                        <span>
+                                            Descargar PDF
+                                        </span>
+                                    }
+                                </Button>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        @if (!string.IsNullOrWhiteSpace(Report.Description))
+                        {
+                            <div class="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/30 p-4 rounded">
+                                <p class="text-gray-700 dark:text-gray-300">
+                                    @Report.Description
+                                </p>
+                            </div>
+                        }
+                        <div class="mt-2">
+                            <h3 class="text-lg font-semibold mb-4">Datos del Reporte</h3>
+                            @if (Report.DataResult.Count == 0)
+                            {
+                                <div class="text-center py-12 text-gray-500">
+                                    <FileText Class="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                                    <p class="text-lg font-medium">No hay datos para mostrar</p>
+                                    <p class="text-sm mt-2">
+                                        Verifica que existan registros en la tabla base o ajusta los filtros del reporte
+                                    </p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="overflow-x-auto border rounded-lg">
+                                    <table class="w-full border-collapse border-2 border-gray-200 dark:border-gray-700">
+                                        <thead>
+                                            <tr class="border-b-2 border-gray-200 dark:border-gray-700">
+                                                @foreach (string? column in Report.DataResult.First().Keys)
+                                                {
+                                                    <th class="text-left p-3 font-semibold text-xs bg-gray-50 dark:bg-gray-800 uppercase tracking-wider">
+                                                        @column
+                                                    </th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @* <tr class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+
+                                            </tr> *@
+                                            @foreach (Dictionary<string, object?> row in Report.DataResult)
+                                            {
+                                                <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                                    @foreach (string column in row.Keys)
+                                                    {
+                                                        <td class="p-3 text-xs">
+                                                            @FormatValue(row[column], column)
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </CardContent>
+                </Card>
+            }
+        </div>
+    </article>
+</div>

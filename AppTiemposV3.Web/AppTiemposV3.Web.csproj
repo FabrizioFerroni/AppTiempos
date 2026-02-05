@@ -37,4 +37,12 @@
         <DependentUpon>AlertTitle.razor</DependentUpon>
       </Compile>
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Pages\Reports\EditReport\" />
+    </ItemGroup>
+
+	<Target Name="EjecutarNpm" BeforeTargets="Build">
+		<Exec Command="npm run tailwind:build" />
+	</Target>
 </Project>

@@ -1,0 +1,7 @@
+﻿<button class="@GetClasses()"
+        disabled="@Disabled"
+        @onclick="HandleClick"
+        data-state="@(IsActive ? "active" : "inactive")"
+>
+    @ChildContent
+</button>

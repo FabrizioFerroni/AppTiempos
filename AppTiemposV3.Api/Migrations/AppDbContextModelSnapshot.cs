@@ -161,8 +161,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<Guid>("UserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("char(100)");
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -409,6 +408,89 @@ namespace AppTiemposV3.Api.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("rechazos", (string)null);
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ReportEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsFavorite")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsScheduled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<DateTime>("LastRun")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("QueryRaw")
+                        .HasMaxLength(10240000)
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("QueryRequest")
+                        .HasColumnType("json");
+
+                    b.Property<string>("ReportMode")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("RunCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<string>("Schedule")
+                        .IsRequired()
+                        .HasColumnType("json");
+
+                    b.Property<string>("TableBase")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("UrlIdentificator")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("reportes", (string)null);
                 });
 
             modelBuilder.Entity("AppTiemposV3.Api.Entities.RequerimentsEntity", b =>
@@ -838,6 +920,17 @@ namespace AppTiemposV3.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ReportEntity", b =>
+                {
+                    b.HasOne("AppTiemposV3.Api.Entities.UserEntity", "User")
+                        .WithMany("Reports")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("AppTiemposV3.Api.Entities.RequerimentsEntity", b =>
                 {
                     b.HasOne("AppTiemposV3.Api.Entities.CategoriesEntity", "Category")
@@ -955,6 +1048,8 @@ namespace AppTiemposV3.Api.Migrations
                     b.Navigation("Rejections");
 
                     b.Navigation("RejectionsDetails");
+
+                    b.Navigation("Reports");
 
                     b.Navigation("Requeriments");
 

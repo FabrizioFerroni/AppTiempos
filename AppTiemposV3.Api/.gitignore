@@ -10,6 +10,7 @@ obj/
 /node_modules
 /wwwroot/node_modules
 /Files/colors.json
+/Logs
 
 ### Rider ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider

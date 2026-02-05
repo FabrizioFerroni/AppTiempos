@@ -1,3 +1,5 @@
+@using static AppTiemposV3.Web.Utils.Helpers
+
 @page "/"
 
 @layout MainLayout
@@ -70,15 +72,13 @@
 			</div>
 			<div class="flex items-center justify-between">
 				<div class="flex items-center space-x-2">
-					<Checkbox
-						@bind-Value="login.RememberMe"
-						Id="remember"
-						Name="remember"
-						Class="cursor-pointer"
-						Required/>
-					<Label For="remember" Id="remember" Class="text-gray-700 dark:text-gray-300 cursor-pointer">
-						Recordarme
-					</Label>
+					<Checkbox Id="remember"
+								@bind-Value="login.RememberMe"
+								Name="remember"
+								Class="cursor-pointer"
+								Label="Recordarme"
+								StyleSpan="top: 55% !important;"
+								Style=@($"--radio-checked-color: {GetHexColorGradient(ColorService.GetCurrentColor().Gradient)};") />
 				</div>
 				<Enlace
 					Href="olvide-contrasena"
