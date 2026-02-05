@@ -66,7 +66,7 @@ namespace AppTiemposV3.Api.Repositories
             sb.AppendLine("SELECT");
             sb.AppendLine("   COUNT(r.Id) AS Alls,");
             sb.AppendLine("   SUM(CASE WHEN r.IsFavorite = 1 THEN 1 ELSE 0 END) AS Favorites,");
-            sb.AppendLine("   SUM(CASE WHEN r.Schedule->> '$.scheduled' = 'true' THEN 1 ELSE 0 END) AS Scheduled");
+            sb.AppendLine("   SUM(CASE WHEN r.IsScheduled = 1 THEN 1 ELSE 0 END) AS Scheduled");
             sb.AppendLine("FROM reportes AS r");
             sb.AppendLine("WHERE r.UserId = @UserId");
             sb.AppendLine("AND r.IsDeleted = 0");
