@@ -36,6 +36,7 @@ public partial class Select<TItem> : ComponentBase
     [Parameter] public bool EnableSearch { get; set; } = false;
     [Parameter] public string HeightClass { get; set; } = "max-h-96";
     [Parameter] public string HeightClassPrin { get; set; } = "";
+    [Parameter] public string? StyleButton { get; set; } = string.Empty;
     
     
 

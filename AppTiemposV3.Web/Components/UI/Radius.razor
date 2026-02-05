@@ -1,0 +1,22 @@
+﻿@* <input type="radio"
+       class="@GetClasses()"
+       id="@Id"
+       checked="@Checked"
+       name="@Name"
+       style="@Style"
+       @onclick="OnClick"
+       @onchange="OnChange"
+       @attributes="GetBooleanAttributes()" /> *@
+
+<label class="container" style="@Style">
+    @Label
+    <input 
+        type="radio"           
+        name="@Name"
+        id="@Id"
+        checked="@Checked"        
+        @onclick="OnClick"
+        @onchange="OnChange"
+        @attributes="GetBooleanAttributes()">
+    <span class="checkmark"></span>
+</label>

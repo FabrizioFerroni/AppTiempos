@@ -1,8 +1,76 @@
-<input
-    type="checkbox"
-    class="@GetClasses()"
-    id="@Id"
-    name="@Name"
-    @onclick="OnClick"
-    @onchange="OnChange"
-    @attributes="GetBooleanAttributes()" />
+﻿<label class="containerchk" style="@Style">
+    @Label
+    <input type="checkbox"
+           name="@Name"
+           id="@Id"
+           checked="@Value"
+           @onclick="OnClick"
+           @onchange="OnChange"
+           @attributes="GetBooleanAttributes()">
+    <span class="checkmarkchk" style="@StyleSpan"></span>
+</label>
+<style>
+    .containerchk {
+        position: relative;
+        padding-left: 23px; 
+        cursor: pointer;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        display: inline-block;
+    }
+
+    .containerchk input {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        opacity: 0;
+        cursor: pointer;
+        margin: 0;
+        padding: 0;
+        border: none;
+    }
+
+    .checkmarkchk {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%);
+        height: 16px;
+        width: 16px;
+        background-color: #eee;
+        border-radius: 20%;
+    }
+
+    .containerchk:hover input ~ .checkmarkchk {
+        background-color: #ccc;
+    }
+
+    .containerchk input:checked ~ .checkmarkchk {
+        background-color: var(--radio-checked-color, #2196F3);
+    }
+
+    .checkmarkchk:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+
+    .containerchk input:checked ~ .checkmarkchk:after {
+        display: block;
+    }
+
+    .containerchk .checkmarkchk:after {
+        top: 4px;
+        left: 4px;
+        width: 8px;
+        height: 8px;
+        background-image: url("data:image/svg+xml,%3csvg aria-hidden='true' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 12'%3e %3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M1 5.917 5.724 10.5 15 1.5'/%3e %3c/svg%3e");
+        background-repeat: no-repeat;
+        print-color-adjust: exact;
+    }
+</style>

@@ -714,4 +714,87 @@ public class GenericRepository : IGenericContract
 
         return query;
     }
+
+    public async Task<Pageable<List<TEntity>>> GetAllPaginatedReportedAsync<TEntity>(PaginationDto pagination, Guid? userId) where TEntity : class
+    {
+        ParameterExpression paramBuscar = Expression.Parameter(typeof(TEntity), "e");
+        MemberExpression propertyBuscar = Expression.Property(paramBuscar, "Name");
+        Expression<Func<TEntity, object>> expressionBuscar = Expression.Lambda<Func<TEntity, object>>(
+            Expression.Convert(propertyBuscar, typeof(object)), paramBuscar
+        );
+
+        IQueryable<TEntity> queryable = _dbContext.Set<TEntity>().AsQueryable();
+
+        if (userId is not null && userId != Guid.Empty)
+        {
+            UserEntity user = await GetUserByIdAsync(userId);
+
+            PropertyInfo? userIdProperty = typeof(TEntity).GetProperty("UserId");
+            if (userIdProperty != null)
+            {
+                ParameterExpression paramUser = Expression.Parameter(typeof(TEntity), "e");
+                MemberExpression userIdProp = Expression.Property(paramUser, "UserId");
+                ConstantExpression userIdValue = Expression.Constant(user.Id);
+                BinaryExpression equalUser = Expression.Equal(userIdProp, userIdValue);
+                Expression<Func<TEntity, bool>> userFilter = Expression.Lambda<Func<TEntity, bool>>(equalUser, paramUser);
+                queryable = queryable.Where(userFilter);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(pagination.Search))
+        {
+            string propertyName;
+            if (expressionBuscar.Body is UnaryExpression unaryExp && unaryExp.Operand is MemberExpression memberExp)
+                propertyName = memberExp.Member.Name;
+            else if (expressionBuscar.Body is MemberExpression directMemberExp)
+                propertyName = directMemberExp.Member.Name;
+            else
+                throw new InvalidOperationException("No se pudo resolver la propiedad de búsqueda.");
+
+            ParameterExpression param = Expression.Parameter(typeof(TEntity), "e");
+            MemberExpression propertyAccess = Expression.Property(param, propertyName);
+            Type propertyType = propertyAccess.Type;
+
+            Expression<Func<TEntity, bool>> lambda;
+                
+            MethodInfo containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) })!;
+            ConstantExpression searchValue = Expression.Constant(pagination.Search);
+            MethodCallExpression containsExpression = Expression.Call(propertyAccess, containsMethod, searchValue);
+            lambda = Expression.Lambda<Func<TEntity, bool>>(containsExpression, param);
+           
+
+            queryable = queryable.Where(lambda);
+        }
+
+        // Total
+        int totalElements = await queryable.CountAsync();
+
+        // Ordenamiento
+        if (!string.IsNullOrEmpty(pagination.Ordenar))
+        {
+            queryable = pagination.Ascending
+                ? queryable.OrderBy(e => EF.Property<object>(e, pagination.Ordenar))
+                : queryable.OrderByDescending(e => EF.Property<object>(e, pagination.Ordenar));
+        }
+        else
+        {
+            queryable = pagination.Ascending
+                ? queryable.OrderBy(e => EF.Property<DateTime>(e, "CreatedAt"))
+                : queryable.OrderByDescending(e => EF.Property<DateTime>(e, "CreatedAt"));
+        }
+
+        // Paginación
+        List<TEntity> resDto = await queryable
+            .Paginar(pagination)
+            .ToListAsync();
+
+        Pageable<List<TEntity>> response = PageableResponse.CreatePageableResponse(
+            resDto,
+            pagination.Pagina,
+            pagination.RegistrosPorPagina,
+            totalElements
+        );
+
+        return response;
+    }
 }

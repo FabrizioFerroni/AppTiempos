@@ -81,3 +81,24 @@ window.fixChartScale = (canvasId) => {
     chart.update();
     console.log("✅ Escala ajustada para:", canvasId);
 };
+
+/*window.downloadFileFromStream = (fileName, base64String) => {
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = "data:application/pdf;base64," + base64String;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    console.log("✅ Archivo descargado para:", fileName);
+};*/
+
+window.downloadFileFromStream = (fileName, contentType, base64String) => {
+    const link = document.createElement('a');
+    link.download = fileName;
+    // Ahora usamos la variable contentType que viene desde C#
+    link.href = `data:${contentType};base64,${base64String}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    console.log("✅ Archivo descargado:", fileName);
+};

@@ -145,6 +145,12 @@ public partial class Sidebar : ComponentBase, IDisposable
             
             if (url == "/app/rechazos" && currentUrl.StartsWith("/app/rechazo/", StringComparison.OrdinalIgnoreCase))
                 isActive = true;
+
+            if (url == "/app/reportes" && currentUrl.StartsWith("/app/reportes/", StringComparison.OrdinalIgnoreCase))
+                isActive = true;
+
+            if (url == "/app/reportes" && currentUrl.StartsWith("/app/reporte/", StringComparison.OrdinalIgnoreCase))
+                isActive = true;
         }
 
         ColorModel? currentColor = ColorService.GetCurrentColor();

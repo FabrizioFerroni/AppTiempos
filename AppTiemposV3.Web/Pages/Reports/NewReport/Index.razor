@@ -1,0 +1,1149 @@
+﻿@page "/app/reportes/nuevo"
+@using static AppTiemposV3.Web.Utils.ReportMetadata
+@using AppTiemposV3.Web.Utils
+
+<PageTitle>
+    Nuevo Reporte | TimeTracker Pro
+</PageTitle>
+
+<div class="flex flex-col w-full">
+    <Navbar Title="Nuevo Reporte" Subtitle="Constructor de reportes personalizados" OnToggleSidebar="HandleSidebarToggle">
+        <div class="text-right">
+            <Enlace Href="/app/reportes" Target="_self" Class="border border-gray-300  dark:hover:bg-gray-700 h-9 px-3 text-sm inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none text-gray-400  dark:text-gray-300 dark:border-gray-500 cursor-pointer">
+                <ArrowLeft Class="h-4 w-4 mr-2" />
+                Volver
+            </Enlace>
+        </div>
+    </Navbar>
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90")>
+                <CardHeader>
+                    <div class="flex justify-between items-center">
+                        <div class="flex flex-col gap-1">
+                            <h2 class="text-2xl font-bold">
+                                Nuevo reporte
+                            </h2>
+                            <p class="text-[hsl(var(--muted-foreground))]">
+                                Crea tus reportes personalizados
+                            </p>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                        <div class="space-y-6 select-none">
+                            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                 <EditForm Enhance Model=@createNewReport class="space-y-4 mt-2" novalidate OnValidSubmit=@SendCreateNewReport FormName="CreateReportForm">
+                                    <DataAnnotationsValidator/>
+                                    <CardHeader>
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <CardTitle>
+                                                    Constructor de Reportes
+                                                </CardTitle>
+                                                <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+                                                    Crea reportes con datos relacionados de múltiples tablas
+                                                </p>
+                                            </div>
+                                            <div class="flex gap-2">
+                                            <Button Variant="outline"
+                                                    Type="submit"
+                                                    Size="sm"
+                                                    Class="@ColorService.GetButtonClassess()"
+                                                    Disabled="@(IsSendingReport || (string.IsNullOrWhiteSpace(createNewReport.Name) || string.IsNullOrWhiteSpace(createNewReport.Description)))">
+                                                    @if (IsSendingReport)
+                                                    {
+                                                        <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                                        <span>Guardando...</span>
+                                                    }
+                                                    else{
+                                                        <Save Class="w-4 h-4 mr-2" />
+                                                        <span>Guardar</span>
+                                                    }
+                                                </Button>
+                                                <Button Variant="outline" Size="sm" Disabled>
+                                                    <Eye Class="w-4 h-4 mr-2" />
+                                                    Vista Previa
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent Class="space-y-4">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <Label For="reportName" Id="reportNameLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                                    Nombre del Reporte
+                                                </Label>
+                                                <Input
+                                                    Type="text"
+                                                    Id="reportName"
+                                                    Name="reportName"
+                                                    @bind-Value="@createNewReport.Name"
+                                                    Placeholder="Reporte de Actividades por Cliente"
+                                                    Autocomplete="off"
+                                                    Required
+                                                    Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                                />
+                                            </div>
+                                             <div>
+                                                <Label For="baseTable" Id="baseTableLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                                    Tabla Base
+                                                </Label>
+                                                <Select TItem="string"
+                                                        Items="@OptionsBasesDatos"
+                                                        Id="baseTable"
+                                                        Value="@BasesDatosSeleccionado"
+                                                        Disabled=@(_reportMode == "custom")
+                                                        ValueChanged="OnBasesDatosSelectedChanged!"
+                                                        Placeholder="Selecciona la base de datos principal"
+                                                        ItemTextSelector="x => x"
+                                                        ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                        ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                
+                                                        OnDropdownStateChanged="HandleDropdownState">
+                                                </Select>
+                                                @* HeightClass="max-h-[70px]" *@
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label For="description" Id="descriptionLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                                Descripción
+                                            </Label>
+                                            <TextArea Id="description"
+                                                      Placeholder="Describe el propósito de este reporte..."
+                                                      Required
+                                                      @bind-Value="@createNewReport.Description"
+                                                      Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                                      Rows="3">
+                                            </TextArea>
+                                        </div>
+                                        <div>
+                                            <Label Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                                Modo de Construcción
+                                            </Label>
+                                            <div class="flex gap-4 mt-2">
+                                                <div class="flex items-center space-x-2">                                           
+                                                    @{
+                                                        string selectedMethod = "visual";
+                                                    }
+                                                    <Radius Id="visual"
+                                                            Name="reportName"
+                                                            Class=@($"cursor-pointer")
+                                                            Label="Constructor Visual"
+                                                            Value
+                                                            OnClick="() => { HandleModeConstruction(selectedMethod); }"
+                                                            Style=@($"--radio-checked-color: {GetHexColorGradient(ColorService.GetCurrentColor().Gradient)};") />
+                                                </div>
+                                                <div class="flex items-center space-x-2">
+                                                    @{
+                                                        string selectedMethod2 = "custom";
+                                                    }
+                                                    <Radius Id="custom"
+                                                            Name="reportName"
+                                                            Class="cursor-pointer"
+                                                            Label="SQL Personalizado"
+                                                            OnClick="() => { HandleModeConstruction(selectedMethod2); }"
+                                                            Style=@($"--radio-checked-color: {GetHexColorGradient(ColorService.GetCurrentColor().Gradient)};") />
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </CardContent>
+                                </EditForm>
+                            </Card>
+
+                            @if (!string.IsNullOrWhiteSpace(_reportMode) && _reportMode == "visual")
+                            {
+                            
+                                <Tabs Value="@tab" Class="space-y-4 " ValueChanged="v => tab = v">
+                                    <TabsList Class="grid w-full grid-cols-6 shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700 hover:shadow-md transition-shadow px-2">
+                                        <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900" Value="joins" OnClick="@RebuildQuery">Relaciones</TabsTrigger>
+                                        <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900"  Value="filters">Filtros</TabsTrigger>
+                                        <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900"  Value="metrics">Métricas</TabsTrigger>
+                                        <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900"  Value="grouping">Agrupación</TabsTrigger>
+                                        <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900"  Value="schedule">Programación</TabsTrigger>
+                                        <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900"  Value="sql">SQL</TabsTrigger>
+                                    </TabsList>
+
+                                    <TabsContent Value="joins">
+                                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                          <CardHeader>
+                                            <CardTitle Class="flex items-center gap-2">
+                                              <Link Class="w-5 h-5" />
+                                              Tablas Relacionadas
+                                            </CardTitle>
+                                                <p class="text-sm text-[hsl(var(--muted-foreground))]">
+                                              Selecciona las tablas relacionadas para incluir sus datos en el reporte
+                                            </p>
+                                          </CardHeader>
+                                          <CardContent Class="space-y-4">
+                                            <div class="flex justify-between items-center gap-2">
+                                                <div class="text-left">
+                                                    @if (!string.IsNullOrWhiteSpace(BasesDatosSeleccionado))
+                                                    {
+                                                        <Label>Tabla Base: <strong>@BasesDatosSeleccionado</strong></Label>
+                                                        <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+                                                            Esta es la tabla principal del reporte. Puedes agregar tablas relacionadas abajo.
+                                                        </p>
+                                                    }
+                                                    else
+                                                    {
+                                                        <Label>Tabla Base: No hay base de datos seleccionada</Label>
+                                                        <p class="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+                                                            En el card de arriba donde dice Tabla base elija una tabla por donde salir
+                                                        </p>
+                                                    }
+                                                </div>
+
+                                                <Button Variant="ghost"
+                                                        Size="sm"
+                                                        Class="p-1 cursor-pointer"
+                                                        OnClick="@(() => TogglePrincipalDetails(BasesDatosSeleccionado!))"
+                                                        Disabled=string.IsNullOrWhiteSpace(BasesDatosSeleccionado!)
+                                                >
+                                                    @if (ExpandedPrincipalTables.Contains(BasesDatosSeleccionado!))
+                                                    {
+                                                        <ChevronUp Class="w-4 h-4" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <ChevronDown Class="w-4 h-4" />
+                                                    }
+                                                </Button>
+                                            </div>
+                                                @if (ExpandedPrincipalTables.Contains(BasesDatosSeleccionado!) && !string.IsNullOrWhiteSpace(BasesDatosSeleccionado!))
+                                                {
+                                                    <div class="p-3 space-y-3">
+                                                        <div class="grid grid-cols-2 gap-3 text-xs">
+                                                            @foreach (TableField? campo in GetFields(GetTableRelations(BasesDatosSeleccionado!)))
+                                                            {
+                                                                SelectedField key = new SelectedField(_tableMap[BasesDatosSeleccionado!], campo.Value);
+                                                                bool isChecked = _selectedFields.ContainsKey(key);
+                                                                string? alias = isChecked ? _selectedFields[key] : string.Empty;
+                                                                <div @key="key" class="flex gap-2 items-center justify-start">
+                                                                    <Checkbox Id="@campo.Value"
+                                                                              Name="@campo.Value"
+                                                                              Class="cursor-pointer"
+                                                                              Label="@campo.Value"
+                                                                              Value="@isChecked"
+                                                                              ValueChanged="v => OnFieldToggle(key, v)"
+                                                                              Style=@($"--radio-checked-color: {GetHexColorGradient(ColorService.GetCurrentColor().Gradient)};") />
+
+                                                                    <Input Type="text"
+                                                                           Id=@($"text-bs-{campo.Value}")
+                                                                           Name=@($"text-bs-{campo.Value}")
+                                                                           Placeholder="Nombre de columna"
+                                                                           Autocomplete="off"
+                                                                           Disabled=@(!isChecked)
+                                                                           Value="@alias"
+                                                                           ValueChanged="v => OnAliasChanged(key, v)"
+                                                                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                                                           Style="height: calc(var(--spacing) * 8) !important;" />
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+
+                                            <div class="space-y-2">
+                                              <Label>Tablas Relacionadas Activas</Label>
+                                                @if (!GetRootJoins().Any())
+                                                 {
+                                                    <p class="text-sm text-[hsl(var(--muted-foreground))]">
+                                                        No hay tablas relacionadas agregadas
+                                                    </p>
+                                                 }
+                                                <div class="space-y-2 mt-2">
+                                                    @foreach (JoinDefinition? join in ActiveJoins.Where(j => j.ParentTable == _tableMap[BasesDatosSeleccionado!]))
+                                                    {
+                                                        @RenderJoinNode(join, 0)
+                                                    }
+                                                </div>
+                                          
+                                            </div>
+
+                                            <div class="space-y-2">
+                                              <Label>Agregar Tabla Relacionada</Label>
+                                                @if (string.IsNullOrWhiteSpace(BasesDatosSeleccionado))
+                                                {
+                                                    <p class="text-sm text-[hsl(var(--muted-foreground))]">
+                                                        Seleccione una tabla para relacionar
+                                                    </p>
+                                                }
+                                                    else if (!GetAvailableOptionsFor(GetTableRelations(BasesDatosSeleccionado!), false).Any())
+                                                {
+                                                    <p class="text-sm text-[hsl(var(--muted-foreground))]">
+                                                        No hay más tablas disponibles para relacionar
+                                                    </p>
+                                                }
+                                                else
+                                                {
+                                                    <div class="flex flex-wrap gap-2 mt-2"> 
+                                                        @foreach (JoinDefinition available in GetAvailableOptionsFor(GetTableRelations(BasesDatosSeleccionado!), false))
+                                                        {
+                                                            <Button 
+                                                                Variant="outline"
+                                                                Size="sm"
+                                                                Class="cursor-pointer"
+                                                                OnClick="@(() => AddJoin(available))"
+                                                            >
+                                                                <Plus Class="w-4 h-4 mr-2" />
+                                                                @NameToSpanish(available.Nombre)
+                                                            </Button>
+                                                        }
+                                                    </div>                                                    
+                                                }                                            
+                                            </div>
+                                          </CardContent>
+                                        </Card>
+                                      </TabsContent>
+
+                                    <TabsContent Value="filters">
+                                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                            <CardHeader> 
+                                                <div class="flex items-center justify-between">
+                                                    <div>
+                                                        <CardTitle Class="flex items-center gap-2">
+                                                            <Filter Class="w-5 h-5" />
+                                                            Filtros
+                                                        </CardTitle>
+                                                        <p class="text-sm text-[hsl(var(--muted-foreground))]">
+                                                            Selecciona los campos por los cuales quieras filtrar los datos
+                                                        </p>
+                                                    </div>
+                                                    <Button Variant="outline"
+                                                                Size="sm"
+                                                                Class="cursor-pointer"
+                                                            Disabled=@string.IsNullOrWhiteSpace(BasesDatosSeleccionado!)
+                                                            OnClick="() => AddFilter()">
+                                                        <Plus Class="w-4 h-4 mr-2" />
+                                                        Agregar Filtro
+                                                    </Button>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent Class="space-y-4">
+                                                @if(Filters.Count == 0)
+                                                {
+                                                    <div class="text-center py-8 text-[hsl(var(--muted-foreground))]">
+                                                        <Filter Class="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                                        <p>No hay filtros personalizados configurados</p>
+                                                     </div>   
+                                                } else {
+                                                    @foreach ((ReportFilter filter, int index) in Filters.Select((ReportFilter filter, int index) => (filter, index)))
+                                                    {
+                                                        <div @key="filter.Id">
+                                                            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow p-4 flex items-center gap-4") Id=@($"filter-{index + 1}")>
+                                                                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                                                    <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                                                                        @(index + 1)
+                                                                    </span>
+                                                                </div>
+                                                                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end flex-1">
+                                                                    <div class="flex flex-col gap-2">
+                                                                        <Label For=@($"baseTableFilter-{index + 1}")>
+                                                                            Tabla
+                                                                        </Label>
+                                                                        <Select TItem="string"
+                                                                                Items="@OptionsBasesDatosFilter"
+                                                                                Id=@($"baseTableFilter-{index + 1}")
+                                                                                Value="@filter.Tabla"
+                                                                                ValueChanged="v => OnBasesDatosFilterSelectedChanged(filter, v)!"
+                                                                                Placeholder="Selecciona la base de datos"
+                                                                                ItemTextSelector="x => x"
+                                                                                Disabled=@string.IsNullOrWhiteSpace(BasesDatosSeleccionado!)
+                                                                                ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                StyleButton="height: calc(var(--spacing) * 8) !important;"
+                                                                                OnDropdownStateChanged="HandleDropdownState">
+                                                                        </Select>
+                                                                    </div>
+                                                                    <div class="flex flex-col gap-2">
+                                                                        <Label For=@($"optionsCampos-{index + 1}")>
+                                                                            Campo
+                                                                        </Label>
+                                                                        <Select TItem="string"
+                                                                                Items="@filter.OptionsCampos"
+                                                                                Id=@($"optionsCampos-{index + 1}")
+                                                                                Value="@filter.Campo"
+                                                                                Disabled=@string.IsNullOrWhiteSpace(filter.Tabla)
+                                                                                ValueChanged="v => filter.Campo = v"
+                                                                                Placeholder="Selecciona el campo de la tabla que desea filtrar"
+                                                                                ItemTextSelector="x => x"
+                                                                                ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                StyleButton="height: calc(var(--spacing) * 8) !important;"
+                                                                                OnDropdownStateChanged="HandleDropdownState">
+                                                                        </Select>
+                                                                    </div>
+                                                                    <div class="flex flex-col gap-2">
+                                                                        <Label For=@($"operadorFilter-{index + 1}")>
+                                                                            Operador
+                                                                        </Label>
+                                                                        <Select TItem="string"
+                                                                                Items="@OptionsOperador"
+                                                                                Id=@($"operadorFilter-{index + 1}")
+                                                                                Value="@filter.Operador"
+                                                                                ValueChanged="v => filter.Operador = v"
+                                                                                ItemTextSelector="x => x"
+                                                                                ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                StyleButton="height: calc(var(--spacing) * 8) !important;"
+                                                                                OnDropdownStateChanged="HandleDropdownState">
+                                                                        </Select>
+                                                                    </div>
+                                                                    <div class="flex flex-col gap-2">
+                                                                        <Label For=@($"tfilter-{index + 1}")>
+                                                                            Valor
+                                                                        </Label>
+                                                                        <Input Type="text"
+                                                                                Id=@($"tfilter-{index + 1}")
+                                                                                Name=@($"text-filter-{index + 1}")
+                                                                                Placeholder="Nombre de columna"
+                                                                                Disabled=@string.IsNullOrWhiteSpace(filter.Campo)
+                                                                                Autocomplete="off"
+                                                                                Value="@filter.Valor"
+                                                                                ValueChanged="@((string val) => OnFilterValueChanged(filter, val))"
+                                                                                Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                                                                Style="height: calc(var(--spacing) * 8) !important;" />
+                                                                    </div>
+                                                                    <Button 
+                                                                        Variant="outline" 
+                                                                        Size="sm" 
+                                                                        Class="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20  dark:hover:border-red-900/50  cursor-pointer"
+                                                                        Style="height: calc(var(--spacing) * 8) !important;"
+                                                                        OnClick="() => RemoveFilter(filter)"
+                                                                        >
+                                                                      <Trash2 Class="w-4 h-4" />
+                                                                    </Button>
+                                                                </div>
+                                                            </Card>
+                                                        </div>
+                                                    }
+                                                }
+                                            </CardContent>
+                                        </Card>
+                                    </TabsContent>
+
+                                    <TabsContent Value="metrics">
+                                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                            <CardHeader>
+                                                <div class="flex items-center justify-between">
+                                                    <div>
+                                                        <CardTitle Class="flex items-center gap-2">
+                                                            <TrendingUp Class="w-5 h-5" />
+                                                            Métricas
+                                                        </CardTitle>
+                                                        <p class="text-sm text-[hsl(var(--muted-foreground))]">
+                                                            Acá puedes agregar metricas como sumas, porcentajes, etc.
+                                                        </p>
+                                                    </div>
+                                                    <Button Variant="outline"
+                                                            Size="sm"
+                                                            Class="cursor-pointer"
+                                                            Disabled=@string.IsNullOrWhiteSpace(BasesDatosSeleccionado!)
+                                                            OnClick="() => AddMetric()"
+                                                    >
+                                                        <Plus Class="w-4 h-4 mr-2" />
+                                                        Agregar Metricas
+                                                    </Button>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent Class="space-y-4">
+                                                @if(Metrics.Count == 0){
+                                                    <div class="text-center py-8 text-muted-foreground">
+                                                        <TrendingUp Class="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                                        <p>No hay métricas configuradas</p>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    @foreach ((ReportMetrics metric, int index) in Metrics.Select((ReportMetrics metric, int index) => (metric, index)))
+                                                    {
+                                                        <div @key="metric.Id">
+                                                            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow p-4 flex items-center gap-4") Id=@($"filter-{index + 1}")>
+                                                                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                                                                    <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
+                                                                        @(index + 1)
+                                                                    </span>
+                                                                </div>
+                                                                <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end flex-1">
+                                                                    <div class="flex flex-col gap-2">
+                                                                        <Label For=@($"tetiqueta-{index + 1}")>
+                                                                            Etiqueta (Nombre columna)
+                                                                        </Label>
+                                                                        <Input Type="text"
+                                                                               Id=@($"tetiqueta-{index + 1}")
+                                                                               Name=@($"text-etiqueta-{index + 1}")
+                                                                               Placeholder="Nombre de la metrica"
+                                                                               Autocomplete="off"
+                                                                               Value="@metric.Etiqueta"
+                                                                               ValueChanged="@((string val) => OnMetricValueChanged(metric, val))"
+                                                                               Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                                                               Style="height: calc(var(--spacing) * 8) !important;" />
+                                                                    </div>
+                                                                    <div class="flex flex-col gap-2">
+                                                                        <Label For=@($"baseTableFilter-{index + 1}")>
+                                                                            Tabla
+                                                                        </Label>
+                                                                        <Select TItem="string"
+                                                                                Items="@OptionsBasesDatosFilter"
+                                                                                Id=@($"baseTableFilter-{index + 1}")
+                                                                                Value="@metric.Tabla"
+                                                                                ValueChanged="v => OnBasesDatosMetricSelectedChanged(metric, v)!"
+                                                                                Placeholder="Selecciona la base de datos"
+                                                                                ItemTextSelector="x => x"
+                                                                                Disabled=@string.IsNullOrWhiteSpace(BasesDatosSeleccionado!)
+                                                                                ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                StyleButton="height: calc(var(--spacing) * 8) !important;"
+                                                                                OnDropdownStateChanged="HandleDropdownState">
+                                                                        </Select>
+                                                                    </div>
+                                                                    <div class="flex flex-col gap-2">
+                                                                        <Label For=@($"optionsCampos-{index + 1}")>
+                                                                            Campo
+                                                                        </Label>
+                                                                        <Select TItem="string"
+                                                                                Items="@metric.OptionsCampos"
+                                                                                Id=@($"optionsCampos-{index + 1}")
+                                                                                Value="@metric.Campo"
+                                                                                Disabled=@string.IsNullOrWhiteSpace(metric.Tabla)
+                                                                                ValueChanged="@((v) => { metric.Campo = v; RebuildQuery(); })"
+                                                                                Placeholder="Selecciona el campo"
+                                                                                ItemTextSelector="x => x"
+                                                                                ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                StyleButton="height: calc(var(--spacing) * 8) !important;"
+                                                                                OnDropdownStateChanged="HandleDropdownState">
+                                                                        </Select>
+                                                                    </div>
+                                                                     <div class="flex flex-col gap-2">
+                                                                        <Label For=@($"agregacionMetric-{index + 1}")>
+                                                                            Metodo de agregación
+                                                                        </Label>
+                                                                        <Select TItem="string"
+                                                                                Items="@OptionsAgregacion"
+                                                                                Id=@($"agregacionMetric-{index + 1}")
+                                                                                Value="@metric.Agregacion"
+                                                                                ValueChanged="@((v) => { metric.Agregacion = v; RebuildQuery(); })"
+                                                                                ItemTextSelector="x => x"
+                                                                                ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                StyleButton="height: calc(var(--spacing) * 8) !important;"
+                                                                                OnDropdownStateChanged="HandleDropdownState">
+                                                                        </Select>
+                                                                    </div>
+                                                                    <div class="flex flex-col gap-2">
+                                                                        <Label For=@($"formatoMetric-{index + 1}")>
+                                                                            Formato
+                                                                        </Label>
+                                                                        <Select TItem="string"
+                                                                                Items="@OptionsFormato"
+                                                                                Id=@($"formatoMetric-{index + 1}")
+                                                                                Value="@metric.Formato"
+                                                                                ValueChanged="v => metric.Formato = v"
+                                                                                ItemTextSelector="x => x"
+                                                                                ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                StyleButton="height: calc(var(--spacing) * 8) !important;"
+                                                                                OnDropdownStateChanged="HandleDropdownState">
+                                                                        </Select>
+                                                                    </div>
+                                                                    <Button Variant="outline"
+                                                                            Size="sm"
+                                                                            Class="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20  dark:hover:border-red-900/50  cursor-pointer"
+                                                                            Style="height: calc(var(--spacing) * 8) !important;"
+                                                                            OnClick="() => RemoveMetric(metric)">
+                                                                        <Trash2 Class="w-4 h-4" />
+                                                                    </Button>
+                                                                </div>
+                                                             </Card>
+                                                        </div>
+                                                    }
+                                                }
+                                                </CardContent>
+                                        </Card>
+                                    </TabsContent>
+
+                                    <TabsContent Value="grouping">
+                                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                            <CardHeader>
+                                                <CardTitle Class="flex items-center gap-2">
+                                                    <Group Class="w-5 h-5" />
+                                                    Agrupación
+                                                </CardTitle>
+                                                <p class="text-sm text-muted-foreground">
+                                                    Selecciona los campos por los cuales agrupar los datos
+                                                </p>
+                                            </CardHeader>
+                                            <CardContent Class="space-y-4">
+                                                @if(OptionsBasesDatosFilter.Count == 0){
+                                                    <div class="text-center py-8 text-muted-foreground">
+                                                        <Group Class="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                                        <p>No hay campos para agrupar</p>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    foreach (string? campos in OptionsBasesDatosFilter)
+                                                    {
+                                                        foreach (TableField? field in GetFields(GetTableRelationsAll(campos)))
+                                                        {
+                                                            <div class="flex items-center gap-2">
+
+                                                                    <Checkbox Id=@($"{campos}-{field.Value}")
+                                                                          Name=@($"{campos}-{field.Value}")
+                                                                          Value="_groupedFields.Any(f => f.Tabla == campos && f.Campo == field.Value)"
+                                                                          ValueChanged="@(checkedState => OnGroupingChanged(campos, field.Value, (bool)checkedState))"
+                                                                          Class="cursor-pointer"
+                                                                          Label=@($"{campos}.{field.Value}") 
+                                                                          Style=@($"--radio-checked-color: {GetHexColorGradient(ColorService.GetCurrentColor().Gradient)};")/>
+                                                            </div>
+                                                        }
+                                                
+                                                    }
+                                                }
+
+                                            </CardContent>
+                                        </Card>
+                                    </TabsContent>
+
+                                    <TabsContent Value="schedule">
+                                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                            <CardHeader>
+                                                <CardTitle Class="flex items-center gap-2">
+                                                    <Clock Class="w-5 h-5" />
+                                                    Programación Automática
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent Class="space-y-4">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="space-y-1">
+                                                        <Label Id="schedule" Class="text-base font-medium">Habilitar Programación</Label>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                            Ejecutar y enviar este reporte automáticamente
+                                                        </p>
+                                                    </div>
+                                                    <Switch Checked="@SchecheduledProgramed" Id="schedule" CheckedChanged="HandleLoadedCheck" />
+                                                </div>
+                                                @if (SchecheduledProgramed)
+                                                {
+                                                    <div>
+                                                        <div class="space-y-2">
+                                                            <Label For="frecuency" Id="frecuencyLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                                                Frecuencia
+                                                            </Label>
+                                                            <Select TItem="string"
+                                                                    Items="@OptionsFrecuencia"
+                                                                    Id="frecuency"
+                                                                    Value="@FrecuenciaSeleccionada"
+                                                                    ValueChanged="OnFrecuencySelectedChanged!"
+                                                                    Placeholder="Selecciona la frecuencia con que quieres que se envie el mail"
+                                                                    ItemTextSelector="x => x"
+                                                                    ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                    ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                    HeightClass="max-h-[120px]"
+                                                                    OnDropdownStateChanged="HandleDropdownState">
+                                                            </Select>
+                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                @if (FrecuenciaSeleccionada == "Diario")
+                                                                {
+                                                                    <span>Se enviará todos los días a las 8:00 AM</span>
+                                                                }
+                                                                else if (FrecuenciaSeleccionada == "Semanal (Lunes)")
+                                                                {
+                                                                    <span>Se enviará todos los lunes a las 8:00 AM</span>
+                                                                }
+                                                                else if (FrecuenciaSeleccionada == "Mensual (Día 1)")
+                                                                {
+                                                                    <span>Se enviará el día 1 de cada mes a las 8:00 AM</span>
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                        <div class="space-y-2">
+                                                            <Label For="destinatario" Id="destinatarioLabel">Destinatarios</Label>
+                                                            <div class="space-y-2">
+                                                                @for (int i = 0; i < Recipients.Count; i++)
+                                                                {
+                                                                    int idx = i;
+
+                                                                    <div class="flex items-center gap-2">
+                                                                        <Input Type="email"
+                                                                               Placeholder="correo@ejemplo.com"
+                                                                               Value="@Recipients[idx]"
+                                                                               ValueChanged="@((string? v) => OnRecipientChanged(idx, v))"
+                                                                               Autocomplete="off"
+                                                                               Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2" />
+                                                                        <Button Variant="outline" Size="sm" Class="cursor-pointer" OnClick="@(() => RemoveRecipient(idx))">
+                                                                            <Close Class="w-4 h-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                }
+                                                                <Button Variant="outline" Size="sm" Class="cursor-pointer" OnClick="AddRecipient">
+                                                                    <Plus Class="w-4 h-4 mr-2" />
+                                                                    Agregar Destinatario
+                                                                </Button>
+                                                            </div>
+                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Los reportes se enviarán por email a estos destinatarios automáticamente
+                                                            </p>
+                                                        </div>
+                                                        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg mt-2">
+                                                            <div class="flex items-start gap-3">
+                                                                <AlertCircle Class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                                                <div class="space-y-1">
+                                                                    <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                                                        Información sobre Programación
+                                                                    </p>
+                                                                    <p class="text-sm text-blue-700 dark:text-blue-300">
+                                                                        Los reportes programados se ejecutarán automáticamente y se enviarán por email en formato
+                                                                        PDF. Asegúrate de que las direcciones de correo sean válidas.
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </CardContent>
+                                        </Card>
+                                    </TabsContent>
+
+                                    <TabsContent Value="sql">
+                                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                          <CardHeader>
+                                            <CardTitle Class="flex items-center gap-2">
+                                              <Code Class="w-5 h-5" />
+                                                SQL
+                                            </CardTitle>
+                                            <p class="text-sm text-muted-foreground">
+                                                Consulta SQL basada en tu configuración
+                                            </p>
+                                          </CardHeader>
+                                          <CardContent Class="space-y-4">
+                                                <div>
+                                                    <Label For="consulta" Id="consultaLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                                        Consulta SQL
+                                                    </Label>
+                                                    <TextArea Id="consulta"
+                                                              Placeholder="SELECT
+        a.id,
+        a.Description,
+        r.ReqID,
+        r.Titulo,
+        u.FullName as Usuario,
+        a.StartDate,
+        a.EndTime,
+        TIMESTAMPDIFF(HOUR, a.StartTime, a.EndTime) AS Duracion
+    FROM activities AS a
+    INNER JOIN requirements AS r ON a.RequirementId=r.id
+    INNER JOIN usuarios AS u ON a.UserId=u.id
+    WHERE a.StartDate>= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+        AND r.Estado = 'En Progreso'
+    ORDER BY a.StartDate DESC;"
+                                                                  Required
+                                                                      Value="@queryVisual.ToString()"
+                                                                  Readonly
+                                                                  Class="font-mono text-sm min-h-[400px] bg-muted mt-2 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0 ring-0 focus:ring-0"
+                                                                  Rows="16">
+                                                        </TextArea>
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    @{
+                                                        string? id = $"queryVisualSQL";
+                                                        int estado = resultCopy.ContainsKey(id) ? resultCopy[id] : 0;
+                                                    }
+                                                    @if (estado == 0)
+                                                    {
+                                                        <Button Variant="outline" Size="sm" Class="cursor-pointer" OnClick="@(() => CopyToClipboard(queryVisual.ToString(), id))" Disabled=@string.IsNullOrWhiteSpace(BasesDatosSeleccionado)>                                                   
+                                                            <ClipboardCopy Class="h-4 w-4 mr-2" />
+                                                            Copiar SQL
+                                                        </Button>                                                    
+                                                    } else if(estado == 1)
+                                                    {
+                                                        <Check Class="h-4 w-4 text-green-600"/>
+                                                    }
+                                                    else if (estado == 2)
+                                                    {
+                                                        <Close Class="h-4 w-4 text-red-600"/>
+                                                    }
+                                                    @if (mensajes.ContainsKey(id))
+                                                    {
+                                                        (string texto, bool exito) = mensajes[id];
+                                                        <span class="text-xs @(exito ? "text-green-600" : "text-red-600")">
+                                                            @texto
+                                                        </span>
+                                                    }                                                
+                                                </div>
+                                          </CardContent>
+                                        </Card>
+                                      </TabsContent>
+                                </Tabs>
+                            }
+                            else
+                            {
+                                <Tabs Value="@tabVisual" Class="space-y-4 " ValueChanged="v => tabVisual = v">
+                                    <TabsList Class="grid w-full grid-cols-6 shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700 hover:shadow-md transition-shadow px-2">
+                                        <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900" Value="sql">SQL Personalizado</TabsTrigger>
+                                        <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900" Value="schedule">Programación</TabsTrigger>
+                                    </TabsList>
+
+                                    <TabsContent Value="sql">
+                                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                            <CardHeader>
+                                                <CardTitle Class="flex items-center gap-2">
+                                                    <Code Class="w-5 h-5" />
+                                                    SQL Personalizado
+                                                </CardTitle>
+                                                <p class="text-sm text-muted-foreground">
+                                                    Escribe tu consulta SQL personalizada. Puedes usar todas las tablas disponibles en tu base de datos.
+                                                </p>
+                                            </CardHeader>
+                                            <CardContent Class="space-y-4">
+                                                <div>
+                                                    <Label For="consulta" Id="consultaLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                                        Consulta SQL
+                                                    </Label>
+                                                    <TextArea Id="consulta"
+                                                              Placeholder="Ejemplo de consulta SQL personalizada:
+    SELECT
+        a.id,
+        a.Description,
+        r.ReqID,
+        r.Titulo,
+        u.FullName as Usuario,
+        a.StartDate,
+        a.EndTime,
+        TIMESTAMPDIFF(HOUR, a.StartTime, a.EndTime) AS Duracion
+    FROM activities AS a
+    INNER JOIN requirements AS r ON a.RequirementId = r.id
+    INNER JOIN usuarios AS u ON a.UserId = u.id
+    WHERE a.StartDate>= DATE_SUB(CURRENT_DATE, INTERVAL 30 DAY)
+        AND r.Estado = 'En Progreso'
+    ORDER BY a.StartDate DESC;"
+                                                              ValueChanged="(v) => { OnQueryCustomChanged(v); }"
+                                                              Required
+                                                              Class="font-mono text-sm min-h-[400px] bg-muted mt-2 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                                              Rows="16">
+                                                    </TextArea>
+                                                </div>
+                                                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3">
+                                                    <h4 class="font-medium text-sm mb-2 flex items-center gap-2">
+                                                        <Info Class="w-4 h-4" />
+                                                        Tablas Disponibles - Haz clic para ver detalles
+                                                    </h4>
+                                                    <div class="space-y-2">
+                                                        @foreach (ReportTableUi? table in TablesUi)
+                                                        {
+                                                            <div class="border rounded-lg bg-white dark:bg-gray-800">
+                                                                <div class="w-full p-3 flex items-center justify-between">
+                                                                    <div class="text-left">
+                                                                        <p class="font-medium">@table.Key</p>
+                                                                        <p class="text-xs text-muted-foreground">
+                                                                            @table.Description
+                                                                        </p>
+                                                                    </div>
+
+                                                                    <Button Variant="ghost"
+                                                                            Size="sm"
+                                                                            Class="p-1 cursor-pointer"
+                                                                            OnClick="@(() => ToggleDetails(table.Table))">
+                                                                        @if (ExpandedTables.Contains(table.Table))
+                                                                        {
+                                                                            <ChevronDown Class="w-4 h-4" />
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <ChevronRight Class="w-4 h-4" />
+                                                                        }
+                                                                    </Button>
+                                                                </div>
+                                                                @if (ExpandedTables.Contains(table.Table))
+                                                                {
+                                                                    <div class="p-3 border-t border-gray-300 dark:border-gray-600 space-y-3">
+                                                                        <div>
+                                                                            <p class="text-xs font-semibold mb-2 text-blue-600 dark:text-blue-400">Campos:</p>
+                                                                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                                                                @foreach (TableField? campo in GetFields(table.Table))
+                                                                                {
+                                                                                    <div class="flex justify-between border-r border-gray-300 dark:border-gray-600 pr-2">
+                                                                                        <p class="font-mono">@campo.Value</p>
+                                                                                        <p class="text-[hsl(var(--muted-foreground))]">
+                                                                                            (@campo.Type)
+                                                                                            @if (!campo.Nullable)
+                                                                                            {
+                                                                                                <span class="ml-1 text-red-500">*</span>
+                                                                                            }
+                                                                                        </p>
+                                                                                    </div>
+                                                                                }
+                                                                            </div>
+                                                                            <p class="text-red-600 pt-2" style="font-size: 8px !important;">* - Campos requeridos</p>
+                                                                        </div>
+                                                                        @if (HaveJoin(table.Table))
+                                                                        {
+                                                                            <div>
+                                                                                <p class="text-xs font-semibold mb-2 text-green-600 dark:text-green-400">Relaciones:</p>
+                                                                                <div class="space-y-1 text-xs">
+                                                                                    @foreach(JoinDefinition? join in GetJoins(table.Table))
+                                                                                    {
+                                                                                        <div class="flex items-center gap-2">
+                                                                                            @if(join.JoinType == JoinType.Inner)
+                                                                                            {
+                                                                                                <span class="font-mono text-green-900 px-2 py-0.5 rounded join-inner" style="background-color: hsl(142, 76%, 86%);">
+                                                                                                    INNER JOIN
+                                                                                                </span>
+                                                                                            }
+                                                                                            else
+                                                                                            {
+                                                                                                <span class="font-mono text-blue-900 px-2 py-0.5 rounded join-left" style="background-color: hsl(214, 95%, 93%);">
+                                                                                                    LEFT JOIN
+                                                                                                </span>
+                                                                                            }
+
+                                                                                            <span>@join.Nombre.ToString().ToLowerInvariant() (@join.TargetField → @join.Field)</span>
+                                                                                        </div>
+                                                                                    }
+                                                                                </div>
+                                                                            </div>
+                                                                        }
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    @{
+                                                        string? id = $"queryCustomSQL";
+                                                        int estado = resultCopy.ContainsKey(id) ? resultCopy[id] : 0;
+                                                    }
+                                                    @if (estado == 0)
+                                                    {
+                                                        <Button Variant="outline" Size="sm" Class="cursor-pointer" OnClick="@(() => CopyToClipboard(queryCustom.ToString(), id))">
+                                                            <ClipboardCopy Class="h-4 w-4 mr-2" />
+                                                            Copiar SQL
+                                                        </Button>
+                                                    }
+                                                    else if (estado == 1)
+                                                    {
+                                                        <Check Class="h-4 w-4 text-green-600" />
+                                                    }
+                                                    else if (estado == 2)
+                                                    {
+                                                        <Close Class="h-4 w-4 text-red-600" />
+                                                    }
+                                                    @if (mensajes.ContainsKey(id))
+                                                    {
+                                                        (string texto, bool exito) = mensajes[id];
+                                                        <span class="text-xs @(exito ? "text-green-600" : "text-red-600")">
+                                                            @texto
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </TabsContent>
+
+                                    <TabsContent Value="schedule">
+                                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                            <CardHeader>
+                                                <CardTitle Class="flex items-center gap-2">
+                                                    <Clock Class="w-5 h-5" />
+                                                    Programación Automática
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent Class="space-y-6">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="space-y-1">
+                                                        <Label Id="schedule" Class="text-base font-medium">Habilitar Programación</Label>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                            Ejecutar y enviar este reporte automáticamente
+                                                        </p>
+                                                    </div>
+                                                    <Switch Checked="@SchecheduledProgramedCustom" Id="schedule" CheckedChanged="HandleLoadedCheckCustom" />
+                                                </div>
+                                                @if (SchecheduledProgramedCustom)
+                                                {
+                                                    <div>
+                                                        <div class="space-y-2">
+                                                            <Label For="frecuency" Id="frecuencyLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                                                                Frecuencia
+                                                            </Label>
+                                                            <Select TItem="string"
+                                                                    Items="@OptionsFrecuenciaCustom"
+                                                                    Id="frecuency"
+                                                                    Value="@FrecuenciaSeleccionadaCustom"
+                                                                    ValueChanged="OnFrecuencySelectedChangedCustom!"
+                                                                    Placeholder="Selecciona la frecuencia con que quieres que se envie el mail"
+                                                                    ItemTextSelector="x => x"
+                                                                    ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                    ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                    HeightClass="max-h-[120px]"
+                                                                    OnDropdownStateChanged="HandleDropdownState">
+                                                            </Select>
+                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                @if (FrecuenciaSeleccionadaCustom == "Diario")
+                                                                {
+                                                                    <span>Se enviará todos los días a las 8:00 AM</span>
+                                                                } else if(FrecuenciaSeleccionadaCustom == "Semanal (Lunes)")
+                                                                {
+                                                                    <span>Se enviará todos los lunes a las 8:00 AM</span>
+                                                                }
+                                                                else if (FrecuenciaSeleccionadaCustom == "Mensual (Día 1)")
+                                                                {
+                                                                    <span>Se enviará el día 1 de cada mes a las 8:00 AM</span>
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                        <div class="space-y-2">
+                                                            <Label For="destinatario" Id="destinatarioLabel">Destinatarios</Label>
+                                                            <div class="space-y-2">
+                                                                @for (int i = 0; i < RecipientsCustom.Count; i++)
+                                                                {
+                                                                    int idxC = i;
+
+                                                                    <div class="flex items-center gap-2">
+                                                                        <Input Type="email"
+                                                                               Placeholder="correo@ejemplo.com"
+                                                                               Value="@RecipientsCustom[idxC]"
+                                                                               ValueChanged="@((string? v) => OnRecipientChangedCustom(idxC, v))"
+                                                                               Autocomplete="off"
+                                                                               Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2" />
+                                                                        <Button Variant="outline" Size="sm" Class="cursor-pointer" OnClick="@(() => RemoveRecipientCustom(idxC))">
+                                                                            <Close Class="w-4 h-4" />                                                                   
+                                                                        </Button>
+                                                                    </div>
+                                                                }
+                                                            <Button Variant="outline" Size="sm" Class="cursor-pointer" OnClick="AddRecipientCustom">
+                                                                    <Plus Class="w-4 h-4 mr-2" />
+                                                                    Agregar Destinatario
+                                                                </Button>
+                                                            </div>
+                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Los reportes se enviarán por email a estos destinatarios automáticamente
+                                                            </p>
+                                                        </div>
+                                                        <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg mt-2">
+                                                            <div class="flex items-start gap-3">
+                                                                <AlertCircle Class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                                                <div class="space-y-1">
+                                                                    <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                                                        Información sobre Programación
+                                                                    </p>
+                                                                    <p class="text-sm text-blue-700 dark:text-blue-300">
+                                                                        Los reportes programados se ejecutarán automáticamente y se enviarán por email en formato
+                                                                        PDF. Asegúrate de que las direcciones de correo sean válidas.
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </CardContent>
+                                        </Card>
+                                    </TabsContent>                                
+                                </Tabs>
+                            }
+                        </div>
+                </CardContent>
+            </Card>
+        </div>
+    </article>
+</div>
+
+
+@code {
+    RenderFragment RenderJoinNode(JoinDefinition join, int level) => __builder =>
+    {
+        int padding = level * 20;
+
+        <div class="flex flex-col gap-2 p-3 border border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700 rounded-lg shadow-sm"
+             style="margin-left: @(padding)px">
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <Link class="w-4 h-4 text-blue-600" />
+                    <div>
+                        <p class="font-medium">@NameToSpanish(join.Nombre)</p>
+                        <p class="text-xs text-muted-foreground">
+                            @InnerOrLeftCardinal(join.JoinType, join.Nombre, join.Table, join.ParentTable, string.Empty, join.Field, join.TargetField)
+                        </p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <Button Variant="ghost" Size="sm" OnClick="@(() => ToggleRelacionadaDetails(join.Table))" Class="cursor-pointer">
+                        @if (ExpandedRelacionadasTables.Contains(join.Table))
+                        {
+                            <ChevronUp Class="w-4 h-4" />
+                        }
+                        else
+                        {
+
+                            <ChevronDown Class="w-4 h-4" />
+                        }
+                    </Button>
+                    <Button Variant="ghost" Size="sm" Class="text-red-600 cursor-pointer" OnClick="@(() => RemoveJoin(join.Table))">
+                        <Trash2 class="w-4 h-4" />
+                    </Button>
+                </div>
+            </div>
+
+            @if (ExpandedRelacionadasTables.Contains(join.Table))
+            {
+                <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md grid grid-cols-2 gap-3 text-xs">
+                    @foreach (TableField? campo in GetFields(join.Table))
+                    {
+                        SelectedField key = new SelectedField(_tableMap[join.Table.ToString()], campo.Value);
+                        bool isChecked = _selectedFields.ContainsKey(key);
+                        <div class="flex gap-2 items-center">
+                            <Checkbox 
+                                Value="@isChecked" 
+                                ValueChanged="v => OnFieldToggle(key, v)" 
+                                Label="@campo.Value" 
+                                Style=@($"--radio-checked-color: {GetHexColorGradient(ColorService.GetCurrentColor().Gradient)};") 
+                                />
+                            <Input 
+                                Placeholder="Alias" 
+                                Disabled="!isChecked" 
+                                Value="@(isChecked? _selectedFields[key] : "")" 
+                                ValueChanged="v => OnAliasChanged(key, v)" 
+                                Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                Style="height: calc(var(--spacing) * 8) !important;" 
+                                />
+                        </div>
+                    }
+                </div>
+            }
+
+            @{
+                IEnumerable<JoinDefinition> subRel = GetAvailableJoinsRelaciones(join.Table);
+                if(subRel.Any()){
+                    <div class="mt-2 pt-2 border-t border-gray-100 dark:border-gray-600">
+                        <p class="text-[10px] uppercase font-bold text-gray-400 mb-1">Relacionar con @NameToSpanish(join.Nombre)</p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach (JoinDefinition subJoin in GetAvailableOptionsFor(join.Table, true))
+                            {
+                                <Button Variant="outline" Size="xs" OnClick="@(() => AddJoinRel(subJoin, join.Table))" Class="cursor-pointer">
+                                    <Plus class="w-3 h-3 mr-1" /> @NameToSpanish(subJoin.Nombre)
+                                </Button>
+                            }
+                        </div>
+                    </div>
+                }
+            }            
+
+            @{
+                IEnumerable<JoinDefinition> children = GetChildJoins(join.Table);
+                if (children.Any())
+                {
+                    <div class="mt-3 space-y-3 border-l-2 border-blue-500/30 pl-4">
+                        @foreach (JoinDefinition child in children)
+                        {
+                            @RenderJoinNode(child, 0)
+                        }
+                    </div>
+                }
+            }
+        </div>
+    };
+}

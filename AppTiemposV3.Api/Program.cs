@@ -1,9 +1,25 @@
 using AppTiemposV3.Api.Data;
 using AppTiemposV3.Api.Entities;
+using AppTiemposV3.Api.Events;
+using AppTiemposV3.Api.Middlewares;
 using AppTiemposV3.Api.Repositories;
+using AppTiemposV3.Api.Scheduled;
+using AppTiemposV3.Api.Services;
 using AppTiemposV3.Api.Utilidades;
 using AppTiemposV3.SharedClases.Contracts;
+using AppTiemposV3.SharedClases.DTOs;
+using AppTiemposV3.SharedClases.DTOs.Activities;
+using AppTiemposV3.SharedClases.DTOs.Audits;
+using AppTiemposV3.SharedClases.DTOs.Categories;
+using AppTiemposV3.SharedClases.DTOs.Invitations;
+using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
+using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
+using AppTiemposV3.SharedClases.DTOs.Trainings;
+using AppTiemposV3.SharedClases.DTOs.Users;
+using AppTiemposV3.SharedClases.GenericModels;
+using AppTiemposV3.SharedClases.Utilidades;
+using AppTiemposV3.SharedClases.Utilidades.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -14,33 +30,41 @@ using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
+using Quartz;
+using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 using System.Text;
+using static System.Text.Encoding;
+using static System.Console;
 using System.Text.Json.Serialization;
-using AppTiemposV3.Api.Events;
-using AppTiemposV3.Api.Middlewares;
-using AppTiemposV3.Api.Services;
-using AppTiemposV3.SharedClases.DTOs;
-using AppTiemposV3.SharedClases.DTOs.Activities;
-using AppTiemposV3.SharedClases.DTOs.Audits;
-using AppTiemposV3.SharedClases.DTOs.Categories;
-using AppTiemposV3.SharedClases.DTOs.Invitations;
-using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
-using AppTiemposV3.SharedClases.DTOs.Rejections;
-using AppTiemposV3.SharedClases.DTOs.Trainings;
-using AppTiemposV3.SharedClases.DTOs.Users;
-using AppTiemposV3.SharedClases.GenericModels;
-using AppTiemposV3.SharedClases.Utilidades;
-using AppTiemposV3.SharedClases.Utilidades.Interfaces;
+using static QuestPDF.Infrastructure.LicenseType;
+using static QuestPDF.Settings;
 using TimeOnlyJsonConverter = AppTiemposV3.Api.Utilidades.TimeOnlyJsonConverter;
+using static System.TimeZoneInfo;
+using Serilog.Sinks.SystemConsole.Themes;
 
-// using AppTiemposV3.SharedClases.Utilidades;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
+
+OutputEncoding = UTF8;
+
+//Licencia QuestPDF
+License = Community;
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
+
+builder.Host.UseSerilog((context, configuration) => configuration
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] : {Message:lj}{NewLine}{Exception}",
+        theme: AnsiConsoleTheme.Sixteen,
+        applyThemeToRedirectedOutput: true
+    )
+    .WriteTo.File("Logs/reportes-.txt",
+        rollingInterval: RollingInterval.Day, 
+        retainedFileCountLimit: 14) 
+);
 
 builder.AddServiceDefaults();
 
@@ -209,6 +233,8 @@ services.AddScoped<ITrainingContract<TrainingResponseDto>, TrainingRepository>()
 services.AddScoped<IRejectionContract<RejectionResponseDto>, RejectionRepository>();
 services.AddScoped<IRejectionDetailContract<RejectionDetailResponseDto>, RejectionDetailsRepository>();
 services.AddScoped<IInvitationContract<InvitationResponseDto>, InvitationRepository>();
+services.AddScoped<IReportContract, ReportRepository>();
+services.AddScoped<IReportScheduledContract, ReportScheduledRepository>();
 services.AddScoped<IUserCContract<UserResponseDto>, UserRepository>();
 services.AddScoped<IUserContract, UserContextService>();
 services.AddScoped<IGenericContract, GenericRepository>();
@@ -234,6 +260,35 @@ services.AddCors(options =>
             .WithHeaders(HeaderNames.ContentType, HeaderNames.Authorization);
     });
 });
+
+
+services.AddQuartz(q =>
+{
+    JobKey? jobKey = new JobKey("ReportScheduledJob");
+
+    q.AddJob<ReportScheduled>(opts => opts.WithIdentity(jobKey));
+
+    q.AddTrigger(opts => opts
+        .ForJob(jobKey)
+        .WithIdentity("TriggerDiario8AM")
+        .WithCronSchedule("0 0 8 * * ?", x => x
+            .InTimeZone(FindSystemTimeZoneById("America/Argentina/Cordoba")))
+    );
+
+    JobKey? logsJobKey = new JobKey("SendLogsJob");
+
+    q.AddJob<SendLogsJob>(opts => opts.WithIdentity(logsJobKey));
+
+    q.AddTrigger(opts => opts
+        .ForJob(logsJobKey)
+        .WithIdentity("MidnightLogsTrigger")
+        .WithCronSchedule("0 5 0 ? * MON", x => x
+            .InTimeZone(FindSystemTimeZoneById("America/Argentina/Cordoba")))
+    );
+
+});
+
+services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
 
 

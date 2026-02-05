@@ -1,31 +1,32 @@
 using AppTiemposV3.Api.Entities;
+using AppTiemposV3.SharedClases.DTOs.Reports;
+using AppTiemposV3.SharedClases.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
 using System.Text.Json;
-using AppTiemposV3.SharedClases.Enums;
+using static Grpc.Core.Metadata;
 
 namespace AppTiemposV3.Api.Data;
 
 public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Guid>
 {
-    public DbSet<RequerimentsEntity> Requeriments { get; set; } = null!;
-    
-    public DbSet<CategoriesEntity> Categories { get; set; } = null!;
-    
+    public DbSet<RequerimentsEntity> Requeriments { get; set; } = null!;    
+    public DbSet<CategoriesEntity> Categories { get; set; } = null!;    
     public DbSet<ActivitiesEntity> Activities { get; set; } = null!;
-    
-    public DbSet<TrainingEntity> Trainings { get; set; } = null!;
-    
-    public DbSet<InvitationEntity> Invitations { get; set; } = null!;
-    
-    public DbSet<RejectionEntity> Rejections { get; set; } = null!;
-    
-    public DbSet<RejectionDetailEntity> RejectionDetails { get; set; } = null!;
-    
+    public DbSet<TrainingEntity> Trainings { get; set; } = null!;    
+    public DbSet<InvitationEntity> Invitations { get; set; } = null!;    
+    public DbSet<RejectionEntity> Rejections { get; set; } = null!;    
+    public DbSet<RejectionDetailEntity> RejectionDetails { get; set; } = null!;    
     public DbSet<AuditEntity> Audits { get; set; } = null!;
+    public DbSet<ReportEntity> Reports { get; set; } = null!;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     public AppDbContext(DbContextOptions options) : base(options)
     {
@@ -50,6 +51,7 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
         builder.Entity<InvitationEntity>(e => e.ToTable(name: "invitaciones"));
         builder.Entity<RejectionEntity>(e => e.ToTable(name: "rechazos"));
         builder.Entity<RejectionDetailEntity>(e => e.ToTable(name: "rechazos_detalles"));
+        builder.Entity<ReportEntity>(e => e.ToTable(name: "reportes"));
 
         Type[]? excludedTypes = new[] { typeof(CategoriesEntity)};
         
@@ -383,6 +385,49 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
 
             rd.Property(rn => rn.RechazoNro)
                 .HasDefaultValueSql("0");
+        });
+
+        builder.Entity<ReportEntity>(re =>
+        {
+            re.HasOne(re => re.User)
+                .WithMany(u => u.Reports)
+                .HasForeignKey(re => re.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            re.Property(rc => rc.RunCount)
+                .HasDefaultValueSql("0");
+
+
+            re.Property(rc => rc.IsScheduled)
+                .HasDefaultValueSql("0");
+
+            re.Property(e => e.QueryRequest)
+              .HasColumnType("json")
+              .HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                v => JsonSerializer.Deserialize<QueryRequestDTO>(v, JsonOptions) ?? new QueryRequestDTO()
+              );
+
+            re.Property(e => e.Schedule)
+              .HasColumnType("json")
+              .HasConversion(
+                v => JsonSerializer.Serialize(v, JsonOptions),
+                v => JsonSerializer.Deserialize<ScheduleReportDto>(v, JsonOptions) ?? new ScheduleReportDto()
+            );
+
+            re.Property(c => c.CreatedAt)
+                .HasColumnType("timestamp")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            re.Property(c => c.LastRun)
+                .HasColumnType("timestamp")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            re.Property(c => c.IsDeleted)
+                .HasDefaultValue(false);
+
+            re.Property(c => c.IsFavorite)
+                .HasDefaultValue(false);
         });
 
     }

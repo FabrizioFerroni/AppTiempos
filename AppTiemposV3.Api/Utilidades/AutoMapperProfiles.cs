@@ -6,6 +6,7 @@ using AppTiemposV3.SharedClases.DTOs.Categories;
 using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
+using AppTiemposV3.SharedClases.DTOs.Reports;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.DTOs.Users;
@@ -28,6 +29,7 @@ namespace AppTiemposV3.Api.Utilidades
             MappingUsers();
             MappingInvitation();
             MappingAudits();
+            MappingReports();
         }
 
         public void MappingRequeriments()
@@ -166,6 +168,15 @@ namespace AppTiemposV3.Api.Utilidades
             CreateMap<UserEntity, UserDtoAu>();
             CreateMap<AuditChangeDto, AuditChange>();
             CreateMap<AuditChange, AuditChangeDto>();
+        }
+
+        private void MappingReports()
+        {
+            CreateMap<CreateNewReportDto, ReportEntity>()
+            .ForMember(dest => dest.Id, opt => opt.Ignore());
+
+            CreateMap<QueryRequestDTO, QueryRequestDTO>();
+            CreateMap<ScheduleReportDto, ScheduleReportDto>();
         }
     }
 }

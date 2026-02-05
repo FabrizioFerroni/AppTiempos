@@ -32,4 +32,6 @@ public class UserEntity : IdentityUser<Guid>
     public ICollection<RejectionDetailEntity> RejectionsDetails { get; set; } = new List<RejectionDetailEntity>();
     
     public ICollection<AuditEntity> Audits { get; set; } = new List<AuditEntity>();
+
+    public ICollection<ReportEntity> Reports { get; set; } = new List<ReportEntity>();
 }

@@ -7,6 +7,7 @@ using MimeKit;
 using MimeKit.Text;
 using RazorLight;
 using static System.IO.File;
+using static MailKit.Security.SecureSocketOptions;
 
 namespace AppTiemposV3.Api.Services;
 
@@ -44,7 +45,7 @@ public class EmailService: IEmailService
            await smtp.ConnectAsync(
                smtpHost,
                smtpPort,
-               SecureSocketOptions.StartTls
+               StartTls
            );
 
            await smtp.AuthenticateAsync(
@@ -63,7 +64,52 @@ public class EmailService: IEmailService
            return false;
        }
     }
-    
+
+    public async Task<bool> SendWithAttachments(List<string> destinations, string subject, string html, byte[] pdfBytes, string type, string fileName = "Reporte.pdf")
+    {
+        try
+        {
+            // 1. Obtener credenciales (Igual que ya tienes)
+            string emailFrom = _configuration["Email:EmailFrom"] ?? Environment.GetEnvironmentVariable("Email__EmailFrom")!;
+            string smtpHost = _configuration["Email:SmtpHost"] ?? Environment.GetEnvironmentVariable("Email__SmtpHost")!;
+            string smtpUser = _configuration["Email:SmtpUser"] ?? Environment.GetEnvironmentVariable("Email__SmtpUser")!;
+            string smtpPassword = _configuration["Email:SmtpPass"] ?? Environment.GetEnvironmentVariable("Email__SmtpPass")!;
+            int smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? Environment.GetEnvironmentVariable("Email__SmtpPort") ?? "587");
+
+            MimeMessage email = new MimeMessage();
+            email.From.Add(MailboxAddress.Parse(emailFrom));
+
+            foreach (string? to in destinations)
+            {
+                email.To.Add(MailboxAddress.Parse(to));
+            }
+
+            email.Subject = subject;
+
+            ContentType contentType = ContentType.Parse(type);
+
+            BodyBuilder? builder = new BodyBuilder();
+            builder.HtmlBody = html;
+            builder.Attachments.Add(fileName, pdfBytes, contentType);
+
+            email.Body = builder.ToMessageBody();
+
+            using SmtpClient smtp = new SmtpClient();
+            await smtp.ConnectAsync(smtpHost, smtpPort, StartTls);
+            await smtp.AuthenticateAsync(smtpUser, smtpPassword);
+            await smtp.SendAsync(email);
+            await smtp.DisconnectAsync(true);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error enviando email con adjunto: {ex.Message}");
+            return false;
+        }
+    }
+
+
     public async Task<string> GetEmailTemplateAsync<T>(string emailTemplate, T emailTemplateModel, bool fromEmbedded = false)
     {
         if (fromEmbedded)
