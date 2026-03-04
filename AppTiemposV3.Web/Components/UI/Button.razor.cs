@@ -42,7 +42,7 @@ public partial class Button : ComponentBase
             _ => ""
         };
 
-        string baseClasses = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none";
+        string baseClasses = "cursor-pointer inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-0 focus:ring-offset-0 disabled:opacity-50 disabled:pointer-events-none";
 
         return Cn(baseClasses, variantClasses, sizeClasses, Class);
     }

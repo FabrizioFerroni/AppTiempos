@@ -6,7 +6,7 @@ public interface IAuthContract
 {
     Task<GeneralResponse> Invite(InviteDto dto);
     
-    Task<GeneralResponse> Register(string token, UserDto dto);
+    Task<GeneralResponse> Register(string token, UserDto dto, string origin);
     
     Task<GeneralResponse> AcceptInvitation(Guid id, AcceptInviteDto dto);
 

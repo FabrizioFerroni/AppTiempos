@@ -1,14 +1,16 @@
 using AppTiemposV3.Api.Data;
 using AppTiemposV3.SharedClases.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage;
 using MySqlConnector;
 using System.Data;
 using System.Data.Common;
 using System.Security;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using static System.Data.ConnectionState;
 using static System.StringComparison;
+
 namespace AppTiemposV3.Api.Helpers;
 
 public static class DatabaseHelper
@@ -46,7 +48,7 @@ public static class DatabaseHelper
             await using DbDataReader? reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                Dictionary<string, object?> row = new Dictionary<string, object?>();
+                Dictionary<string, object?> row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
                 for (int i = 0; i < reader.FieldCount; i++)
                     row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
                 result.Add(row);
@@ -61,6 +63,55 @@ public static class DatabaseHelper
         
     }
 
+    public static async Task<List<Dictionary<string, object?>>> QueryRawFullAsync(
+    DbContext dbContext,
+    string sql,
+    params MySqlParameter[] parameters)
+    {
+        if (string.IsNullOrWhiteSpace(sql)) return new List<Dictionary<string, object?>>();
+
+        // Obtenemos la conexión pero NO la abrimos manualmente con OpenAsync()
+        DbConnection conn = dbContext.Database.GetDbConnection();
+
+        try
+        {
+            await using DbCommand cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.CommandType = CommandType.Text;
+
+            // Si hay una transacción activa en EF, se la pasamos al comando
+            if (dbContext.Database.CurrentTransaction != null)
+                cmd.Transaction = dbContext.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters is { Length: > 0 })
+                cmd.Parameters.AddRange(parameters);
+
+            // EF Core 6+ tiene este método que abre la conexión si es necesario 
+            // y la cierra automáticamente al terminar el reader si él la abrió.
+            await dbContext.Database.OpenConnectionAsync();
+
+            List<Dictionary<string, object?>> result = new();
+
+            await using DbDataReader reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                // Usamos StringComparer.OrdinalIgnoreCase para que row["campo"] y row["CAMPO"] funcionen igual
+                Dictionary<string, object?>? row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                for (int i = 0; i < reader.FieldCount; i++)
+                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+
+                result.Add(row);
+            }
+            return result;
+        }
+        finally
+        {
+            // En lugar de CloseAsync manual, usamos CloseConnectionAsync de EF
+            // que solo la cierra si EF fue quien la abrió originalmente.
+            await dbContext.Database.CloseConnectionAsync();
+        }
+    }
+
 
     /// <summary>
     /// Intenta guardar los cambios pendientes en el contexto de la base de datos.
@@ -71,9 +122,20 @@ public static class DatabaseHelper
     /// </exception>
     public static async Task EnsureSavedAsync(string errorMessage, AppDbContext dbCxt)
     {
-        int result = await dbCxt.SaveChangesAsync();
-        if (result <= 0)
-            throw new InternalServerErrorException(errorMessage);
+        try
+        {
+            int result = await dbCxt.SaveChangesAsync();
+            if (result <= 0)
+                throw new InternalServerErrorException(errorMessage);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            foreach (EntityEntry? entry in ex.Entries)
+            {
+                Console.WriteLine(entry.Entity.GetType().Name);
+            }
+            throw;
+        }
     }
 
 

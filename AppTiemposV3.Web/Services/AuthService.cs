@@ -30,7 +30,7 @@ public class AuthService: IAuthContract
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
-    public async Task<GeneralResponse> Register(string token, UserDto dto)
+    public async Task<GeneralResponse> Register(string token, UserDto dto, string origin)
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/register/{token}", GenerateStringContent(SerializeObj(dto)));
         
@@ -67,7 +67,7 @@ public class AuthService: IAuthContract
         ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
         
         if(!response.IsSuccessStatusCode)
-            return new LoginResponse(false, false, null!, resultError.Message);
+            return new LoginResponse(false, false, null!, resultError.Message, false);
         
         LoginResponse? result =  DeserializeJsonString<LoginResponse>(apiResponse);
 
@@ -103,7 +103,7 @@ public class AuthService: IAuthContract
         ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
         
         if(!response.IsSuccessStatusCode)
-            return new LoginResponse(false, false, null!,resultError.Message);
+            return new LoginResponse(false, false, null!,resultError.Message, false);
         
         LoginResponse? result =  DeserializeJsonString<LoginResponse>(apiResponse);
 

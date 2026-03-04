@@ -1,4 +1,8 @@
+using AppTiemposV3.SharedClases.Utilidades;
 using System.Text.Json;
+using static System.Text.Json.JsonNamingPolicy;
+using static System.Text.Json.JsonSerializer;
+using System.Text.Json.Serialization;
 using static System.Text.Encodings.Web.JavaScriptEncoder;
 namespace AppTiemposV3.Web.Utils;
 
@@ -41,7 +45,18 @@ public static class Helpers
     
     public static void PrintAsJson(object data)
     {
-        string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true, Encoder = UnsafeRelaxedJsonEscaping });
+        JsonSerializerOptions? options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNameCaseInsensitive = true,
+            Encoder = UnsafeRelaxedJsonEscaping,
+            Converters = { 
+                new JsonStringEnumConverter(CamelCase),
+                new TimeOnlyJsonConverter()
+            }
+        };
+
+        string json = Serialize(data, options);
         Console.WriteLine(json);
     }
     

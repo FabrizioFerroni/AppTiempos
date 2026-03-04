@@ -29,7 +29,8 @@ public class AuthController : ControllerBase
     [HttpPost("register/{token}")]
     public async Task<IActionResult> Register(string token,[FromBody] UserDto dto)
     {
-        GeneralResponse? response = await _authContract.Register(token, dto);
+        StringValues origin = Request.Headers["origin"];
+        GeneralResponse? response = await _authContract.Register(token, dto, origin!);
         return StatusCode(201, response);
     }
 

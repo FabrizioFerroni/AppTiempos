@@ -1,0 +1,135 @@
+﻿@using AppTiemposV3.SharedClases.DTOs.Configurations
+@using static AppTiemposV3.Web.Utils.SizeString
+
+<Modal Method="show-backup" IdElement="@Id" Class="select-none"
+       Id=@($"dialog-modal-show-backup-{IdModalStr}")>
+       <div class="px-6 my-4">
+            <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+                <span class="text-gray-700 dark:text-gray-300 text-md flex gap-2 items-start justify-start text-lg leading-none font-semibold">
+                    <History Class="w-5 h-5 text-blue-600" />
+                    Historial de Respaldos Automáticos
+                </span>
+                <Button Variant="ghost"
+                        Size="sm"
+                        Command="close"
+                        CommandFor=@($"modal-{Id}")
+                        Class="text-xs cursor-pointer"
+                        OnClick="() => CloseModal()">
+                    <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4" />
+                </Button>
+            </div>
+
+            <span class="text-gray-700 dark:text-gray-500 text-sm leading-none">
+            Se conservan los últimos @MaxCountsBackups respaldos
+                automáticos. Puedes restaurar cualquiera de ellos.
+            </span>
+
+            <div class="space-y-3 mt-2">
+                @if(backups.Count == 0)
+                {
+                    <div class="text-center py-8">
+                        <Database Class="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                        <p class="text-gray-500 dark:text-gray-400">
+                            No hay respaldos automáticos disponibles
+                        </p>
+                        <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                            Los respaldos se crearán automáticamente según la frecuencia
+                            configurada
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    @foreach ((AutoBackup backup, int index) in backups.Select((AutoBackup backup, int index) => (backup, index)))
+                    {
+                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow {(index == 0 ? "border-blue-500 dark:border-blue-400" : "")}")>
+                            <CardContent Class="pt-4">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1 space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <h4 class="font-semibold text-gray-800 dark:text-gray-100">
+                                                Respaldo #@(backups.Count - index)
+                                            </h4>
+
+                                            @if (index == 0)
+                                            {
+                                                <span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded">
+                                                    Más reciente
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <div class="grid grid-cols-3 gap-4 text-sm">
+                                            <div>
+                                                <p class="text-gray-500 dark:text-gray-400">
+                                                    Fecha
+                                                </p>
+                                                <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                    @backup.Timestamp.ToString("dd/MM/yyyy")
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p class="text-gray-500 dark:text-gray-400">
+                                                  Hora
+                                                </p>
+                                                <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                    @backup.Timestamp.ToString("HH:mm")
+                                                </p>
+                                            </div>
+                                            
+                                            <div>
+                                                <p class="text-gray-500 dark:text-gray-400">
+                                                  Tamaño
+                                                </p>
+                                                <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                    @FormatearTamaño(backup.Size)
+                                                </p>
+                                            </div>                                            
+                                        </div>
+                                    </div>
+
+                                    <div class="flex gap-2 ml-4">
+                                        <Button
+                                            Size="sm"
+                                            Disabled=@IsDownloadingBack
+                                            Variant="outline"
+                                            OnClick="() => DownloadBackup(backup.Id, backup.PathToBackup!)">
+                                        @if (IsDownloadingBack)
+                                        {
+                                            <LoaderCircle Class="w-4 h-4 animate-spin" />
+                                        }
+                                        else
+                                        {
+                                            <Download Class="w-4 h-4" />
+                                        }
+                                    </Button>
+
+                                        <Button
+                                            Size="sm"   
+                                            Disabled=@IsRestoreBack
+                                            Class=@($"{ColorService.GetButtonClassess()}")
+                                            OnClick="() => RestoreBackup(backup.Id)">
+                                        @if (IsRestoreBack)
+                                        {
+                                            <LoaderCircle Class="w-4 h-4 animate-spin mr-1" />
+                                            <span>Restaurando ...</span>
+                                        }
+                                        else
+                                        {
+                                            <Upload Class="w-4 h-4 mr-1" />
+                                            <span>Restaurar</span>
+                                        }
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    }
+                }
+            </div>
+       </div>
+</Modal>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNew-{Id}") command="show-modal" commandfor=@($"show-backup-{Id}")></button>
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalNew-{Id}") command="close" commandfor="@($"show-backup-{Id}")"></button>   

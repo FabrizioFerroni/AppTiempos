@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using AppTiemposV3.Api.Entities.ConfigurationTable;
 using AppTiemposV3.SharedClases.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,9 +16,10 @@ public class UserEntity : IdentityUser<Guid>
     public Areas Area { get; set; }
 
     public DateTime LastPasswordChange { get; set; } = DateTime.Now;
-    /*[Unicode(false)] 
+    
     public string? ImageUrl { get; set; } = string.Empty;
-    public string ImageName { get; set; } = string.Empty;*/
+    public string? ImageName { get; set; } = string.Empty;
+    public bool IsAccountConfigurated { get; set; } = false;
 
 
     // Relations
@@ -34,4 +36,6 @@ public class UserEntity : IdentityUser<Guid>
     public ICollection<AuditEntity> Audits { get; set; } = new List<AuditEntity>();
 
     public ICollection<ReportEntity> Reports { get; set; } = new List<ReportEntity>();
+    public ICollection<ConfigurationEntity> Configurations { get; set; } = new List<ConfigurationEntity>();
+    public ICollection<BackupLogsEntity> BackupsLogs { get; set; } = new List<BackupLogsEntity>();
 }

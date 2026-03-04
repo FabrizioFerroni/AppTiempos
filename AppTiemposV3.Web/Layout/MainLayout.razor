@@ -5,16 +5,42 @@
 <div class="w-full min-h-screen bg-gradient-to-br select-none from-blue-50 via-indigo-50 to-purple-50  dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
     <AuthorizeView>
         <Authorized>
-            <RedirectToApp />
+            @if (IsSetupConfig)
+            {
+                <NotificationContainer />
+                @Body
+            }
+            else
+            {
+                <RedirectToApp />
+            }
         </Authorized>
         <NotAuthorized>
+            <NotificationContainer />
             @Body
         </NotAuthorized>
     </AuthorizeView>
 </div>
 
-<div id="blazor-error-ui">
+@* <div id="blazor-error-ui">
     Se ha producido un error.
     <a href="" class="reload">Recargar</a>
     <a class="dismiss">🗙</a>
+</div>
+ *@
+<div id="blazor-error-ui" class="select-none fixed bottom-4 left-1/2 -translate-x-1/2 max-w-lg w-full bg-red-100 border border-red-400 text-red-800 px-4 py-3 rounded-lg shadow-lg flex items-center justify-between">
+    <div class="flex items-center justify-between w-full">
+        <div class="flex items-center space-x-2">
+            <AlertTriangle Class="h-5 w-5 text-red-600 font-bold leading-none" />
+            <span class="text-sm font-bold leading-none">
+                Algo salió mal.
+            </span>
+            <span class="text-gray-700 hover:text-gray-800 text-sm font-semibold leading-none">
+                Recarga con el botón de la derecha.
+            </span>
+        </div>
+        <a class="reload cursor-pointer">
+            <RotateCw Class="h-5 w-5 text-gray-700 hover:text-red-800 text-sm font-bold leading-none" />
+        </a>
+    </div>
 </div>

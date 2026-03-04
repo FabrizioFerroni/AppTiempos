@@ -1,19 +1,22 @@
-using AppTiemposV3.Web.Authentication;
-using AppTiemposV3.Web.Components.Icons;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using System.Globalization;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
+using AppTiemposV3.SharedClases.DTOs.Configurations;
 using AppTiemposV3.SharedClases.GenericModels;
+using AppTiemposV3.Web.Authentication;
+using AppTiemposV3.Web.Components.Icons;
 using AppTiemposV3.Web.Pages.Activities.Modales;
 using AppTiemposV3.Web.Services;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
+using System.Globalization;
+using System.Security.Claims;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.Web.Utils.Helpers;
 
 namespace AppTiemposV3.Web.Components.UI;
 
@@ -22,18 +25,24 @@ public partial class Sidebar : ComponentBase, IDisposable
     [Inject] private NavigationManager Nav { get; set; } = null!;
     [Inject] private IJSRuntime JS { get; set; } = null!;
     [Inject] LayoutState State { get; set; } = null!;
+    [Inject] ActivityStateService ActivityState { get; set; } = null!;
     [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
     [Inject] private ColorService ColorService { get; set; } = null!;
     [Inject] private ILocalStorageService _localStorageService { get; set; } = default!;
     [Inject] private NotificationService Toltip { get; set; } = default!;
     [Inject] private IActivityContract<ActivityResponseDto>  ActivityService { get; set; } = null!;
+    [Inject] private IConfigurationContract _configurationService { get; set; } = default!;
     private string CurrentUrl => Nav.Uri.Replace(Nav.BaseUri, "/");
     private string rutaProfile { get; set; } = "/app/perfil";
     private string FechaHoy = string.Empty;
     [Parameter] public bool IsClosed { get; set;  } = false;
-    private double TodayHoursWorked { get; set; } = Math.Round(4.50, 1);
+    public bool IsProgressLoaded { get; set;  } = false;
+    private string TodayHoursWorked { get; set; } = string.Empty;
+    private double TodayHoursWorkedDbl { get; set; } = 0;
     private double TodayHoursTarget { get; set; } = 8;
-    
+    private int ProgressHour { get; set; } = 0;
+    private string HorasFaltantes { get; set; } = string.Empty;
+
     private bool IsNewButtonDisabled = false;
     private List<ActivityResponseDto> Activities = [];
     #region Modales
@@ -41,8 +50,16 @@ public partial class Sidebar : ComponentBase, IDisposable
     private NewActivitySidebar? newModalRef;
     #endregion
     
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
+        AuthenticationState? authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        ClaimsPrincipal? user = authState.User;
+
+        if (user.Identity is { IsAuthenticated: true })
+        {
+            await GetProgressDay();
+        }
+
         string currentUrl = CurrentUrl;
         ColorService.OnColorChanged += HandleColorChanged;
         if (currentUrl.StartsWith("/app/", StringComparison.OrdinalIgnoreCase))
@@ -52,9 +69,19 @@ public partial class Sidebar : ComponentBase, IDisposable
             _ = SafeRunAsync(async () => await GetAllActivities());
         }
         State.OnDisabledButtonChanged += HandleDisabledButtonChanged;
-        return Task.CompletedTask;
+        ActivityState.OnActivityUpdated += RefreshData;
     }
-    
+
+    private async void RefreshData()
+    {
+        await GetProgressDay();
+        // 1. Opcional: Volver a poner isLoading = true si traes datos de BD
+        // 2. Ejecutar la lógica para recalcular TodayHoursWorked
+
+        // 3. Forzar el refresco de la UI
+        await InvokeAsync(StateHasChanged);
+    }
+
     protected override void OnInitialized()
     {
         DateTime hoy = DateTime.Now;
@@ -72,21 +99,6 @@ public partial class Sidebar : ComponentBase, IDisposable
     private async void HandleColorChanged()
     {
         await InvokeAsync(StateHasChanged); 
-    }
-    
-    private string GetRemainingHours()
-    {
-        double remaining = TodayHoursTarget - TodayHoursWorked;
-
-        if (remaining <= 0)
-            return "0h";
-
-        int hours = (int)remaining;
-        int minutes = (int)Math.Round((remaining - hours) * 60);
-
-        double totalDecimal = hours + (minutes / 60.0);
-
-        return totalDecimal.ToString("0.0") + "h";
     }
 
     private List<MenuItem> MenuItems = new()
@@ -242,7 +254,7 @@ public partial class Sidebar : ComponentBase, IDisposable
     
     private string GetPercentageClass()
     {
-        if (TodayHoursWorked >= TodayHoursTarget)
+        if (TodayHoursWorkedDbl >= TodayHoursTarget)
             return "font-medium text-green-600 dark:text-green-400";
 
         return "font-medium text-blue-600 dark:text-blue-400";
@@ -330,6 +342,37 @@ public partial class Sidebar : ComponentBase, IDisposable
             StateHasChanged();
         }
     }
+
+
+    private async Task GetProgressDay()
+    {
+        IsProgressLoaded = false;
+        StateHasChanged();
+        try
+        {
+            DataResponse<ProgressHoursConfigDto> response = await _configurationService.ProgressHours();
+
+            if (response.Success)
+            {
+                ProgressHoursConfigDto data = response.Data;
+                TodayHoursWorked = data.HorasRealizadas;
+                TodayHoursWorkedDbl = data.HorasRealizadasDbl;
+                TodayHoursTarget = data.MetaDelDia;
+                HorasFaltantes = data.HorasFaltantes;
+                ProgressHour = data.Porcentaje;
+            }
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine($"{ex.Message}");
+            throw;
+        }
+        finally
+        {
+            IsProgressLoaded = true;
+            StateHasChanged();
+        }
+    }
     #endregion
     
     public void Dispose()
@@ -337,6 +380,7 @@ public partial class Sidebar : ComponentBase, IDisposable
         Nav.LocationChanged -= OnLocationChanged;
         ColorService.OnColorChanged -= HandleColorChanged; 
         State.OnDisabledButtonChanged -= HandleDisabledButtonChanged;
+        ActivityState.OnActivityUpdated -= RefreshData;
     }
     
     #region Scripts
