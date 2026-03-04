@@ -21,9 +21,9 @@ public partial class Input : ComponentBase
 
     [Parameter] public int? MaxLength { get; set; }
     [Parameter] public int? MinLength { get; set; }
-    [Parameter] public int? Min { get; set; }
-    [Parameter] public int? Max { get; set; }
-    
+    [Parameter] public string? Min { get; set; }
+    [Parameter] public string? Max { get; set; }
+    [Parameter] public string? Step { get; set; }
     [Parameter] public string? Pattern { get; set; }
     [Parameter] public string? InputMode { get; set; }
     
@@ -44,28 +44,6 @@ public partial class Input : ComponentBase
     
     [Parameter(CaptureUnmatchedValues = true)] 
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
-    
-    /*private string CurrentValue
-    {
-        get => Value ?? string.Empty;
-        set
-        {
-            string? incoming = value ?? string.Empty;
-
-            if (DigitsOnly)
-            {
-                incoming = Regex.Replace(incoming, @"[^0-9\.]", "");
-            }
-
-            // Solo propagar si cambió (evita loops)
-            if (incoming != Value)
-            {
-                Value = incoming;
-                // no await para evitar reentradas en el setter
-                _ = ValueChanged.InvokeAsync(Value);
-            }
-        }
-    }*/
     
     private string CurrentValue
     {

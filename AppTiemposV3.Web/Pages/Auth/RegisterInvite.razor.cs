@@ -1,14 +1,22 @@
-using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.Enums;
+using AppTiemposV3.Web.Authentication;
+using AppTiemposV3.Web.Components.Icons;
 using AppTiemposV3.Web.Services;
-using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.JSInterop;
+using Newtonsoft.Json.Linq;
+using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
+using static AppTiemposV3.Web.Utils.Helpers;
+using static System.StringComparer;
 
 namespace AppTiemposV3.Web.Pages.Auth;
 
@@ -20,6 +28,9 @@ public partial class RegisterInvite : ComponentBase, IDisposable
     [Inject] private IAuthContract? AuthService { get; set; }
     [Inject] private IInvitationContract<InvitationResponseDto> InvitationService { get; set; }
     [Inject] private ColorService ColorService { get; set; } = null!;
+    [Inject] private ISessionStorageService _sessionStorageService { get; set; } = default!;
+    [Inject] private NavigationManager? Nav { get; set; }
+    [Inject] private AuthenticationStateProvider? AuthStateProvider { get; set; }
     public bool IsCreated { get; set; } = false;
     public bool IsTokenInvalid { get; set; } = false;
     private bool isLoading = false;
@@ -30,7 +41,8 @@ public partial class RegisterInvite : ComponentBase, IDisposable
     private bool showPasswordConfirm = false;
     private string Nombre { get; set; } = string.Empty;
     private string Email { get; set; } = string.Empty;
-    
+    private string AccessToken { get; set; } = string.Empty;
+
     [Inject] private IJSRuntime? Js { get; set; }
     
     private UserDto? register = new UserDto();
@@ -142,14 +154,32 @@ public partial class RegisterInvite : ComponentBase, IDisposable
             isLoading = true;
             StateHasChanged();
             
-            GeneralResponse? response = await AuthService!.Register(Token, register!);
+            GeneralResponse? response = await AuthService!.Register(Token, register!, "");
             
             if (response?.Flag == true)
             {
                 Nombre = register!.FullName;
                 Email = register!.Email;
                 register = new();
+                
+
+                if(response?.Data != null)
+                {
+                    Dictionary<string, string>? insensitiveDict = new Dictionary<string, string>(response.Data, OrdinalIgnoreCase);
+                    insensitiveDict.TryGetValue("AccessToken", out string? accessToken);
+                    insensitiveDict.TryGetValue("RefreshToken", out string? refreshToken);
+
+                     TokenDto? token = new()
+                     {
+                         AccessToken = accessToken!,
+                         RefreshToken = refreshToken!,
+                     };
+
+                    AccessToken = token.AccessToken;
+                }
+
                 IsCreated = true;
+
             }
             else
             {
@@ -169,7 +199,18 @@ public partial class RegisterInvite : ComponentBase, IDisposable
         }
         
     }
-    
+
+    private async Task GoToSetup()
+    {
+        if (!string.IsNullOrWhiteSpace(AccessToken))
+        {
+            CustomAuthenticationProvider? customAuthStateProvider =
+                         (CustomAuthenticationProvider)AuthStateProvider!;
+            await customAuthStateProvider.UpdateAuthenticationState(AccessToken, false);
+            Nav!.NavigateTo("/setup");
+        }
+    }
+
     private bool IsValidEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))

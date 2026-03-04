@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
@@ -12,8 +10,6 @@ using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.DTOs.Users;
 using AppTiemposV3.SharedClases.Utilidades;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using AppTiemposV3.Web;
 using AppTiemposV3.Web.Authentication;
 using AppTiemposV3.Web.Handlers;
@@ -21,7 +17,12 @@ using AppTiemposV3.Web.Services;
 using Blazored.LocalStorage;
 using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.JSInterop;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using static AppTiemposV3.SharedClases.Utilidades.JsonOptions;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
@@ -43,6 +44,7 @@ services.AddHttpClient("API", client =>
 JsonSerializerOptions? jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 jsonOptions.Converters.Add(new TimeOnlyJsonConverter());
 jsonOptions.Converters.Add(new JsonStringEnumConverter());
+jsonOptions.Converters.Add(new FlexibleDoubleConverter());
 
 services.AddSingleton(jsonOptions);
 services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API"));
@@ -62,10 +64,12 @@ services.AddScoped<IRejectionContract<RejectionResponseDto>, RejectionService>()
 services.AddScoped<IRejectionDetailContract<RejectionDetailResponseDto>, RejectionDetailService>();
 services.AddScoped<IInvitationContract<InvitationResponseDto>, InvitationService>();
 services.AddScoped<IReportContract, ReportService>();
+services.AddScoped<IConfigurationContract, ConfigurationService>();
 services.AddScoped<IUserCContract<UserResponseDto>, UserService>();
 services.AddScoped<LayoutState>();
 services.AddScoped<ColorService>();
 services.AddSingleton<NotificationService>();
+services.AddScoped<ActivityStateService>();
 
 WebAssemblyHost? host = builder.Build();
 

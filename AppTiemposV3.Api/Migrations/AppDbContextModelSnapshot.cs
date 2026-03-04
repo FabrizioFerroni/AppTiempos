@@ -219,6 +219,284 @@ namespace AppTiemposV3.Api.Migrations
                     b.ToTable("categories", (string)null);
                 });
 
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("ActualConfig")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValueSql("1");
+
+                    b.Property<bool>("AutoBackupEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<string>("BackupFrecuencia")
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("BackupRetention")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BackupTime")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("MaxBackup")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("NotificationConfigId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("WeeklyImparId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("WeeklyParId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NotificationConfigId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("WeeklyImparId");
+
+                    b.HasIndex("WeeklyParId");
+
+                    b.ToTable("configuraciones", (string)null);
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationTable.BackupLogsEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ConfigurationEntityId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("PathToBackup")
+                        .HasColumnType("longtext");
+
+                    b.Property<long>("Size")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("longtext")
+                        .HasDefaultValueSql("Manual");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfigurationEntityId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("configuraciones_backups_logs", (string)null);
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationTable.DayConfigEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ConfigurationEntityId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("Day")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DayName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<double>("MaxHours")
+                        .HasColumnType("double");
+
+                    b.Property<double>("MinHours")
+                        .HasColumnType("double");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfigurationEntityId");
+
+                    b.ToTable("configuraciones_dias", (string)null);
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationTable.NotificationConfigEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("EnableNotificationDiario")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<bool>("EnableNotificationMetaAlcanzada")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<bool>("EnableNotificationSemanal")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<string>("HoraNotificacionDiaria")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("NotificationsEmail")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValueSql("0");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("configuraciones_notificaciones", (string)null);
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationTable.WeeklyHourConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time(6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time(6)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("configuraciones_horarios", (string)null);
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationTable.WorkingSaturdayEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ConfigurationEntityId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfigurationEntityId");
+
+                    b.ToTable("configuraciones_sabados", (string)null);
+                });
+
             modelBuilder.Entity("AppTiemposV3.Api.Entities.InvitationEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -674,6 +952,17 @@ namespace AppTiemposV3.Api.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
+                    b.Property<string>("ImageName")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<sbyte>("IsAccountConfigurated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint")
+                        .HasDefaultValueSql("0");
+
                     b.Property<DateTime>("LastPasswordChange")
                         .HasColumnType("datetime(6)");
 
@@ -882,6 +1171,82 @@ namespace AppTiemposV3.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationEntity", b =>
+                {
+                    b.HasOne("AppTiemposV3.Api.Entities.ConfigurationTable.NotificationConfigEntity", "NotificationConfig")
+                        .WithMany()
+                        .HasForeignKey("NotificationConfigId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AppTiemposV3.Api.Entities.UserEntity", "User")
+                        .WithMany("Configurations")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AppTiemposV3.Api.Entities.ConfigurationTable.WeeklyHourConfig", "WeeklyImpar")
+                        .WithMany()
+                        .HasForeignKey("WeeklyImparId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AppTiemposV3.Api.Entities.ConfigurationTable.WeeklyHourConfig", "WeeklyPar")
+                        .WithMany()
+                        .HasForeignKey("WeeklyParId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("NotificationConfig");
+
+                    b.Navigation("User");
+
+                    b.Navigation("WeeklyImpar");
+
+                    b.Navigation("WeeklyPar");
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationTable.BackupLogsEntity", b =>
+                {
+                    b.HasOne("AppTiemposV3.Api.Entities.ConfigurationEntity", "Configuration")
+                        .WithMany("BackupsLogs")
+                        .HasForeignKey("ConfigurationEntityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AppTiemposV3.Api.Entities.UserEntity", "User")
+                        .WithMany("BackupsLogs")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Configuration");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationTable.DayConfigEntity", b =>
+                {
+                    b.HasOne("AppTiemposV3.Api.Entities.ConfigurationEntity", "Configuration")
+                        .WithMany("DayConfigs")
+                        .HasForeignKey("ConfigurationEntityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Configuration");
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationTable.WorkingSaturdayEntity", b =>
+                {
+                    b.HasOne("AppTiemposV3.Api.Entities.ConfigurationEntity", "Configuration")
+                        .WithMany("WorkingSaturdays")
+                        .HasForeignKey("ConfigurationEntityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Configuration");
+                });
+
             modelBuilder.Entity("AppTiemposV3.Api.Entities.RejectionDetailEntity", b =>
                 {
                     b.HasOne("AppTiemposV3.Api.Entities.RejectionEntity", "Rejection")
@@ -1025,6 +1390,15 @@ namespace AppTiemposV3.Api.Migrations
                     b.Navigation("Requeriments");
                 });
 
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.ConfigurationEntity", b =>
+                {
+                    b.Navigation("BackupsLogs");
+
+                    b.Navigation("DayConfigs");
+
+                    b.Navigation("WorkingSaturdays");
+                });
+
             modelBuilder.Entity("AppTiemposV3.Api.Entities.RejectionEntity", b =>
                 {
                     b.Navigation("RejectionsDetails");
@@ -1044,6 +1418,10 @@ namespace AppTiemposV3.Api.Migrations
                     b.Navigation("Activities");
 
                     b.Navigation("Audits");
+
+                    b.Navigation("BackupsLogs");
+
+                    b.Navigation("Configurations");
 
                     b.Navigation("Rejections");
 

@@ -42,6 +42,7 @@ using static QuestPDF.Settings;
 using TimeOnlyJsonConverter = AppTiemposV3.Api.Utilidades.TimeOnlyJsonConverter;
 using static System.TimeZoneInfo;
 using Serilog.Sinks.SystemConsole.Themes;
+using System.Runtime.InteropServices;
 
 
 WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
@@ -143,9 +144,11 @@ services.AddSwaggerGen(opt =>
 // Starting
 string connectBdMySql = builder.Configuration.GetConnectionString("MySQL") ?? 
                         throw new InvalidOperationException("Falta especificar la cadena de conexion a la base de datos");
+MySqlServerVersion? serverVersion = new MySqlServerVersion(new Version(8, 0, 45));
+
 services.AddDbContext<AppDbContext>(opt =>
 {
-    opt.UseMySql(connectBdMySql, ServerVersion.AutoDetect(connectBdMySql), b =>
+    opt.UseMySql(connectBdMySql, serverVersion, b =>
     {
         b.EnableRetryOnFailure(3);
         b.CommandTimeout(3600); //60
@@ -234,6 +237,8 @@ services.AddScoped<IRejectionContract<RejectionResponseDto>, RejectionRepository
 services.AddScoped<IRejectionDetailContract<RejectionDetailResponseDto>, RejectionDetailsRepository>();
 services.AddScoped<IInvitationContract<InvitationResponseDto>, InvitationRepository>();
 services.AddScoped<IReportContract, ReportRepository>();
+services.AddScoped<IConfigurationContract, ConfigurationRepository>();
+services.AddScoped<IBackupContract, BackupRepository>();
 services.AddScoped<IReportScheduledContract, ReportScheduledRepository>();
 services.AddScoped<IUserCContract<UserResponseDto>, UserRepository>();
 services.AddScoped<IUserContract, UserContextService>();
@@ -264,6 +269,10 @@ services.AddCors(options =>
 
 services.AddQuartz(q =>
 {
+    string tzId = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                  ? "Argentina Standard Time"
+                  : "America/Argentina/Cordoba";
+
     JobKey? jobKey = new JobKey("ReportScheduledJob");
 
     q.AddJob<ReportScheduled>(opts => opts.WithIdentity(jobKey));
@@ -272,7 +281,7 @@ services.AddQuartz(q =>
         .ForJob(jobKey)
         .WithIdentity("TriggerDiario8AM")
         .WithCronSchedule("0 0 8 * * ?", x => x
-            .InTimeZone(FindSystemTimeZoneById("America/Argentina/Cordoba")))
+            .InTimeZone(FindSystemTimeZoneById(tzId)))
     );
 
     JobKey? logsJobKey = new JobKey("SendLogsJob");
@@ -283,7 +292,18 @@ services.AddQuartz(q =>
         .ForJob(logsJobKey)
         .WithIdentity("MidnightLogsTrigger")
         .WithCronSchedule("0 5 0 ? * MON", x => x
-            .InTimeZone(FindSystemTimeZoneById("America/Argentina/Cordoba")))
+            .InTimeZone(FindSystemTimeZoneById(tzId)))
+    );
+
+
+    JobKey? backupJobKey = new JobKey("BackupsBDJob");
+    q.AddJob<BackupsBDJob>(opts => opts.WithIdentity(backupJobKey));
+
+    q.AddTrigger(opts => opts
+        .ForJob(backupJobKey)
+        .WithIdentity("BackupsBDJob-trigger")
+        .WithCronSchedule("0 */5 * * * ?", x => x 
+            .InTimeZone(TimeZoneInfo.FindSystemTimeZoneById(tzId)))
     );
 
 });
@@ -292,24 +312,51 @@ services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
 
 
-
-WebApplication? app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// En Program.cs
+try
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    WebApplication? app = builder.Build();
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.UseCors("DefaultCorsPolicy");
+    app.UseMiddleware<ExceptionMiddleware>();
+
+    app.UseHttpsRedirection();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
+    app.Run();
+}
+catch (Exception ex)
+{
+    // Pon un punto de interrupción (Breakpoint) aquí
+    Console.WriteLine(ex.ToString());
+    throw;
 }
 
-app.UseCors("DefaultCorsPolicy");
-app.UseMiddleware<ExceptionMiddleware>();
 
-app.UseHttpsRedirection();
+//WebApplication? app = builder.Build();
 
-app.UseAuthentication();
-app.UseAuthorization();
+// Configure the HTTP request pipeline.
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
 
-app.MapControllers();
+//app.UseCors("DefaultCorsPolicy");
+//app.UseMiddleware<ExceptionMiddleware>();
 
-app.Run();
+//app.UseHttpsRedirection();
+
+//app.UseAuthentication();
+//app.UseAuthorization();
+
+//app.MapControllers();
+

@@ -68,7 +68,15 @@ public partial class Login : ComponentBase
                 CustomAuthenticationProvider? customAuthStateProvider =
                     (CustomAuthenticationProvider)AuthStateProvider!;
                 await customAuthStateProvider.UpdateAuthenticationState(tokenLogin, rememberMe);
-                Router!.NavigateTo("/app/dashboard");
+
+                if (response.IsAccountConfigurated)
+                {
+                    Router!.NavigateTo("/app/dashboard");
+                }
+                else
+                {
+                    Router!.NavigateTo("/setup");
+                }
             }
             else if (response?.Flag == true && response.TwoFa == true)
             {

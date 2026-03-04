@@ -1,0 +1,798 @@
+﻿@page "/app/configuraciones"
+@using AppTiemposV3.SharedClases.Constants
+@using AppTiemposV3.SharedClases.DTOs.Configurations
+@using AppTiemposV3.SharedClases.DTOs.Reports
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
+@using AppTiemposV3.Web.Pages.Reports.Modal
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelper
+@using AppTiemposV3.Web.Pages.Configurations.Modals
+@using static AppTiemposV3.Web.Utils.SizeString
+@using System.Globalization
+@using static System.Globalization.CultureInfo
+@using static System.MidpointRounding
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>
+    Configuraciones | TimeTracker Pro
+</PageTitle>
+
+<div class="flex flex-col w-full select-none">
+    <Navbar Title="Configuración del Sistema" Subtitle="Personaliza tu experiencia en TimeTracker" OnToggleSidebar="HandleSidebarToggle" />
+    <article class="content px-4">
+        <div class="px-6 space-y-6 mt-6">
+            <div class="container mx-auto p-6 w-[135rem] max-w-[135rem]">
+                @if(IsLoadingConfig){
+                    <LoadingData Title="Cargando configuracion" Subtitle="Espere unos segundos ..." />
+                }
+                else 
+                {
+                    <AuthorizeView Context="authContext">
+                        @{
+                            bool isAdmin = authContext.User.Claims.FirstOrDefault(u => u.Type == CustomClaimTypes.Role)!.Value == "Admin";
+                        }
+                        <EditForm Enhance Model=@updateConfig novalidate OnValidSubmit=@UpdateConfiguration FormName="UpdateConfigurationForm">
+                            <DataAnnotationsValidator />
+                    
+                            <Tabs Value="@tab" Class="space-y-4 " ValueChanged="v => tab = v">
+                                <TabsList Class="grid w-full grid-cols-6 shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700 hover:shadow-md transition-shadow px-2">
+                                    <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900" Class="flex items-center gap-2" Value="work-hours" Type="button">
+                                        <Clock Class="w-4 h-4" />
+                                        Horarios
+                                    </TabsTrigger>
+                                    <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900" Class="flex items-center gap-2" Value="notifications" Type="button">
+                                        <Bell Class="w-4 h-4" />
+                                        Notificaciones
+                                    </TabsTrigger>
+                                    <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900" Class="flex items-center gap-2" Value="import" Type="button">
+                                        <Upload Class="w-4 h-4" />
+                                        Importar
+                                    </TabsTrigger>
+                                    @if (isAdmin)
+                                    {
+                                        <TabsTrigger ActiveClass="bg-white/80 dark:bg-gray-900" Class="flex items-center gap-2" Value="backup" Type="button">
+                                            <Database Class="w-4 h-4" />
+                                            Respaldo
+                                        </TabsTrigger> 
+                                    }
+
+                                </TabsList>
+
+                                <TabsContent Value="work-hours" Class="space-y-6">
+                                    <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                        <CardHeader>
+                                            <CardTitle Class="flex items-center gap-2">
+                                                <Clock Class="w-5 h-5 text-blue-600" />
+                                                Horas Mínimas y Máximas por Día (L-S)
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent Class="space-y-4">
+                                            <Card Class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20">
+                                                <CardContent Class="pt-6">
+                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                                                        <div>
+                                                            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                                                @GetTotalWeeklyHours()h
+                                                            </p>
+                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Máximo Semanal
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                                                @WorkHours.Count(w => w.Enabled)
+                                                            </p>
+                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Días Laborales
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                                                                @GetAverageDailyHours()h
+                                                            </p>
+                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Promedio Diario
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                            <div class="space-y-4">
+                                                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                                                    Configuración por Día (Lunes a Sabados)
+                                                </h3>
+                                            </div>
+                                            <div class="grid gap-4">
+                                                @foreach (DayConfig? day in WorkHours)
+                                                {
+                                                    <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700 hover:shadow-md transition-shadow {(day.Enabled ? "border-blue-200 dark:border-blue-700" : "border-gray-200 dark:border-gray-700 opacity-60")}")>
+                                                        <CardContent class="pt-4">
+                                                            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+
+                                                                <div class="flex items-center space-x-2">
+                                                                    <Switch Checked="day.Enabled" CheckedChanged="@(value => OnDayEnabledChanged(day, value))" />
+
+                                                                    <Label Class="font-medium text-gray-800 dark:text-gray-100">
+                                                                        @day.DayName
+                                                                    </Label>
+                                                                </div>
+
+                                                                <div>
+                                                                    <Label class="text-sm text-gray-600 dark:text-gray-300">
+                                                                        Máximo
+                                                                    </Label>
+                                                                    <Input Type="number"
+                                                                           Step="0.5"
+                                                                           Min="@day.MinHours.ToString(InvariantCulture)"
+                                                                           Max="24"
+                                                                           Value="@day.MaxHours.ToString(InvariantCulture)"
+                                                                           ValueChanged="@(v => day.MaxHours = ParseDouble(v))"
+                                                                           Class="font-medium bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                                                           Disabled="(!day.Enabled)" />
+                                                                </div>
+
+                                                                <div>
+                                                                    <Label class="text-sm text-gray-600 dark:text-gray-300">
+                                                                        Mínimo
+                                                                    </Label>
+                                                                    <Input Type="number"
+                                                                           Step="0.5"
+                                                                           Value="@day.MinHours.ToString(InvariantCulture)"
+                                                                           Min="0"
+                                                                           Max="@day.MaxHours.ToString(InvariantCulture)"
+                                                                           ValueChanged="@(v => day.MinHours = ParseDouble(v))"
+                                                                           Class="font-medium bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                                                           Disabled="(!day.Enabled || day.MaxHours == 0)" />
+                                                                </div>
+
+                                                                <div class="text-center">
+                                                                    <Label class="text-sm text-gray-600 dark:text-gray-300">
+                                                                        Rango
+                                                                    </Label>
+                                                                    <p class="text-sm font-medium">
+                                                                        @(day.Enabled ? $"{day.MinHours}h - {day.MaxHours}h" : "Deshabilitado")
+                                                                    </p>
+                                                                </div>
+
+                                                                <div class="flex justify-center">
+                                                                    @if (day.Enabled)
+                                                                    {
+                                                                        <div class="@GetIndicatorColor(day)" />
+                                                                    }
+                                                                </div>
+
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
+                                                }
+                                            </div>
+                            
+                                        </CardContent>
+                                    </Card>
+                                    <Card Class="@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow mt-4 {(IsSelectClosed ? "backdrop-blur-sm" : "")}")">
+                                        <CardHeader>
+                                            <CardTitle Class="flex items-center gap-2">
+                                                <Clock Class="w-5 h-5 text-purple-600" />
+                                                Horarios de Entrada/Salida por Semana
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                Configura diferentes horarios para semanas pares e impares. El
+                                                año tiene 52 semanas (26 pares + 26 impares)
+                                            </p>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                                                <Card Class="border-purple-200 dark:border-purple-700 bg-purple-50/30 dark:bg-purple-900/10">
+                                                    <CardContent Class="pt-4 space-y-4">
+                                                      <div class="flex items-center justify-between">
+                                                        <h4 class="font-semibold text-purple-900 dark:text-purple-100">
+                                                          Semanas Pares
+                                                        </h4>
+                                                        <span class="text-xs text-purple-600 dark:text-purple-400">
+                                                          2, 4, 6, ... 52 (26 semanas)
+                                                        </span>
+                                                      </div>
+
+                                                      <div>
+                                                            <Label Class="text-sm text-gray-600 dark:text-gray-300">
+                                                              Hora Entrada
+                                                            </Label>
+                                                            <Input
+                                                              Type="time"
+                                                              Value="@WeeklyPar.StartTime.ToString("HH:mm")"
+                                                                   ValueChanged="@(v => WeeklyPar.StartTime = TimeOnly.Parse(v))"
+                                                                   Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2"                   />
+                                                      </div>
+
+                                                      <div>
+                                                            <Label Class="text-sm text-gray-600 dark:text-gray-300">
+                                                              Hora Salida
+                                                            </Label>
+                                                            <Input
+                                                              Type="time"
+                                                              Value="@WeeklyPar.EndTime.ToString("HH:mm")"
+                                                              ValueChanged="@(v => WeeklyPar.EndTime = TimeOnly.Parse(v))"
+                                                              Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2"
+                                                              />
+                                                      </div>
+
+                                                      <div class="bg-white dark:bg-gray-800 rounded-lg p-3 text-center">
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                              Duración
+                                                            </p>
+                                                            <p class="text-lg font-bold text-purple-600 dark:text-purple-400">
+                                                                @GetScheduleDuration(WeeklyPar)
+                                                            </p>
+                                                      </div>
+                                                    </CardContent>
+                                                  </Card>
+                                                <Card Class="border-blue-200 dark:border-blue-700 bg-blue-50/30 dark:bg-blue-900/10">
+                                                    <CardContent Class="pt-4 space-y-4">
+                                                        <div class="flex items-center justify-between">
+                                                            <h4 class="font-semibold text-blue-900 dark:text-blue-100">
+                                                                Semanas Impares
+                                                            </h4>
+                                                            <span class="text-xs text-blue-600 dark:text-blue-400">
+                                                                1, 3, 5, ... 51 (26 semanas)
+                                                            </span>
+                                                        </div>
+
+                                                        <div>
+                                                            <Label Class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Hora Entrada
+                                                            </Label>
+                                                            <Input 
+                                                                Type="time"
+                                                                Value="@WeeklyImpar.StartTime.ToString("HH:mm")"
+                                                                   ValueChanged="@(v => WeeklyImpar.StartTime = TimeOnly.Parse(v))"
+                                                                Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2" />
+                                                        </div>
+
+                                                        <div>
+                                                            <Label Class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Hora Salida
+                                                            </Label>
+                                                            <Input 
+                                                                Type="time"
+                                                                Value="@WeeklyImpar.EndTime.ToString("HH:mm")"
+                                                                   ValueChanged="@(v => WeeklyImpar.EndTime = TimeOnly.Parse(v))"
+                                                                Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2" />
+                                                        </div>
+
+                                                        <div class="bg-white dark:bg-gray-800 rounded-lg p-3 text-center">
+                                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                                Duración
+                                                            </p>
+                                                            <p class="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                                                @GetScheduleDuration(WeeklyImpar)
+                                                            </p>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            </div>
+
+                                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mt-3">
+                                                <div class="flex items-start gap-3">
+                                                    <Calendar Class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                                                    <div>
+                                                        <h4 class="font-medium text-blue-800 dark:text-blue-200">
+                                                            Información
+                                                        </h4>
+                                                        <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                                                            El sistema verificará si el número de semana del año es
+                                                            par o impar y aplicará el horario correspondiente.
+                                                            Ejemplo: Semana 10 (par) usará el horario de semanas
+                                                            pares, Semana 11 (impar) usará el horario de semanas
+                                                            impares.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                    <Card Class="@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow mt-4 {(IsSelectClosed ? "backdrop-blur-sm" : "")}")">
+                                        <CardHeader>
+                                            <CardTitle Class="flex items-center gap-2">
+                                                <Calendar Class="w-5 h-5 text-orange-600" />
+                                                Sábados Laborales
+                                            </CardTitle>
+                                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                                                Configure las fechas específicas de sábados en los que trabaja
+                                            </p>
+                                        </CardHeader>
+                                        <CardContent Class="space-y-4">
+                                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                <div>
+                                                    <Label>Fecha</Label>
+                                                    <Input
+                                                        Type="date"
+                                                        Value="@NewSaturdayDate?.ToString("yyyy-MM-dd")"
+                                                        ValueChanged="@(v =>
+                                                               NewSaturdayDate =
+                                                                   DateOnly.TryParseExact(
+                                                                       v,
+                                                                       "yyyy-MM-dd",
+                                                                       CultureInfo.InvariantCulture,
+                                                                       DateTimeStyles.None,
+                                                                       out DateOnly d
+                                                                   )
+                                                                   ? d
+                                                                   : null
+                                                        )"
+                                                        Min="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")"
+                                                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2"
+                                                        />
+                                                </div>
+                                                <div>
+                                                    <Label>Hora Inicio</Label>
+                                                    <Input
+                                                        Type="time"
+                                                        Value="@NewSaturdayStart?.ToString(@"hh\:mm")"
+                                                        ValueChanged="@(v => NewSaturdayStart = TimeSpan.TryParse(v, out TimeSpan t) ? t : null)"
+                                                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2"                                   />
+                                                </div>
+                                                <div>
+                                                    <Label>Hora Fin</Label>
+                                                    <Input
+                                                        Type="time"
+                                                        Value="@NewSaturdayEnd?.ToString(@"hh\:mm")"
+                                                        ValueChanged="@(v => NewSaturdayEnd = TimeSpan.TryParse(v, out TimeSpan t) ? t : null)"
+                                                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2"                           />
+                                                </div>
+                                                <div class="flex items-end">
+                                                    <Button Size="sm" Variant="outline" Class=@($"w-full cursor-pointer {ColorService.GetButtonClassess()}") OnClick="() => AddWorkingSaturday()">
+                                                        <Plus Class="w-4 h-4 mr-2" />
+                                                        Agregar
+                                                    </Button>
+                                                </div>
+                                            </div>
+
+                                            @if (WorkingSaturdays.Any())
+                                            {
+                                                <div class="space-y-2">
+                                                    <h4 class="font-medium text-sm text-gray-700 dark:text-gray-300">
+                                                        Sábados Configurados (@WorkingSaturdays.Count)
+                                                    </h4>
+
+                                                    <div class="grid gap-2">
+                                                        @foreach (WorkingSaturday saturday in WorkingSaturdays)
+                                                        {
+                                                            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                                                <div class="flex items-center gap-4">
+                                                                    <Calendar Class="w-4 h-4 text-orange-600" />
+                                                                    <div>
+                                                                        <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                                            @saturday.Date.ToString("dddd d 'de' MMMM yyyy", new CultureInfo("es-AR"))
+                                                                        </p>
+                                                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                                            @saturday.StartTime.ToString(@"hh\:mm") - @saturday.EndTime.ToString(@"hh\:mm") (@saturday.Hours.ToString("#h"))
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <Button Variant="ghost"
+                                                                        Size="sm"
+                                                                        Class="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer hover:bg-gray-800"
+                                                                        OnClick="() => RemoveWorkingSaturday(saturday)">
+                                                                    <Trash2 Class="w-4 h-4" />
+                                                                </Button>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                                    <Calendar Class="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                                    <p class="text-sm">
+                                                        No hay sábados laborales configurados
+                                                    </p>
+                                                </div>
+                                            }
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+
+                                <TabsContent Value="notifications">
+                                    <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                        <CardHeader>
+                                            <CardTitle Class="flex items-center gap-2">
+                                                <Bell Class="w-5 h-5 text-green-600" />
+                                                Configuración de Notificaciones
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent Class="space-y-6">
+                                           <div class="grid gap-6">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="space-y-1">
+                                                        <Label Class="text-[hsl(var(--base))] font-medium">
+                                                            Recordatorio Diario
+                                                        </Label>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                            Recibir recordatorio para registrar actividades
+                                                        </p>
+                                                    </div>
+                                                    <Switch Checked="@notifCfg.EnableNotificationDiario" CheckedChanged="@(v => notifCfg.EnableNotificationDiario = v)" />
+                                                </div>
+
+                                                <Separator />
+
+                                                <div class="flex items-center justify-between">
+                                                    <div class="space-y-1">
+                                                        <Label Class="text-[hsl(var(--base))] font-medium">
+                                                            Reporte Semanal
+                                                        </Label>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                            Resumen semanal de productividad
+                                                        </p>
+                                                    </div>
+                                                    <Switch Checked="@notifCfg.EnableNotificationSemanal" CheckedChanged="@(v => notifCfg.EnableNotificationSemanal = v)" />
+                                                </div>
+
+                                                <Separator />
+
+                                                <div class="flex items-center justify-between">
+                                                    <div class="space-y-1">
+                                                        <Label Class="text-[hsl(var(--base))] font-medium">
+                                                            Meta Alcanzada
+                                                        </Label>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                            Notificar cuando se complete la meta diaria
+                                                        </p>
+                                                    </div>
+                                                    <Switch Checked="@notifCfg.EnableNotificationMetaAlcanzada" CheckedChanged="@(v => notifCfg.EnableNotificationMetaAlcanzada = v)" />
+                                                </div>
+
+                                                <Separator />
+
+                                                <div class="flex items-center justify-between">
+                                                    <div class="space-y-1">
+                                                        <Label Class="text-[hsl(var(--base))] font-medium">
+                                                            Notificaciones por Email
+                                                        </Label>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                            Enviar notificaciones también por correo
+                                                        </p>
+                                                    </div>
+                                                    <Switch Checked="@notifCfg.NotificationsEmail" CheckedChanged="@(v => notifCfg.NotificationsEmail = v)" />
+                                                </div>
+
+                                                <div class="grid grid-cols-1 gap-4">
+                                                    <div>
+                                                      <Label For="reminderTime">Hora de Recordatorio</Label>
+                                                      <Input
+                                                        Id="reminderTime"
+                                                        Type="time"
+                                                        Value="@notifCfg.HoraNotificacionDiaria"
+                                                        ValueChanged="@(v => notifCfg.HoraNotificacionDiaria = v)"
+                                                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 w-full mt-2"
+                                                        />
+                                                    </div>
+                                              </div>
+
+                                           </div>
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+
+                                <TabsContent Value="import">
+                                    <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                        <CardHeader>
+                                            <CardTitle Class="flex items-center gap-2">
+                                                <Upload Class="w-5 h-5 text-green-600" />
+                                                Importación Masiva de Datos
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent Class="space-y-4">
+                                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                                                <h4 class="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                                                    Instrucciones
+                                                </h4>
+                                                <ul class="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+                                                    <li>
+                                                        Soporta archivos XLSX
+                                                    </li>
+                                                    <li>
+                                                        Para XLSX: usa las hojas "nombre" para separar tablas
+                                                    </li>
+                                                    <li>
+                                                        Tablas soportadas: Requerimientos, Actividades, Capacitaciones, Rechazos
+                                                    </li>
+                                                    <li>
+                                                        La primera fila de cada sección debe contener los nombres de las columnas
+                                                    </li>
+                                                </ul>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                                <Card Class="@($"border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20 shadow-xl hover:shadow-md transition-shadow mt-4 {(IsSelectClosed ? "backdrop-blur-sm" : "")}")">
+                                                    <CardContent Class="pt-6">
+                                                        <h4 class="font-medium mb-3 flex items-center gap-2 text-green-800 dark:text-green-200">
+                                                            <Upload Class="w-5 h-5" />
+                                                            Importar Datos
+                                                        </h4>
+                                                        <p class="text-sm text-green-700 dark:text-green-300 mb-4">
+                                                            Importa un archivo XLSX con todas las tablas
+                                                        </p>
+
+                                                        <Button 
+                                                            Variant="outline"
+                                                                Disabled=@(IsLoadingImportDataExcel || !IsDownloaded)
+                                                                OnClick="TriggerFilePickerExcelAsync"
+                                                             Class=@($"w-full {ColorService.GetButtonClassess()} cursor-pointer")>
+                                                            @if (IsLoadingImportDataExcel)
+                                                            {
+                                                                <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                                                <span>Importando datos...</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <Upload Class="w-4 h-4 mr-2" />
+                                                                <span>Seleccionar Archivo</span>
+                                                            }
+                                                            
+                                                        </Button>
+
+
+                                                        <InputFile id="import-data-excel-input" OnChange="HandleImportDataExcel" @ref="inputImportDataExcel" class="hidden" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                                                    </CardContent>
+                                                </Card>
+                                                <Card Class="@($"border-green-200 border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 shadow-xl hover:shadow-md transition-shadow mt-4 {(IsSelectClosed ? "backdrop-blur-sm" : "")}")">
+                                                    <CardContent Class="pt-6">
+                                                        <h4 class="font-medium mb-3 flex items-center gap-2">
+                                                            <Download Class="w-5 h-5 text-blue-600" />
+                                                            Descargar Plantilla
+                                                        </h4>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                                                            Descarga una plantilla XLSX con el formato correcto para
+                                                            importar datos.
+                                                        </p>
+
+                                                        <Button Variant="outline"
+                                                                Class=@($"w-full bg-[hsl(var(--transparent))] cursor-pointer")
+                                                                OnClick="() => DescargarExcel()">
+                                                            <Download Class="w-4 h-4 mr-2" />
+                                                            Descargar Plantilla XLSX
+                                                        </Button>
+                                                    </CardContent>
+                                                </Card>
+                                            </div>
+
+                                            <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
+                                                <h4 class="font-medium text-amber-800 dark:text-amber-200 mb-2">
+                                                    Formato del archivo XLSX
+                                                </h4>
+                                                <pre class="whitespace-pre text-xs text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 p-3 rounded overflow-x-auto">
+                                                        @textoFormato
+                                                </pre>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+
+                                @if(isAdmin){
+                                    <TabsContent Value="backup">
+                                        <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/90 hover:shadow-md transition-shadow {(IsSelectClosed ? "backdrop-blur-sm" : "")}")>
+                                            <CardHeader>
+                                                <CardTitle Class="flex items-center gap-2">
+                                                    <Database Class="w-5 h-5 text-red-600" />
+                                                    Configuración de Respaldo
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent Class="space-y-4">
+                                                <div class="space-y-4">
+                                                    <div class="flex items-center justify-between">
+                                                        <div class="space-y-1">
+                                                            <Label Class="text-base font-medium">
+                                                                Respaldo Automático
+                                                            </Label>
+                                                            <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Crear respaldos automáticos de tus datos
+                                                            </p>
+                                                        </div>
+                                                        <Switch Checked="@backup.AutoBackup" CheckedChanged="HandleBackupCheck"/>
+                                                    </div>
+
+                                                    @if (backup.AutoBackup)
+                                                    {
+                                                        <Card Class="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                                                            <CardContent Class="pt-4 space-y-4">
+                                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                  <div>
+                                                                      <Label Class="text-sm">
+                                                                          Frecuencia
+                                                                      </Label>
+                                                                        <Select TItem="string"
+                                                                                Items="@OptionsFrecuencia"
+                                                                                Id="frecuency"
+                                                                                Value="@backup.Frecuencia"
+                                                                                ValueChanged="OnFrecuencySelectedChanged!"
+                                                                                Placeholder="Selecciona la frecuencia con que quieres que se envie el mail"
+                                                                                ItemTextSelector="x => x"
+                                                                                ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500 mt-2")
+                                                                                ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
+                                                                                HeightClass="max-h-[120px]"
+                                                                                OnDropdownStateChanged="HandleDropdownState">
+                                                                        </Select>
+                                                                  </div>
+
+                                                                  <div>
+                                                                      <Label Class="text-sm">
+                                                                            Máximo de Respaldos
+                                                                      </Label>
+                                                                      <Input Type="number"
+                                                                            Min="1"
+                                                                            Max="10"
+                                                                            Value="@backup.MaxBackup.ToString()"
+                                                                            ValueChanged="@(v => backup.MaxBackup = ParseInt(v))"
+                                                                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2"
+                                                                            Disabled="(!backup.AutoBackup)" />
+                                                                        <p class="text-xs text-gray-500 mt-1">
+                                                                            Se conservarán los @backup.MaxBackup más
+                                                                            recientes
+                                                                        </p>
+                                                                  </div>
+                                                                </div>
+                                                                <div class="flex">
+                                                                     <Button
+                                                                        Variant="outline"
+                                                                        Size="sm"
+                                                                        Class="flex-1 bg-white dark:bg-gray-800"
+                                                                        OnClick="() => ShowHistoryModal()"
+                                                                      >
+                                                                        <History Class="w-4 h-4 mr-2" />
+                                                                        Ver Historial (@backupsTotal)
+                                                                      </Button>
+                                                                </div>
+                                                            </CardContent>
+                                                        </Card>
+                                                    }
+                                                </div>
+
+                                                 <Separator />
+
+                                                 <div class="space-y-4">
+                                                    <h4 class="font-medium text-gray-800 dark:text-gray-100">
+                                                        Respaldo Manual
+                                                    </h4>
+
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <Card Class="bg-gray-50 dark:bg-gray-800/50 border border-gray-300 hover:bg-gray-100 dark:border-gray-700  dark:hover:bg-gray-700">
+                                                            <CardContent Class="p-3 pt-5">
+                                                                <div class="space-y-2">
+                                                                    @if (IsLoadingLastBackup)
+                                                                    {
+                                                                        <div class="flex flex-row items-center justify-between">
+                                                                            <LoaderCircle Class="w-8 h-8 animate-spin" />
+                                                                            <div class="flex flex-col text-end">
+                                                                                <h3 class="text-md font-medium text-gray-900 dark:text-gray-100">
+                                                                                    Cargando ultimo respaldo
+                                                                                </h3>
+                                                                                <p class="text-gray-500 dark:text-gray-400 animate-pulse">
+                                                                                    Espere unos segundos ...
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <div class="flex items-center justify-between">
+                                                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                                                                Último Respaldo
+                                                                            </span>
+                                                                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                                                @lastBackup.Timestamp.ToString("dd/MM/yyyy - HH:mm")
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="flex items-center justify-between">
+                                                                            <span class="text-sm text-gray-600 dark:text-gray-300">
+                                                                                Tamaño
+                                                                            </span>
+                                                                            <span class="text-sm font-medium text-gray-800 dark:text-gray-100">
+                                                                                @FormatearTamaño(lastBackup.Size)
+                                                                            </span>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            </CardContent>
+                                                        </Card>
+
+                                                        <div class="space-y-3">
+                                                            <Button
+                                                                Variant="outline"
+                                                                    Class="w-full flex items-center gap-2 bg-[hsl(var(--transparent))]"
+                                                                    Disabled=@IsLoadingDownloadBackup
+                                                                    OnClick="() => DownloadBackup()">
+                                                                @if(IsLoadingDownloadBackup){
+                                                                    <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                                                    <span>Descargando respaldo...</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <Database Class="w-4 h-4" />
+                                                                    <span>Descargar Respaldo</span>
+                                                                }
+                                                            </Button>
+
+                                                            <Button Variant="outline"
+                                                                    Class="w-full flex items-center gap-2 bg-[hsl(var(--transparent))]"
+                                                                    OnClick="TriggerFilePickerAsync"
+                                                                    Disabled=@IsLoadingRestoreBackup>
+
+                                                                @if (IsLoadingRestoreBackup)
+                                                                {
+                                                                    <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                                                    <span>Restaurando respaldo...</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <Shield Class="w-4 h-4" />
+                                                                    <span>Restaurar Respaldo</span>
+                                                                }
+                                                            </Button>
+
+                                                            <InputFile id="restore-backup-input" OnChange="HandleFileSelected" @ref="inputFileReference" class="hidden" accept=".sql" />
+                                                        </div>
+                                                    </div>
+                                                 </div>
+
+                                                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                                                    <div class="flex items-start gap-3">
+                                                        <Shield Class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                                                        <div>
+                                                            <h4 class="font-medium text-yellow-800 dark:text-yellow-200">
+                                                                Información de Seguridad
+                                                            </h4>
+                                                            <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                                                                Los respaldos se almacenan de forma segura y encriptada.
+                                                                Se conservarán por el período especificado antes de ser
+                                                                eliminados automáticamente.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </TabsContent>
+                                }
+                             </Tabs>
+                
+
+                            <div class="flex justify-between pt-6 border-t">
+                                    <Button
+                                        Variant="outline"
+                                        Class="flex items-center gap-2 bg-transparent"
+                                        Disabled=@(IsNotUpdated || tab == "backup" || tab == "import")
+                                        OnClick="() => ResetConfigModal()">
+                                        <RotateCcw Class="w-4 h-4" />
+                                        Restablecer Todo
+                                    </Button>
+
+                                    <Button
+                                        Class=@($"flex items-center gap-2 {ColorService.GetButtonClassess()}")
+                                        Disabled="@(IsSavingConfig || tab == "backup" || tab == "import")"
+                                        Type="submit"
+                                    >
+                                        @if(IsSavingConfig)
+                                        {
+                                            <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                            <span>Guardando...</span>
+                                        }
+                                        else
+                                        {
+                                            <Save Class="w-4 h-4" />
+                                            <span>
+                                                Guardar
+                                            </span>
+                                        }
+                                </Button>
+                            </div> 
+                        </EditForm>
+                    </AuthorizeView>
+                }
+             </div>
+            <ResetDefaultConfig @ref="resetModalRef" OnSaved="HandleConfigDeleted" />
+            <ShowBackupsHistory @ref="backModalRef" backups=@lastBackupAll MaxCountsBackups=@backup.MaxBackup />
+        </div>
+    </article>
+</div>

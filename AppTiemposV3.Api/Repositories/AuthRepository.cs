@@ -66,7 +66,7 @@ public class AuthRepository : IAuthContract
         return new GeneralResponse(true, "Se registro correctamente");
     }
 
-    public async Task<GeneralResponse> Register(string token, UserDto dto)
+    public async Task<GeneralResponse> Register(string token, UserDto dto, string origin)
     {
         Dictionary<string, string>? datos = LeerToken<Dictionary<string, string>>(token);
         
@@ -144,7 +144,26 @@ public class AuthRepository : IAuthContract
         {
             await _roleManager.CreateAsync(new IdentityRole<Guid>() { Name = "Admin" });
             await _userManager.AddToRoleAsync(newUser, "Admin");
-            return new GeneralResponse( true, "El usuario ha sido registrado");
+
+            //TODO: Generar token.... 
+            Dictionary<string, string> loginNewUser = new();
+
+            LoginDto loginDto = new LoginDto()
+            {
+                Email = email,
+                Password = dto.Password,
+                RememberMe = false
+            };
+
+            LoginResponse? login = await Login(loginDto, origin!);
+
+            if (login!.Flag)
+            {
+                loginNewUser["AccessToken"] = login.Token.AccessToken;
+                loginNewUser["RefreshToken"] = login.Token.RefreshToken;
+            }
+
+            return new GeneralResponse( true, "El usuario ha sido registrado", loginNewUser);
         }
         else
         {
@@ -164,7 +183,27 @@ public class AuthRepository : IAuthContract
             _dbContext.Invitations.Update(invitation);
             await EnsureSavedAsync("Hubo un error al actualizar la invitacion. Intente mas tarde");
 
-            return new GeneralResponse(true, "El usuario ha sido registrado");
+
+            //TODO: Generar token.... 
+            Dictionary<string, string> loginNewUser = new();
+
+            LoginDto loginDto = new LoginDto()
+            {
+                Email = email,
+                Password = dto.Password,
+                RememberMe = false
+            };
+
+            LoginResponse? login = await Login(loginDto, origin!);
+
+            if (login!.Flag)
+            {
+
+                loginNewUser["AccessToken"] = login.Token.AccessToken;
+                loginNewUser["RefreshToken"] = login.Token.RefreshToken;
+            }
+
+            return new GeneralResponse(true, "El usuario ha sido registrado", loginNewUser);
         }
     }
 
@@ -243,7 +282,7 @@ public class AuthRepository : IAuthContract
 
            
                 _logger.LogInformation($"Se ha enviado el codigo al email {user.Email} para que pueda iniciar sesión");
-                return new LoginResponse(true, true, null!, $"Se te ha enviado el codigo al email {user.Email} para que puedas iniciar sesión");
+                return new LoginResponse(true, true, null!, $"Se te ha enviado el codigo al email {user.Email} para que puedas iniciar sesión", user.IsAccountConfigurated);
                 
             }
 
@@ -262,7 +301,7 @@ public class AuthRepository : IAuthContract
 
                 TokenDto token = GenerateToken(userSession);
 
-                return new LoginResponse(true, false, token, "Te has logueado con éxito");
+                return new LoginResponse(true, false, token, "Te has logueado con éxito", user.IsAccountConfigurated);
             }
             else if (result.IsNotAllowed)
             {
@@ -317,7 +356,7 @@ public class AuthRepository : IAuthContract
 
        TokenDto token = GenerateToken(userSession);
         
-       return new LoginResponse(true, true, token, "Te has logueado con éxito");
+       return new LoginResponse(true, true, token, "Te has logueado con éxito", user.IsAccountConfigurated);
     }
 
     public async Task<GeneralResponse> ForgotPassword(ForgotPasswordDto dto)

@@ -1,0 +1,34 @@
+﻿<DeleteModal IdElement="@Id"
+             Id=@($"dialog-delete-{Id}")
+             Title="¿Restablecer toda la configuración?"
+             TitleBtn="Sí, restablecer todo"
+             OnConfirm="() => ResetConfig()">         
+    <SubtitleHtml>
+        Esta acción restaurará todos los valores por defecto. Se perderán
+        todas las configuraciones personalizadas que hayas realizado en:
+        <ul class="list-disc list-inside mt-2 space-y-1">
+            <li>Horarios de trabajo</li>
+            <li>Horarios de entrada/salida por semana</li>
+            <li>Notificaciones</li>
+            <li>Configuración de respaldo</li>
+            <li>Sábados laborales</li>
+        </ul>
+    </SubtitleHtml>
+</DeleteModal>
+
+
+<Modal Method="deleteLoadingConfig" IdElement="IdShow" Id=@($"dialog-modal-delete-loading-config-{IdModalStr}")>
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+        <LoaderCircle Class="w-16 h-16 mb-4 animate-spin text-gray-900 dark:text-gray-100" />
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            Reseteando configuraciones a las por defecto
+        </h3>
+        <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+            Espere unos segundos ...
+        </p>
+    </div>
+</Modal>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalLoad-{Id}") command="show-modal" commandfor=@($"deleteLoadingConfig-{IdShow}")></button>
+<button type="button" @ref="showModalRef2" class="hidden" id=@($"showModalLDelete-{Id}") command="show-modal" commandfor=@($"delete-{Id}")></button>
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalLoad-{Id}") command="close" commandfor="@($"deleteLoadingConfig-{IdShow}")"></button>

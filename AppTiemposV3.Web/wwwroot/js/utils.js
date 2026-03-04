@@ -82,23 +82,58 @@ window.fixChartScale = (canvasId) => {
     console.log("✅ Escala ajustada para:", canvasId);
 };
 
-/*window.downloadFileFromStream = (fileName, base64String) => {
-    const link = document.createElement('a');
-    link.download = fileName;
-    link.href = "data:application/pdf;base64," + base64String;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    console.log("✅ Archivo descargado para:", fileName);
-};*/
-
 window.downloadFileFromStream = (fileName, contentType, base64String) => {
     const link = document.createElement('a');
     link.download = fileName;
-    // Ahora usamos la variable contentType que viene desde C#
     link.href = `data:${contentType};base64,${base64String}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     console.log("✅ Archivo descargado:", fileName);
 };
+
+
+async function downloadFileFromStreamSQL(fileName, contentStreamReference) {
+    const arrayBuffer = await contentStreamReference.arrayBuffer();
+    const blob = new Blob([arrayBuffer]);
+    const url = URL.createObjectURL(blob);
+
+    const anchorElement = document.createElement('a');
+    anchorElement.href = url;
+    anchorElement.download = fileName ?? '';
+    anchorElement.click();
+    anchorElement.remove();
+
+    URL.revokeObjectURL(url);
+    console.log("✅ Archivo descargado SQL:", fileName);
+}
+
+window.restoreBackup = async (id) => {
+    const element = document.getElementById(id);
+    if (!element) {
+        console.warn('restoreBackup: element not found', id);
+        return;
+    }
+
+    element.click();
+
+    try {
+        console.log("✅ Elemento clickeado:", file);
+    } catch (error) {
+        console.error('Error restoring backup:', error);
+    }
+}
+
+window.downloadFileFromUrl = async (fileName, url) => {
+    const anchorElement = document.createElement('a');
+    anchorElement.href = url;
+    anchorElement.download = fileName ?? '';
+    anchorElement.click();
+    anchorElement.remove();
+
+    try {
+        console.log("✅ Plantilla descargada:", file);
+    } catch (error) {
+        console.error('Error Plantilla descargada:', error);
+    }
+}

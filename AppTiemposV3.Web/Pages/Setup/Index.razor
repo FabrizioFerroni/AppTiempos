@@ -1,0 +1,250 @@
+﻿@using static AppTiemposV3.Web.Utils.Helpers
+@using AppTiemposV3.SharedClases.DTOs.Configurations
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Globalization
+@using static System.Globalization.CultureInfo
+
+@page "/setup"
+
+@layout MainLayout
+
+<AuthorizeView Context="authContext">
+    <div class="flex items-center justify-center p-4">
+        <Card Class="w-[50rem] max-w-[50rem] shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm">
+            @if (isLoadingConfig)
+            {
+                <LoadingData Title="Cargando configuracion inicial" Subtitle="Espere unos segundos ..." />
+            }
+            else
+            {
+                    <CardHeader Class="text-center space-y-4">
+                        <div class=@($"mx-auto w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg {ColorService.GetCurrentColor()!.Gradient}")>
+                            <Settings Class="w-8 h-8 text-white" />
+                        </div>
+
+                        <CardTitle Class="text-2xl font-bold">Configuración Inicial</CardTitle>
+                        <CardDescription Class="dark:text-gray-300">
+                            Configura los parámetros básicos del sistema para comenzar
+                        </CardDescription>
+
+                        <div class="flex items-center justify-center gap-2 pt-4">
+                            <div class=@($"w-8 h-8 rounded-2xl flex items-center justify-center {(currentStep == 1 ? $"{ColorService.GetCurrentColor()!.Gradient} text-white" : "bg-green-500 text-white")}")>
+                                @if (currentStep == 1)
+                                {
+                                    <span>1</span>
+                                }
+                                else
+                                {
+                                    <Check Class="w-5 h-5" />
+                                }
+                            </div>
+                            <div class=@($"w-16 h-1  {(currentStep == 2 ? $"{ColorService.GetCurrentColor()!.Gradient}" : "bg-gray-300")}")></div>
+
+                            <div class=@($"w-8 h-8 rounded-full flex items-center justify-center {(currentStep == 2 ? $"{ColorService.GetCurrentColor()!.Gradient} text-white" : "bg-gray-300 text-gray-600")}")>
+                                2
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent Class="space-y-6">
+                        <EditForm Enhance Model=@newConfig novalidate OnValidSubmit=@CreateConfiguration FormName="CreateConfigurationForm">
+                            <DataAnnotationsValidator />
+
+                            @if (currentStep == 1)
+                            {
+                                <div class="space-y-4">
+                                    <div class="flex items-center gap-2 mb-4">
+                                        <Clock Class="w-5 h-5 text-blue-600" />
+                                        <h3 class="text-lg font-semibold">Horas Mínimas y Máximas por Día</h3>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                                        Configura las horas de trabajo esperadas para cada día de la semana
+                                    </p>
+                                    <div class="grid gap-4">
+                                        @foreach (DayConfig? day in WorkHours)
+                                        {
+                                            <Card Class=@($"shadow-xl border-gray-200 dark:border-gray-600 bg-white/80 dark:bg-gray-700 hover:shadow-md transition-shadow {(day.Enabled ? "border-blue-200 dark:border-blue-700" : "border-gray-200 dark:border-gray-700 opacity-60")}")>
+                                                <CardContent class="pt-4">
+                                                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+
+                                                        <div class="flex items-center space-x-2">
+                                                            <Switch Checked="day.Enabled" CheckedChanged="@(value => OnDayEnabledChanged(day, value))" />
+
+                                                            <Label Class="font-medium text-gray-800 dark:text-gray-100">
+                                                                @day.DayName
+                                                            </Label>
+                                                        </div>
+
+                                                        <div>
+                                                            <Label class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Máximo
+                                                            </Label>
+                                                            <Input Type="number"
+                                                                   Step="0.5"
+                                                                   Min="@day.MinHours.ToString(InvariantCulture)"
+                                                                   Max="24"
+                                                                   Value="@day.MaxHours.ToString(InvariantCulture)"
+                                                                   ValueChanged="@(v => day.MaxHours = ParseDouble(v))"
+                                                                   Class="font-medium bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                                                   Disabled="(!day.Enabled)" />
+                                                        </div>
+
+                                                        <div>
+                                                            <Label class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Mínimo
+                                                            </Label>
+                                                            <Input Type="number"
+                                                                   Step="0.5"
+                                                                   Value="@day.MinHours.ToString(InvariantCulture)"
+                                                                   Min="0"
+                                                                   Max="@day.MaxHours.ToString(InvariantCulture)"
+                                                                   ValueChanged="@(v => day.MinHours = ParseDouble(v))"
+                                                                   Class="font-medium bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                                                   Disabled="(!day.Enabled || day.MaxHours == 0)" />
+                                                        </div>
+
+                                                        <div class="text-center">
+                                                            <Label class="text-sm text-gray-600 dark:text-gray-300">
+                                                                Rango
+                                                            </Label>
+                                                            <p class="text-sm font-medium">
+                                                                @(day.Enabled ? $"{day.MinHours}h - {day.MaxHours}h" : "Deshabilitado")
+                                                            </p>
+                                                        </div>
+
+                                                        <div class="flex justify-center">
+                                                            @if (day.Enabled)
+                                                            {
+                                                                <div class="@GetIndicatorColor(day)" />
+                                                            }
+                                                        </div>
+
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="space-y-6">
+                                    <div class="flex items-center gap-2 mb-4">
+                                        <Clock Class="w-5 h-5 text-blue-600" />
+                                        <h3 class="text-lg font-semibold">Horarios por Semana (Par/Impar)</h3>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                                        Configura los horarios de entrada y salida según la paridad de la semana del año
+                                    </p>
+
+                                    <Card Class="border-2 border-blue-200 dark:border-blue-800 shadow-xl bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm">
+                                        <CardHeader>
+                                            <CardTitle Class="text-base flex items-center gap-2">
+                                                <span class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
+                                                    P
+                                                </span>
+                                                Semanas Pares (2, 4, 6... 52)
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent Class="space-y-4">
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <Label Class="text-sm text-gray-600 dark:text-gray-300">
+                                                        Hora Entrada
+                                                    </Label>
+                                                    <Input Type="time"
+                                                           Value="@WeeklyPar.StartTime.ToString("HH:mm")"
+                                                           ValueChanged="@(v => WeeklyPar.StartTime = TimeOnly.Parse(v))"
+                                                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2" />
+                                                </div>
+
+                                                <div>
+                                                    <Label Class="text-sm text-gray-600 dark:text-gray-300">
+                                                        Hora Salida
+                                                    </Label>
+                                                    <Input Type="time"
+                                                           Value="@WeeklyPar.EndTime.ToString("HH:mm")"
+                                                           ValueChanged="@(v => WeeklyPar.EndTime = TimeOnly.Parse(v))"
+                                                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2" />
+                                                </div>
+
+                                                <div class="text-sm text-gray-600 dark:text-gray-300">
+                                                    Duración: @GetScheduleDuration(WeeklyPar)
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+
+                                    <Card Class="border-2 border-green-200 dark:border-green-800 shadow-xl bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm">
+                                        <CardHeader>
+                                            <CardTitle Class="text-base flex items-center gap-2">
+                                                <span class="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
+                                                    I
+                                                </span>
+                                                Semanas Impares (1, 3, 5... 51)
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent Class="space-y-4">
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <Label Class="text-sm text-gray-600 dark:text-gray-300">
+                                                        Hora Entrada
+                                                    </Label>
+                                                    <Input Type="time"
+                                                           Value="@WeeklyImpar.StartTime.ToString("HH:mm")"
+                                                           ValueChanged="@(v => WeeklyImpar.StartTime = TimeOnly.Parse(v))"
+                                                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2" />
+                                                </div>
+
+                                                <div>
+                                                    <Label Class="text-sm text-gray-600 dark:text-gray-300">
+                                                        Hora Salida
+                                                    </Label>
+                                                    <Input Type="time"
+                                                           Value="@WeeklyImpar.EndTime.ToString("HH:mm")"
+                                                           ValueChanged="@(v => WeeklyImpar.EndTime = TimeOnly.Parse(v))"
+                                                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2" />
+                                                </div>
+
+                                                <div class="text-sm text-gray-600 dark:text-gray-300">
+                                                    Duración: @GetScheduleDuration(WeeklyImpar)
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            }
+
+                            <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+                                <Button Type="button" Variant="outline" OnClick="() => SetCurrentStep(1)" Disabled=@(currentStep == 1 || IsSavingConfig)>
+                                    Atras
+                                </Button>
+                                @if (currentStep == 1)
+                                {
+                                    <Button Type="button" Variant="outline" OnClick="() => SetCurrentStep(2)" Class=@($"{ColorService.GetButtonClassess()}") Disabled="@IsNextDisabled">
+                                        Siguiente
+                                    </Button>
+                                }
+                                else
+                                {
+                                    <Button Type="submit" Variant="outline" Class=@($"{ColorService.GetButtonClassess()} flex items-center gap-2 ") Disabled=IsSavingConfig>
+                                        @if (IsSavingConfig)
+                                        {
+                                            <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                                            <span>Guardando...</span>
+                                        }
+                                        else
+                                        {
+                                            <Check Class="w-4 h-4" />
+                                            <span>Finalizar Setup</span>
+                                        }
+                                    </Button>
+                                }
+                            </div>
+                        </EditForm>
+                    </CardContent>
+            }
+        </Card>
+        
+    </div>
+</AuthorizeView>

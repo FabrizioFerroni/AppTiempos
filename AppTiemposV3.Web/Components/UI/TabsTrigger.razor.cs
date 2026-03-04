@@ -12,6 +12,7 @@ namespace AppTiemposV3.Web.Components.UI
         [Parameter] public bool Disabled { get; set; }
         [Parameter] public string? Class { get; set; }
         [Parameter] public string? ActiveClass { get; set; }
+        [Parameter] public string? Type { get; set; } = "button";
         [Parameter] public RenderFragment? ChildContent { get; set; }
         [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
 

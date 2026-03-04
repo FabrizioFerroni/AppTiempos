@@ -19,6 +19,7 @@ public partial class EditActivity : ComponentBase
     #region Parameters-Variables
     public Guid Id { get; set; }
     public Guid IdActivity { get; set; }
+    [Inject] ActivityStateService ActivityState { get; set; } = null!;
     [Inject] private IJSRuntime? JS { get; set; }
     [Inject] private ColorService ColorService { get; set; } = null!;
     [Inject] private IRequerimentContract<RequerimentResponseDto> RequerimentsService { get; set; } = null!;
@@ -33,18 +34,6 @@ public partial class EditActivity : ComponentBase
     private MarkupString messageError = new("");
 
     private UpdateActivityDto activityDto = new();
-    // {
-    //     Id = Guid.Empty,
-    //     StartDate = DateOnly.FromDateTime(DateTime.Today),
-    //     StartTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute),
-    //     EndTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute),
-    //     Description = string.Empty,
-    //     Etapa = Etapas.Alta,
-    //     RequerimentId = Guid.Empty,
-    //     IsLoaded = false,
-    //     StatusMessage = String.Empty,
-    //     Comment = string.Empty,
-    // };
 
     private ActivityResponseDto? OriginalActivityData;
     
@@ -381,6 +370,7 @@ public partial class EditActivity : ComponentBase
             
             if (response?.Flag == true)
             {
+                ActivityState.NotifyActivityUpdated();
                 _ = SafeRunAsync(async () => await OnResetEditAct(IdActivity));
                 IsLoadingEdit = false;
                 await JS!.InvokeVoidAsync("modalHelpers.clickElement", closeModalRef);
@@ -391,6 +381,7 @@ public partial class EditActivity : ComponentBase
                     StartDate = activityDto.StartDate
                 };
                 await OnSaved.InvokeAsync(args);
+
             }
             else
             {

@@ -69,7 +69,7 @@ else
             <CardContent Class="space-y-6 text-center">
                 <div class="space-y-4">
                     <p class="text-gray-600 dark:text-gray-400">
-                        Tu cuenta ha sido creada exitosamente. Ya puedes iniciar sesión y comenzar a usar la plataforma.
+                        Tu cuenta ha sido creada exitosamente. Ya puedes seguir configurando tu cuenta y comenzar a usar la plataforma.
                     </p>
                     <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                         <p class="text-sm text-green-800 dark:text-green-200">
@@ -81,10 +81,14 @@ else
                 </div>
 
                 <div class="mt-6 text-center border-t border-gray-200 dark:border-gray-700">
-                    <Enlace Href="/" Class="font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-transparent flex justify-center items-center pt-4">
+                   @*  <Enlace Href="/" Class="font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-transparent flex justify-center items-center pt-4">
                         <LogIn class="w-4 h-4 mr-2" />
                         Iniciar de sesión
-                    </Enlace>
+                    </Enlace> *@
+                    <Button Class="font-semibold text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-[hsl(var(--transparent))] flex justify-center items-center pt-4" Variant="" Size="" OnClick="() => GoToSetup()">
+                        <Settings class="w-4 h-4 mr-2" />
+                        Configurar mi cuenta
+                    </Button>
                 </div>
             </CardContent>
         </Card>
@@ -138,6 +142,19 @@ else
             </CardHeader>
 
             <CardContent Class="space-y-6">
+                @if (isError)
+                {
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                        <div class="block sm:inline">
+                            @messageError
+                        </div>
+                        <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
+                            <Close Class="h-6 w-6 text-red-500" />
+                        </button>
+                    </div>
+                }
+
                 <EditForm Enhance Model=@register class="space-y-4" novalidate OnValidSubmit=@SendRegister FormName="RegisterForm">
                     <DataAnnotationsValidator/>
                     <div class="space-y-2">

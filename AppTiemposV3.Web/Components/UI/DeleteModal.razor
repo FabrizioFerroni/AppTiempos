@@ -15,7 +15,14 @@
               </h3>
               <div class="mt-2">
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                  @Subtitle
+                    @if (!string.IsNullOrEmpty(Subtitle))
+                    {
+                        @Subtitle
+                    }
+                    else if (SubtitleHtml != null)
+                    {
+                        @SubtitleHtml
+                    }
                 </p>
               </div>
             </div>
@@ -32,7 +39,7 @@
             OnClick="async () => await OnConfirm.InvokeAsync(IdElement)"
             Class="cursor-pointer inline-flex w-full justify-center rounded-md bg-red-600 dark:bg-red-500 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500 dark:hover:bg-red-400 sm:ml-3 sm:w-auto"
             >
-            Eliminar
+            @TitleBtn
           </Button>
           
           <Button
