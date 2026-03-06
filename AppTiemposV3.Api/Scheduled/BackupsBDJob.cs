@@ -49,7 +49,6 @@ namespace AppTiemposV3.Api.Scheduled
                     bool esHora = horaActual >= horaProg && horaActual < horaProg.Add(TimeSpan.FromMinutes(5));
                     if (!esHora) continue;
 
-                    //if (ahora.ToString("HH:mm") != backup.Time) continue;
 
                     // 2. Validar Frecuencia
                     bool debeEjecutarse = backup.Frecuencia!.ToLower() switch

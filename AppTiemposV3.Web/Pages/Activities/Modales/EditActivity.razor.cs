@@ -309,28 +309,6 @@ public partial class EditActivity : ComponentBase
             }
         }
     }
-    /*private void CheckIfPast()
-    {
-        DateTime selectedDateTime = activityDto.StartDate.ToDateTime(activityDto.StartTime);
-        bool wasPast = IsPastDateTime;
-        
-        IsPastDateTime = selectedDateTime < DateTime.Now;
-        
-        if (IsPastDateTime != wasPast)
-            InvokeAsync(StateHasChanged);
-    }
-    
-    private void CheckIfPastEndTime()
-    {
-        DateTime selectedDateTime = activityDto.StartDate.ToDateTime(activityDto.EndTime);
-        bool wasPast = IsPastDateEndTimeTime;
-        
-        IsPastDateEndTimeTime = selectedDateTime < DateTime.Now;
-        
-        if (IsPastDateEndTimeTime != wasPast)
-            InvokeAsync(StateHasChanged);
-    }
-    */
     
     private void CheckIfPast()
     {

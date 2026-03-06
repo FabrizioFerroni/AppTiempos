@@ -8,17 +8,16 @@ using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
 using AppTiemposV3.SharedClases.Utilidades.Interfaces;
-using AutoMapper;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using MySqlConnector;
-using Org.BouncyCastle.Ocsp;
-using System.Net;
-using System.Text;
 using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 using static AppTiemposV3.Api.Helpers.Helpers;
 using static AppTiemposV3.Api.Helpers.MetadataHelper;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using AutoMapper;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
+using System.Net;
+using System.Text;
 
 namespace AppTiemposV3.Api.Repositories;
 
@@ -173,7 +172,7 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
 
         await _dbCxt.Trainings.AddAsync(training);
 
-        await EnsureSavedAsync("Hubo un error al crear la capacitación");
+        await EnsureSavedAsync("Hubo un error al crear la capacitación", _dbCxt);
 
         try
         {
@@ -215,7 +214,7 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
             
         _dbCxt.Entry(training).State = EntityState.Modified;
         
-        await EnsureSavedAsync("Hubo un problema para eliminar el registro");
+        await EnsureSavedAsync("Hubo un problema para eliminar el registro", _dbCxt);
         
         try
         {
@@ -248,7 +247,7 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         
         _dbCxt.Entry(training).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo un problema para eliminar el registro");
+        await EnsureSavedAsync("Hubo un problema para eliminar el registro", _dbCxt);
         
 
         try
@@ -283,7 +282,7 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         
         _dbCxt.Entry(training).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo un problema para restaurar el registro");
+        await EnsureSavedAsync("Hubo un problema para restaurar el registro", _dbCxt);
         
         try
         {
@@ -359,21 +358,7 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         TrainingEntity? training = await query.FirstOrDefaultAsync();
 
         return training ?? throw new NotFoundException("Capacitación no encontrada");
-    }    
-    
-    /// <summary>
-    /// Intenta guardar los cambios pendientes en el contexto de la base de datos.
-    /// </summary>
-    /// <param name="errorMessage">Mensaje de error a lanzar si no se guardan cambios.</param>
-    /// <exception cref="InternalServerErrorException">
-    /// Se lanza si no se guardan cambios en la base de datos.
-    /// </exception>
-    private async Task EnsureSavedAsync(string errorMessage)
-    {
-        int result = await _dbCxt.SaveChangesAsync();
-        if (result <= 0)
-            throw new InternalServerErrorException(errorMessage);
-    }
+    } 
 
     private async Task<RequerimentsEntity> GetRequerimentByIdAsync(Guid id, Guid userId)
     {

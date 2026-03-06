@@ -119,7 +119,6 @@ namespace AppTiemposV3.Api.Scheduled
 
                 _logger.LogInformation("Backup de logs enviado correctamente.");
 
-                // Limpieza: borrar el zip local después de enviar
                 File.Delete(zipPath);
             }
             catch (Exception ex)

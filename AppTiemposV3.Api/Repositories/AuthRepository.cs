@@ -5,16 +5,17 @@ using AppTiemposV3.SharedClases.Constants;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.Exceptions;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Net;
 using System.Security.Claims;
 using System.Text;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
-using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
+using static System.Environment;
+using static System.Net.WebUtility;
 
 namespace AppTiemposV3.Api.Repositories;
 
@@ -138,14 +139,12 @@ public class AuthRepository : IAuthContract
             throw new InternalServerErrorException(createdUser.Errors.First().Description);
 
 
-        // Chequea si existe el rol admin y se lo asigna al primer usuario creado, si existe registra como user por defecto
         IdentityRole<Guid>? checkAdmin = await _roleManager.FindByNameAsync("Admin");
         if (checkAdmin is null)
         {
             await _roleManager.CreateAsync(new IdentityRole<Guid>() { Name = "Admin" });
             await _userManager.AddToRoleAsync(newUser, "Admin");
 
-            //TODO: Generar token.... 
             Dictionary<string, string> loginNewUser = new();
 
             LoginDto loginDto = new LoginDto()
@@ -351,8 +350,7 @@ public class AuthRepository : IAuthContract
 
        IList<string> userRole = await _userManager.GetRolesAsync(user!);
 
-       UserSession userSession = new UserSession(user!.Id, user!.FullName, user!.Area, user!.Email,
-           userRole.First(), user!.LastPasswordChange);
+       UserSession userSession = new UserSession(user!.Id, user!.FullName, user!.Area, user!.Email, userRole.First(), user!.LastPasswordChange);
 
        TokenDto token = GenerateToken(userSession);
         
@@ -371,8 +369,13 @@ public class AuthRepository : IAuthContract
         }
         
         string tokenUser = await _userManager.GeneratePasswordResetTokenAsync(user);
-        string tokenUserEncoded = WebUtility.UrlEncode(tokenUser);
-        string token = CrearToken(new { email = user.Email, expired = DateTime.Now.AddMinutes(60), tokenUser = tokenUserEncoded });
+        string tokenUserEncoded = UrlEncode(tokenUser);
+        string token = CrearToken(new 
+        { 
+            email = user.Email, 
+            expired = DateTime.Now.AddMinutes(60), 
+            tokenUser = tokenUserEncoded 
+        });
         
         await SendForgotPassword(dto.Email, token, user.FullName);
         
@@ -387,7 +390,7 @@ public class AuthRepository : IAuthContract
         
         string email = datos!["email"].ToString();
         string expired = datos!["expired"].ToString();
-        string tokenUser = WebUtility.UrlDecode(datos!["tokenUser"].ToString());
+        string tokenUser = UrlDecode(datos!["tokenUser"].ToString());
         
         
         DateTimeOffset expiredDate = DateTimeOffset.Parse(expired);
@@ -418,10 +421,11 @@ public class AuthRepository : IAuthContract
         
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
+            foreach (IdentityError? error in result.Errors)
             {
                 _logger.LogError($"Error en reset password: {error.Code} - {error.Description}");
             }
+
             throw new BadRequestException("El token es invalido");
         }
         
@@ -458,7 +462,7 @@ public class AuthRepository : IAuthContract
             issuer: _config["Jwt:Issuer"]!,
             audience: _config["Jwt:Audience"]!,
             claims: userClaims,
-            expires: DateTime.Now.AddHours(10),
+            expires: DateTime.Now.AddHours(10), //TODO: Cambiar a 10 minutos para producción
             signingCredentials: credentials
         );
         
@@ -511,11 +515,11 @@ public class AuthRepository : IAuthContract
     {
         TwoFactorEmailModel dto = new TwoFactorEmailModel();
         dto.AppName = "Time Tracker Pro";
-        dto.UrlApp = "https://localhost:7026";
+        dto.UrlApp = _config["urlFront"] ?? GetEnvironmentVariable("urlFront")!;
         dto.Token = code;
         dto.Minutes = 10;
         dto.SupportEmail = "soporte@fabriziodev.tech";
-        dto.UnsubscribeUrl = "https://localhost:7026/unsubscribe";
+        dto.UnsubscribeUrl = _config["urlFront"] + "/unsubscribe" ?? GetEnvironmentVariable("urlFront")! + "/unsubscribe"; ;
         dto.Year = DateTime.UtcNow.Year;
         
 
@@ -543,7 +547,7 @@ public class AuthRepository : IAuthContract
     {
         ForgotPasswordEmailModel dto = new ForgotPasswordEmailModel();
         dto.AppName = "Time Tracker Pro";
-        dto.UrlApp = "https://localhost:7026";
+        dto.UrlApp = _config["urlFront"] ?? GetEnvironmentVariable("urlFront")!;
         dto.FullName = name;
         dto.UrlChangePassword = $"{dto.UrlApp}/cambiar-clave/{token}";
         dto.Email = email;
@@ -574,7 +578,7 @@ public class AuthRepository : IAuthContract
     {
         SendInvitationEmailModel dto = new SendInvitationEmailModel();
         dto.AppName = "Time Tracker Pro";
-        dto.UrlApp = "https://localhost:7026";
+        dto.UrlApp = _config["urlFront"] ?? GetEnvironmentVariable("urlFront")!;
         dto.FullName = name;
         dto.UrlInvitation = $"{dto.UrlApp}/unirme/{token}";
         dto.Email = email;

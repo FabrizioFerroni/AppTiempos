@@ -1,4 +1,5 @@
-﻿using static AppTiemposV3.SharedClases.Utilidades.DateHelper;
+﻿using System.Text.Json.Serialization;
+using static AppTiemposV3.SharedClases.Utilidades.DateHelper;
 
 namespace AppTiemposV3.SharedClases.DTOs.Configurations
 {

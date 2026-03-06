@@ -16,19 +16,21 @@ namespace AppTiemposV3.Api.Repositories
         private readonly AppDbContext _dbCxt;
         private readonly IMapper _iMapper;
         private readonly IAuditHelperService _auditHelperService;
+        private readonly IConfiguration _config;
 
-        public ReportScheduledRepository(AppDbContext dbContext, IMapper iMapper, IAuditHelperService auditHelper)
+        public ReportScheduledRepository(AppDbContext dbContext, IMapper iMapper, IAuditHelperService auditHelper, IConfiguration config)
         {
             _dbCxt = dbContext;
             _iMapper = iMapper;
             _auditHelperService = auditHelper;
+            _config = config;
         }
 
         public async Task<byte[]> GeneratePDFScheduled(string urlIdentificator, Guid userId)
         {
             ListReportDto reportDto = await GetReportByUrl(urlIdentificator, userId);
 
-            ReportDocumentPDF document = new ReportDocumentPDF(reportDto);
+            ReportDocumentPDF document = new ReportDocumentPDF(reportDto, _config);
 
             return document.GeneratePdf();
         }

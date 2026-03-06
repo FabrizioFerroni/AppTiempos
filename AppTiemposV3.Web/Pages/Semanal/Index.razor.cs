@@ -1,15 +1,21 @@
-using System.Globalization;
-using System.Text.Json;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
-using AppTiemposV3.SharedClases.Enums;
+using AppTiemposV3.SharedClases.DTOs.Configurations;
 using AppTiemposV3.Web.Pages.Requeriments.Modals;
 using AppTiemposV3.Web.Services;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using static System.Globalization.CultureInfo;
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.SharedClases.Utilidades.DateHelper;
+using static AppTiemposV3.Web.Utils.Helpers;
+using static System.Globalization.CultureInfo;
+using static System.Text.Json.JsonSerializer;
+using static System.Text.Json.Serialization.JsonNumberHandling;
 
 namespace AppTiemposV3.Web.Pages.Semanal;
 
@@ -19,7 +25,7 @@ public partial class Index : ComponentBase, IDisposable
     #region InyeccionDependencias
     [Inject] LayoutState State { get; set; } = null!;
     [Inject] private IJSRuntime? JS { get; set; }
-    
+    [Inject] private ILocalStorageService LocalStorageService { get; set; } = default!;
     [Inject] private NavigationManager? Router { get; set; }
     [Inject] private NotificationService Toltip { get; set; } = default!;
     [Inject] private ColorService ColorService { get; set; } = null!;
@@ -57,8 +63,9 @@ public partial class Index : ComponentBase, IDisposable
     
     private string? search { get; set; } = string.Empty;
     private bool SearchEmpty = false;
+    private Dictionary<DiasSemana, double> _configHoras = new();
     #endregion
-    
+
     #region Inicializacion
     protected override async Task OnInitializedAsync()
     {
@@ -82,7 +89,33 @@ public partial class Index : ComponentBase, IDisposable
         await GetAllActivities(true);
         State.OnSidebarChanged += StateHasChanged;
         await State.InitializeAsync();
-        
+
+
+        try
+        {
+            string? json = await LocalStorageService.GetItemAsStringAsync("HorasSemanalesConfig");
+
+            if (!string.IsNullOrEmpty(json))
+            {
+                JsonSerializerOptions? options = new JsonSerializerOptions { 
+                    PropertyNameCaseInsensitive = true,
+                    NumberHandling = AllowReadingFromString
+                };
+
+                options.Converters.Add(new JsonStringEnumConverter());
+
+                List<DayConfig>? lista = Deserialize<List<DayConfig>>(json, options);
+
+                if (lista != null)
+                {
+                    _configHoras = lista.ToDictionary(x => x.Day, x => x.MinHours);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cargando config: {ex.Message}");
+        }
     }
     #endregion
     
@@ -470,7 +503,6 @@ public partial class Index : ComponentBase, IDisposable
         if (day == null || day.Activities.Count == 0)
             return "empty";
 
-        // Calcula el total de horas trabajadas sumando las duraciones de las actividades
         double totalHours = 0;
 
         foreach (ActivityResponseDto activity in day.Activities)
@@ -487,11 +519,17 @@ public partial class Index : ComponentBase, IDisposable
             }
         }
 
-        if (totalHours >= 7)
-            return "completed";
-        if (totalHours > 0)
-            return "partial";
-        return "empty";
+
+        if (Enum.TryParse<DiasSemana>(day.DayName, true, out DiasSemana diaEnum))
+        {
+            if (_configHoras.TryGetValue(diaEnum, out double minRequerida))
+            {
+                if (totalHours >= minRequerida && minRequerida > 0)
+                    return "completed";
+            }
+        }
+
+        return totalHours > 0 ? "partial" : "empty";
     }
 
     string GetStatusColor(string status)

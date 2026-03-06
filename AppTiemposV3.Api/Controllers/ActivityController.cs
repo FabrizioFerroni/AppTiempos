@@ -65,7 +65,6 @@ public class ActivityController : ControllerBase
         {
             pagination.Ordenar = "StartDateTimeCombo";
         }
-        //pagination.Ascending = !pagination.Ascending;
         
         Pageable<List<ActivityResponseDto>> response = await _activityContract.GetAllActivitiesPerDayPag(pagination, fecha);
         

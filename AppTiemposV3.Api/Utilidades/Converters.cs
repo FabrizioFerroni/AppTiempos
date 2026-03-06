@@ -27,24 +27,18 @@ public class TimeOnlyJsonConverter : JsonConverter<TimeOnly>
 
     public override void WriteJson(JsonWriter writer, TimeOnly value, JsonSerializer serializer)
     {
-        // Escribimos en el formato más corto, a menos que el valor tenga segundos
-        /*string format = value.Second == 0 ? "HH:mm" : "HH:mm:ss";
-        writer.WriteValue(value.ToString(format));*/
         string format;
 
         if (value.Second == 0 && value.Millisecond == 0)
         {
-            // Solo horas y minutos
             format = "HH:mm";
         }
         else if (value.Millisecond == 0)
         {
-            // Tiene segundos, pero no milisegundos
             format = "HH:mm:ss";
         }
         else
         {
-            // Tiene milisegundos
             format = "HH:mm:ss.fffffff";
         }
 
@@ -66,25 +60,19 @@ public class TimeOnlyNullableJsonConverter : JsonConverter<TimeOnly?>
     public override void WriteJson(JsonWriter writer, TimeOnly? value, JsonSerializer serializer)
     {
         if (value.HasValue)
-        {
-            /*var format = value.Value.Second == 0 ? "HH:mm" : "HH:mm:ss";
-            writer.WriteValue(value.Value.ToString(format));*/
-            
+        {            
             string format;
 
             if (value.Value.Second == 0 && value.Value.Millisecond == 0)
             {
-                // Solo horas y minutos
                 format = "HH:mm";
             }
             else if (value.Value.Millisecond == 0)
             {
-                // Tiene segundos, pero no milisegundos
                 format = "HH:mm:ss";
             }
             else
             {
-                // Tiene milisegundos
                 format = "HH:mm:ss.fffffff";
             }
 

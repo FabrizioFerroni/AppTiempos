@@ -24,7 +24,6 @@ public static class GenerateSlug
             }
             else if (c >= 'A' && c <= 'Z')
             {
-                // tricky way to convert to lowercase
                 sb.Append((char)(c | 32));
                 prevdash = false;
             }

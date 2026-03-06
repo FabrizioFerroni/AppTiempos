@@ -143,16 +143,9 @@ public class AuditRepository : IAuditContract<AuditsResponseDto>
 
         await _dbCxt.Audits.AddAsync(auditEntity);
 
-        await EnsureSavedAsync("Hubo un error al crear la auditoria");
+        await EnsureSavedAsync("Hubo un error al crear la auditoria", _dbCxt);
 
         return new GeneralResponse(true, "Auditoria creada correctamente");
-    }
-    
-    private async Task EnsureSavedAsync(string errorMessage)
-    {
-        int result = await _dbCxt.SaveChangesAsync();
-        if (result <= 0)
-            throw new InternalServerErrorException(errorMessage);
     }
     
     private async Task<UserEntity> GetUserByIdAsync(Guid userId)

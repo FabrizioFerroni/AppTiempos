@@ -4,6 +4,7 @@ using AppTiemposV3.SharedClases.Constants;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using static System.Text.Json.JsonSerializer;
 
 namespace AppTiemposV3.Api.Events;
 
@@ -33,7 +34,7 @@ public class CustomJwtEvents : JwtBearerEvents
         context.Response.StatusCode = 401;
         context.Response.ContentType = "application/json";
 
-        string result = JsonSerializer.Serialize(new
+        string result = Serialize(new
         {
             statusCode = 401,
             message,
@@ -51,7 +52,7 @@ public class CustomJwtEvents : JwtBearerEvents
         context.Response.StatusCode = 403;
         context.Response.ContentType = "application/json";
 
-        string result = JsonSerializer.Serialize(new
+        string result = Serialize(new
         {
             statusCode = 403,
             message = "No tenés permiso para acceder a este recurso.",

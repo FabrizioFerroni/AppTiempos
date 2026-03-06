@@ -27,6 +27,7 @@ namespace AppTiemposV3.Web.Pages.Configurations
         [Inject] private ColorService ColorService { get; set; } = null!;
         [Inject] private IConfigurationContract ConfigurationContract { get; set; } = null!;
         [Inject] private ILocalStorageService _localStorageService { get; set; } = default!;
+        [Inject] ActivityStateService ActivityState { get; set; } = null!;
         #endregion
         private string KeyHorasSemanales = "HorasSemanalesConfig";
         private string KeySabadosConfig = "SabadosLaborablesConfig";
@@ -371,14 +372,6 @@ ReqID  | IsResolved | RejectionDate  | RejectionReason     | RejectionDetails   
             }
         }
 
-        /*private DiasSemana ParseDay(string day)
-        {
-            return Parse<DiasSemana>(
-                InvariantCulture.TextInfo.ToTitleCase(day),
-                ignoreCase: true
-            );
-        }*/
-
         private async Task UpdateConfiguration()
         {
             IsSavingConfig = true;
@@ -404,6 +397,7 @@ ReqID  | IsResolved | RejectionDate  | RejectionReason     | RejectionDetails   
                 if (response.Flag)
                 {
                     Toltip.Success("Éxito!", response.Message);
+                    ActivityState.NotifyActivityUpdated();
                     await GetConfiguration();
                     await GetTotalAutomaticBackups();
                     await AssignDataLS(updateConfig.DayConfigs, updateConfig.WorkingSaturdays);

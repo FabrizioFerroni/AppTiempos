@@ -113,7 +113,6 @@ namespace AppTiemposV3.Api.Controllers
         {
             byte[] response = await _reportCnt.GenerateExcel(id);
 
-            // El MIME Type para archivos .xlsx es muy específico
             string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";           
 
             return File(response, contentType);

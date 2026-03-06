@@ -1,9 +1,16 @@
 using System.Net;
 using AppTiemposV3.SharedClases.Exceptions;
-using Grpc.Core;
-using Microsoft.Extensions.Logging;
 
 namespace AppTiemposV3.Api.Middlewares;
+
+
+internal class ExceptionMiddlewareDto
+{
+    public int StatusCode { get; set; } = 0;
+    public string Message { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
+    public string Timestamp { get; set; } = string.Empty;
+}
 
 public class ExceptionMiddleware
 {
@@ -72,12 +79,12 @@ public class ExceptionMiddleware
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = statusCode;
 
-        var response = new
+        ExceptionMiddlewareDto response = new ExceptionMiddlewareDto
         {
-            statusCode,
-            message,
-            path,
-            timestamp,
+            StatusCode = statusCode,
+            Message = message,
+            Path = path,
+            Timestamp = timestamp
         };
 
         return context.Response.WriteAsJsonAsync(response);

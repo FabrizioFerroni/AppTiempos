@@ -8,6 +8,12 @@ using MimeKit.Text;
 using RazorLight;
 using static System.IO.File;
 using static MailKit.Security.SecureSocketOptions;
+using static System.IO.Path;
+using static System.AppDomain;
+using static MimeKit.MailboxAddress;
+using static MimeKit.Text.TextFormat;
+using static System.Environment;
+using static System.Reflection.Assembly;
 
 namespace AppTiemposV3.Api.Services;
 
@@ -20,7 +26,7 @@ public class EmailService: IEmailService
     {
         _configuration = configuration;
         _razor = new RazorLightEngineBuilder()
-            .UseEmbeddedResourcesProject(Assembly.GetExecutingAssembly()) // para recursos embebidos
+            .UseEmbeddedResourcesProject(GetExecutingAssembly())
             .UseMemoryCachingProvider()
             .Build();
     }
@@ -29,17 +35,17 @@ public class EmailService: IEmailService
     {
        try
        {
-           string emailFrom = _configuration["Email:EmailFrom"] ?? Environment.GetEnvironmentVariable("Email__EmailFrom")!;
-           string smtpHost = _configuration["Email:SmtpHost"] ?? Environment.GetEnvironmentVariable("Email__SmtpHost")!;
-           string smtpUser = _configuration["Email:SmtpUser"] ?? Environment.GetEnvironmentVariable("Email__SmtpUser")!;
-           string smtpPassword = _configuration["Email:SmtpPass"] ?? Environment.GetEnvironmentVariable("Email__SmtpPass")!;
-           int smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? Environment.GetEnvironmentVariable("Email__SmtpPort") ?? "587");
+           string emailFrom = _configuration["Email:EmailFrom"] ?? GetEnvironmentVariable("Email__EmailFrom")!;
+           string smtpHost = _configuration["Email:SmtpHost"] ?? GetEnvironmentVariable("Email__SmtpHost")!;
+           string smtpUser = _configuration["Email:SmtpUser"] ?? GetEnvironmentVariable("Email__SmtpUser")!;
+           string smtpPassword = _configuration["Email:SmtpPass"] ?? GetEnvironmentVariable("Email__SmtpPass")!;
+           int smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? GetEnvironmentVariable("Email__SmtpPort") ?? "587");
            
            MimeMessage email = new MimeMessage();
-           email.From.Add(MailboxAddress.Parse(emailFrom ?? from));
-           email.To.Add(MailboxAddress.Parse(to));
+           email.From.Add(Parse(emailFrom ?? from));
+           email.To.Add(Parse(to));
            email.Subject = subject;
-           email.Body = new TextPart(TextFormat.Html) { Text = html };
+           email.Body = new TextPart(Html) { Text = html };
 
            using SmtpClient smtp = new SmtpClient();
            await smtp.ConnectAsync(
@@ -70,18 +76,18 @@ public class EmailService: IEmailService
         try
         {
             // 1. Obtener credenciales (Igual que ya tienes)
-            string emailFrom = _configuration["Email:EmailFrom"] ?? Environment.GetEnvironmentVariable("Email__EmailFrom")!;
-            string smtpHost = _configuration["Email:SmtpHost"] ?? Environment.GetEnvironmentVariable("Email__SmtpHost")!;
-            string smtpUser = _configuration["Email:SmtpUser"] ?? Environment.GetEnvironmentVariable("Email__SmtpUser")!;
-            string smtpPassword = _configuration["Email:SmtpPass"] ?? Environment.GetEnvironmentVariable("Email__SmtpPass")!;
-            int smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? Environment.GetEnvironmentVariable("Email__SmtpPort") ?? "587");
+            string emailFrom = _configuration["Email:EmailFrom"] ?? GetEnvironmentVariable("Email__EmailFrom")!;
+            string smtpHost = _configuration["Email:SmtpHost"] ?? GetEnvironmentVariable("Email__SmtpHost")!;
+            string smtpUser = _configuration["Email:SmtpUser"] ?? GetEnvironmentVariable("Email__SmtpUser")!;
+            string smtpPassword = _configuration["Email:SmtpPass"] ?? GetEnvironmentVariable("Email__SmtpPass")!;
+            int smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? GetEnvironmentVariable("Email__SmtpPort") ?? "587");
 
             MimeMessage email = new MimeMessage();
-            email.From.Add(MailboxAddress.Parse(emailFrom));
+            email.From.Add(Parse(emailFrom));
 
             foreach (string? to in destinations)
             {
-                email.To.Add(MailboxAddress.Parse(to));
+                email.To.Add(Parse(to));
             }
 
             email.Subject = subject;
@@ -128,8 +134,8 @@ public class EmailService: IEmailService
 
     private string LoadTemplateFromDisk(string emailTemplate)
     {
-        string templateDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Files", "MailTemplates");
-        string templatePath = Path.Combine(templateDir, $"{emailTemplate}.cshtml");
+        string templateDir = Combine(CurrentDomain.BaseDirectory, "Files", "MailTemplates");
+        string templatePath = Combine(templateDir, $"{emailTemplate}.cshtml");
         return ReadAllText(templatePath, Encoding.UTF8);
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System.Text.Json;
 using AppTiemposV3.SharedClases.GenericModels;
 using static NanoidDotNet.Nanoid;
+using static System.Text.Json.JsonSerializer;
+using static System.IO.Path;
 
 string? outputPath = args.Length > 0 ? args[0] : "colors.json";
 
@@ -57,9 +59,9 @@ List<ColorModel> colors =
            }
        ];
        
-string? json = JsonSerializer.Serialize(colors, new JsonSerializerOptions { WriteIndented = true });
+string? json = Serialize(colors, new JsonSerializerOptions { WriteIndented = true });
 
-Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+Directory.CreateDirectory(GetDirectoryName(outputPath)!);
 File.WriteAllText(outputPath, json);
 
 Console.WriteLine($"✅ Colors.json generado en {outputPath}");
