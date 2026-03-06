@@ -4,20 +4,16 @@ using AppTiemposV3.Api.Files.MailTemplates.Models;
 using AppTiemposV3.SharedClases.Annotations;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
-using AppTiemposV3.SharedClases.DTOs.Audits;
 using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
-using static AppTiemposV3.SharedClases.Utilidades.TokenHelper;
-using static AppTiemposV3.Api.Helpers.Helpers;
-using static AppTiemposV3.Api.Helpers.MetadataHelper;
-using static NanoidDotNet.Nanoid;
-using static NanoidDotNet.Nanoid.Alphabets;
 
 
 namespace AppTiemposV3.Api.Repositories;
@@ -111,7 +107,7 @@ public class InvitationRepository : IInvitationContract<InvitationResponseDto>
         
         await _dbCxt.Invitations.AddAsync(inv);
 
-        await EnsureSavedAsync("Hubo problemas al guardar el registro");
+        await EnsureSavedAsync("Hubo problemas al guardar el registro", _dbCxt);
 
         return new GeneralResponse(true, "Invitacion enviada con éxito");
     }
@@ -167,7 +163,7 @@ public class InvitationRepository : IInvitationContract<InvitationResponseDto>
             
         _dbCxt.Entry(inv).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo problemas para aceptar o denegar la invitacion");
+        await EnsureSavedAsync("Hubo problemas para aceptar o denegar la invitacion", _dbCxt);
 
         return new GeneralResponse(true, $"Invitación {(dto.AcceptDecline ? "aceptada" : "declinada")} con éxito");
     }
@@ -182,7 +178,7 @@ public class InvitationRepository : IInvitationContract<InvitationResponseDto>
             
         _dbCxt.Entry(inv).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo problemas para restaurar el registro");
+        await EnsureSavedAsync("Hubo problemas para restaurar el registro", _dbCxt);
 
         return new GeneralResponse(true, "Invitacion eliminada con éxito");
     }
@@ -230,20 +226,6 @@ public class InvitationRepository : IInvitationContract<InvitationResponseDto>
         return await _dbCxt.Invitations.AnyAsync(r =>
             r.Email == email &&
             (excludeId == null || r.Id != excludeId));
-    }
-    
-    /// <summary>
-    /// Intenta guardar los cambios pendientes en el contexto de la base de datos.
-    /// </summary>
-    /// <param name="errorMessage">Mensaje de error a lanzar si no se guardan cambios.</param>
-    /// <exception cref="InternalServerErrorException">
-    /// Se lanza si no se guardan cambios en la base de datos.
-    /// </exception>
-    private async Task EnsureSavedAsync(string errorMessage)
-    {
-        int result = await _dbCxt.SaveChangesAsync();
-        if (result <= 0)
-            throw new InternalServerErrorException(errorMessage);
     }
 
     private async Task<InvitationEntity> GetInvitationById(Guid id)

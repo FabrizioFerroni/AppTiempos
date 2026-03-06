@@ -194,6 +194,24 @@
                                             
                                         </div>
                                         <div class="flex gap-2 ml-4">
+                                            @if (activity.EndTime == null)
+                                            {
+                                                <Button Variant="outline"
+                                                        Size="sm"
+                                                        Id=@($"complete-endtime-button-{activity.Id}")
+                                                        OnClick="() => EndTimeAutomate(activity)"
+                                                        Disabled=@IsUpdatingTime
+                                                        Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 dark:hover:bg-orange-800/20 dark:hover:border-orange-900/50 cursor-pointer">
+                                                    @if (IsUpdatingTime)
+                                                    {
+                                                        <LoaderCircle Class="w-4 h-4 text-green-500 animate-spin" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <Clock Class="w-4 h-4 text-green-500" />
+                                                    }
+                                                </Button>
+                                            }
                                             <Enlace
                                                 Href=@($"/app/actividad/{activity.UrlIndetificator}")
                                                 Target="_self"

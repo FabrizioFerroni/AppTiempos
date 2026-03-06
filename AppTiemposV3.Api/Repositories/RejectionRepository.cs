@@ -18,6 +18,7 @@ using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 using static AppTiemposV3.Api.Helpers.Helpers;
 using static AppTiemposV3.Api.Helpers.MetadataHelper;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 using static NanoidDotNet.Nanoid;
 using static NanoidDotNet.Nanoid.Alphabets;
 
@@ -161,7 +162,7 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
             
         await _dbCxt.Rejections.AddAsync(rej);
 
-        await EnsureSavedAsync("Hubo un error al crear el rechazo");
+        await EnsureSavedAsync("Hubo un error al crear el rechazo", _dbCxt);
 
         CreateRejectionResponseDto data = new CreateRejectionResponseDto
         {
@@ -211,7 +212,7 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         
         _dbCxt.Entry(rej).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo problemas para actualizar el registro");
+        await EnsureSavedAsync("Hubo problemas para actualizar el registro", _dbCxt);
 
         try
         {
@@ -247,7 +248,7 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
 
         _dbCxt.Entry(rej).State = EntityState.Modified;
         
-        await EnsureSavedAsync("Error al actualizar el rechazo");
+        await EnsureSavedAsync("Error al actualizar el rechazo", _dbCxt);
 
         try
         {
@@ -280,7 +281,7 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
             
         _dbCxt.Entry(rej).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo problemas para eliminar el registro");
+        await EnsureSavedAsync("Hubo problemas para eliminar el registro", _dbCxt);
 
         try
         {
@@ -313,7 +314,7 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
             
         _dbCxt.Entry(rej).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo problemas para restaurar el registro");
+        await EnsureSavedAsync("Hubo problemas para restaurar el registro", _dbCxt);
 
         try
         {
@@ -389,19 +390,6 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
             (excludeId == null || r.Id != excludeId));
     }
     
-    /// <summary>
-    /// Intenta guardar los cambios pendientes en el contexto de la base de datos.
-    /// </summary>
-    /// <param name="errorMessage">Mensaje de error a lanzar si no se guardan cambios.</param>
-    /// <exception cref="InternalServerErrorException">
-    /// Se lanza si no se guardan cambios en la base de datos.
-    /// </exception>
-    private async Task EnsureSavedAsync(string errorMessage)
-    {
-        int result = await _dbCxt.SaveChangesAsync();
-        if (result <= 0)
-            throw new InternalServerErrorException(errorMessage);
-    }
 
     private async Task<RequerimentsEntity> GetRequerimentByIdAsync(Guid id, Guid userId)
     {

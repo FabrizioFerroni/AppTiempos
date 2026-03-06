@@ -1,19 +1,17 @@
 using System.Net;
 using AppTiemposV3.Api.Data;
 using AppTiemposV3.Api.Entities;
-using AppTiemposV3.Api.Utilidades;
 using AppTiemposV3.SharedClases.Annotations;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Categories;
-using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.Exceptions;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static AppTiemposV3.Api.Utilidades.GenerateSlug;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 
 namespace AppTiemposV3.Api.Repositories;
 
@@ -90,7 +88,7 @@ public class CategoryRepository : ICategoryContract<CategoryResponseDto>
 
             await _dbCxt.Categories.AddAsync(cat);
 
-            await EnsureSavedAsync("Hubo un error al crear la categoria");
+            await EnsureSavedAsync("Hubo un error al crear la categoria", _dbCxt);
             
             return new GeneralResponse(true, "Categoria creada correctamente");
         }
@@ -131,7 +129,7 @@ public class CategoryRepository : ICategoryContract<CategoryResponseDto>
            _iMapper.Map(dto, cat);
            cat.ModifiedAt = DateTime.Now;
 
-           await EnsureSavedAsync("Hubo un error al actualizar la categoría.");
+           await EnsureSavedAsync("Hubo un error al actualizar la categoría.", _dbCxt);
            
            return new GeneralResponse(true, "Se actualizó la categoría con éxito.");
        }
@@ -150,7 +148,7 @@ public class CategoryRepository : ICategoryContract<CategoryResponseDto>
         cat.IsDeleted = true;
         cat.DeletedAt = DateTime.Now;
 
-        await EnsureSavedAsync("Hubo un error al eliminar la categoria. Intente mas tarde");
+        await EnsureSavedAsync("Hubo un error al eliminar la categoria. Intente mas tarde", _dbCxt);
 
         return new GeneralResponse(true, "Se elimino con exito la categoria");
     }
@@ -163,7 +161,7 @@ public class CategoryRepository : ICategoryContract<CategoryResponseDto>
         cat.ModifiedAt = DateTime.Now;
         cat.DeletedAt = null;
 
-        await EnsureSavedAsync("Hubo un error al restaurar la categoria. Intente mas tarde");
+        await EnsureSavedAsync("Hubo un error al restaurar la categoria. Intente mas tarde", _dbCxt);
 
         return new GeneralResponse(true, "Se restauro con exito la categoria");
     }
@@ -176,28 +174,10 @@ public class CategoryRepository : ICategoryContract<CategoryResponseDto>
     private async Task<CategoriesEntity?> FindAnyCategoryByName(string name)
     {
         return await _dbCxt.Categories
-            .IgnoreQueryFilters() // Por si tenés filtro global de soft delete
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.Name == name);
     }
-
-    /*private async Task<CategoriesEntity> GetCategoryByIdAsync(Guid id, bool includeDeleted = false)
-    {
-        CategoriesEntity? category;
-        if (includeDeleted)
-        {
-            category = await _dbCxt.Categories
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(r => r.Id == id && r.IsDeleted == true);
-        }
-        else
-        {
-            category = await _dbCxt.Categories
-                .FirstOrDefaultAsync(r => r.Id == id && r.IsDeleted == false);
-        }
-
-        return category ?? throw new NotFoundException("Categoria no encontrada");
-    }*/
-    
+        
     private async Task<CategoriesEntity> GetCategoryByIdAsync(Guid id, bool includeDeleted = false)
     {
         IQueryable<CategoriesEntity> query = _dbCxt.Categories;
@@ -224,12 +204,5 @@ public class CategoryRepository : ICategoryContract<CategoryResponseDto>
             .FirstOrDefaultAsync(r => r.Name == nombre);
 
         return category ?? throw new NotFoundException("Categoria no encontrada");
-    }
-
-    private async Task EnsureSavedAsync(string errorMessage)
-    {
-        int result = await _dbCxt.SaveChangesAsync();
-        if (result <= 0)
-            throw new InternalServerErrorException(errorMessage);
     }
 }

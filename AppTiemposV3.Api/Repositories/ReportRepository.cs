@@ -34,6 +34,7 @@ namespace AppTiemposV3.Api.Repositories
         private readonly IGenericContract _genericContract;
         private readonly IUserContract _userContext;
         private readonly IAuditHelperService _auditHelperService;
+        private readonly IConfiguration _config;
         private Guid _userId => _userContext.GetUserId();
         private readonly ILogger<ReportRepository> _logger;
         public ReportRepository(
@@ -43,7 +44,8 @@ namespace AppTiemposV3.Api.Repositories
             IGenericContract genericContract,
             IUserContract userContext,
             IAuditHelperService auditHelperService,
-            ILogger<ReportRepository> logger
+            ILogger<ReportRepository> logger,
+            IConfiguration config
             )
         {
             _dbCxt = dbCxt;
@@ -53,6 +55,7 @@ namespace AppTiemposV3.Api.Repositories
             _userContext = userContext;
             _auditHelperService = auditHelperService;
             _logger = logger;
+            _config = config;
         }
 
         public async Task<DataResponse<CountTotalReports>> GetTotalReports(string? search)
@@ -298,9 +301,7 @@ namespace AppTiemposV3.Api.Repositories
 
             DataResponse<ListReportDto> reportDto = await GetReportByUrl(report.UrlIdentificator);
 
-            ReportDocumentPDF document = new ReportDocumentPDF(reportDto.Data);
-
-            //document.ShowInCompanion();
+            ReportDocumentPDF document = new ReportDocumentPDF(reportDto.Data, _config);
 
             return document.GeneratePdf();
         }

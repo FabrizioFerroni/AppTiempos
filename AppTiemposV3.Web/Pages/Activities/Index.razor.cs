@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using static AppTiemposV3.Web.Utils.Helpers;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
 namespace AppTiemposV3.Web.Pages.Activities;
 
@@ -42,7 +44,8 @@ public partial class Index : ComponentBase, IDisposable
     private string DateSelected = string.Empty;
     private bool IsNewButtonDisabled = false;
     private bool IsNewButtonNavbarDisabled = false;
-    
+    private bool IsUpdatingTime = false;
+
     #region Paginado
     protected int totalPages = 0;
     protected int totalElements = 0;
@@ -295,7 +298,50 @@ public partial class Index : ComponentBase, IDisposable
         IsNewButtonNavbarDisabled = Activities.Any(a => a.EndTime is null);
     }
     
-    
+    private async Task EndTimeAutomate(ActivityResponseDto activity)
+    {
+        IsUpdatingTime = true;
+        StateHasChanged();
+
+        try
+        {
+            UpdateActivityDto updateDto = new UpdateActivityDto()
+            {
+                Id = activity.Id,
+                StartDate = activity.StartDate,
+                StartTime = TimeOnly.Parse(activity.StartTime),
+                EndTime = TimeOnly.FromDateTime(DateTime.Now),
+                RequerimentId = activity.Requeriment.Id,
+                Description = activity.Description,
+                IsLoaded = false,
+                StatusMessage = "in-progress",
+                Comment = activity.Comment,
+                Etapa = activity.Etapa
+            };
+
+            GeneralResponse response = await ActivityService.UpdateActivity(activity.Id, updateDto);
+
+            if (response.Flag)
+            {
+                Toltip.Success("Éxito!", response.Message);
+                await GetAllActivities(true);
+            }
+            else
+            {
+                Toltip.Error("Upss... hubo un error", response.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Hubo un error al actualizar el tiempo final automatico, {ex.Message}");
+            throw;
+        }
+        finally
+        {
+            IsUpdatingTime = false;
+            StateHasChanged();
+        }
+    }
     #endregion
     
     #region PaginadoFunciones

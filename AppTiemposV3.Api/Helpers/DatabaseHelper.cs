@@ -70,7 +70,6 @@ public static class DatabaseHelper
     {
         if (string.IsNullOrWhiteSpace(sql)) return new List<Dictionary<string, object?>>();
 
-        // Obtenemos la conexión pero NO la abrimos manualmente con OpenAsync()
         DbConnection conn = dbContext.Database.GetDbConnection();
 
         try
@@ -79,15 +78,12 @@ public static class DatabaseHelper
             cmd.CommandText = sql;
             cmd.CommandType = CommandType.Text;
 
-            // Si hay una transacción activa en EF, se la pasamos al comando
             if (dbContext.Database.CurrentTransaction != null)
                 cmd.Transaction = dbContext.Database.CurrentTransaction.GetDbTransaction();
 
             if (parameters is { Length: > 0 })
                 cmd.Parameters.AddRange(parameters);
 
-            // EF Core 6+ tiene este método que abre la conexión si es necesario 
-            // y la cierra automáticamente al terminar el reader si él la abrió.
             await dbContext.Database.OpenConnectionAsync();
 
             List<Dictionary<string, object?>> result = new();
@@ -95,7 +91,6 @@ public static class DatabaseHelper
             await using DbDataReader reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                // Usamos StringComparer.OrdinalIgnoreCase para que row["campo"] y row["CAMPO"] funcionen igual
                 Dictionary<string, object?>? row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
                 for (int i = 0; i < reader.FieldCount; i++)
                     row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
@@ -106,8 +101,6 @@ public static class DatabaseHelper
         }
         finally
         {
-            // En lugar de CloseAsync manual, usamos CloseConnectionAsync de EF
-            // que solo la cierra si EF fue quien la abrió originalmente.
             await dbContext.Database.CloseConnectionAsync();
         }
     }
@@ -160,10 +153,6 @@ public static class DatabaseHelper
         List<MySqlParameter>? parameters = new List<MySqlParameter>();
         int pIndex = 0;
 
-        // Patrón para:
-        // 1. Strings: 'text'
-        // 2. Números: 123 o 123.45 (que no sean parte de una palabra)
-        // 3. Booleanos/Nulls: true, false, null
         string pattern = @"'([^']*)'|\b(\d+(\.\d+)?)\b|\b(true|false|null)\b";
 
         string sqlParametrizada = Regex.Replace(sqlRaw, pattern, (match) =>
@@ -171,30 +160,25 @@ public static class DatabaseHelper
             string value = match.Value;
             string paramName = $"@p{pIndex++}";
 
-            // CASO 1: Es un string (venga con LIKE o sea un valor exacto)
             if (value.StartsWith("'"))
             {
                 string cleanValue = value.Trim('\'');
-                // Si el front mandó '%JUAN%', cleanValue será %JUAN%
                 parameters.Add(new MySqlParameter(paramName, cleanValue));
                 return paramName;
             }
 
-            // CASO 2: Es un número
             if (decimal.TryParse(value, out decimal num))
             {
                 parameters.Add(new MySqlParameter(paramName, num));
                 return paramName;
             }
 
-            // CASO 3: Nulls o Bools
             if (value.ToLower() == "null")
             {
                 parameters.Add(new MySqlParameter(paramName, DBNull.Value));
                 return paramName;
             }
 
-            // Si no entra en nada (casos raros), devolvemos el valor original
             return value;
         });
 

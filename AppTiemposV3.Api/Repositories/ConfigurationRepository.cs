@@ -645,15 +645,6 @@ namespace AppTiemposV3.Api.Repositories
 
                 List<Dictionary<string, object?>> totalData = await QueryRawFullAsync(_dbCxt, sql, parameters.ToArray());
 
-                /* foreach (Dictionary<string, object?> row in totalData)
-                 {
-                     resp.HorasRealizadas = row["HorasRealizadasTexto"]?.ToString() ?? "0h";
-                     resp.HorasRealizadasDbl = row["HorasRealizadasDbl"] != null ? Convert.ToDouble(row["HorasRealizadasDbl"]) : 0;
-                     resp.MetaDelDia = row["MetaDelDia"] != null ? Convert.ToDouble(row["MetaDelDia"]) : 0;
-                     resp.Porcentaje = row["Porcentaje"] != null ? Convert.ToInt32(row["Porcentaje"]) : 0;
-                     resp.HorasFaltantes = row["HorasFaltantesFormateado"]?.ToString() ?? "0h 0min";
-                 }*/
-
                 Dictionary<string, object?>? row = totalData.FirstOrDefault();
 
                 if (row != null)

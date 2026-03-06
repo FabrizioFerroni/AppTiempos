@@ -5,9 +5,7 @@ using AppTiemposV3.Api.Entities;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.Exceptions;
-using AutoMapper;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static AppTiemposV3.Api.Helpers.DatabaseHelper;
@@ -34,10 +32,10 @@ public class DashboardRepository : IDashboardContract<DashboardKPIDto>
         DashboardKPIDto? resp = new DashboardKPIDto();
         
         _ = await GetUserByIdAsync(_userId);
-        
-        string yearweekCon = year.ToString() + weekNumber.ToString();
+
+        string yearweekCon = $"{year}{weekNumber:D2}";
         int yearweek = Convert.ToInt32(yearweekCon);
-        
+
         string sql = @"SELECT 
                             DAYNAME(a.StartDate) AS Day,
                             WEEKDAY(a.StartDate) + 1 AS DayNumber,
@@ -129,20 +127,6 @@ public class DashboardRepository : IDashboardContract<DashboardKPIDto>
         return respback;
     }
     
-    private (DateOnly start, DateOnly end) GetDateRangeFromWeek(int year, int weekNumber)
-    {
-        DateTime firstDay = new DateTime(year, 1, 1);
-
-        int offset = DayOfWeek.Monday - firstDay.DayOfWeek;
-        if (offset > 0) offset -= 7;
-
-        DateTime firstMonday = firstDay.AddDays(offset);
-        DateTime startOfWeek = firstMonday.AddDays((weekNumber - 1) * 7);
-        DateTime endOfWeek = startOfWeek.AddDays(6);
-
-        return (DateOnly.FromDateTime(startOfWeek), DateOnly.FromDateTime(endOfWeek));
-    }
-    
     private async Task<UserEntity> GetUserByIdAsync(Guid userId)
     {
         UserEntity? user = await _userManager.FindByIdAsync(userId.ToString());
@@ -160,7 +144,7 @@ public class DashboardRepository : IDashboardContract<DashboardKPIDto>
             "Friday" => "Viernes",
             "Saturday" => "Sábado",
             "Sunday" => "Domingo",
-            _ => day // por si no coincide, devuelve el valor original
+            _ => day 
         };
     }
     
@@ -171,7 +155,6 @@ public class DashboardRepository : IDashboardContract<DashboardKPIDto>
             "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"
         };
 
-        // Agrega los días faltantes
         foreach ((string day, int index) in allDays.Select((string d, int i) => (d, i)))
         {
             if (!chartDays.Any(c => c.Day.Equals(day, StringComparison.OrdinalIgnoreCase)))

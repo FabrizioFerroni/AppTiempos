@@ -13,6 +13,7 @@ using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
 using AppTiemposV3.SharedClases.Utilidades.Interfaces;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Identity;
@@ -196,7 +197,7 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
             
         await _dbCxt.Activities.AddAsync(act);
 
-        await EnsureSavedAsync("Hubo un error al crear la actividad");
+        await EnsureSavedAsync("Hubo un error al crear la actividad", _dbCxt);
         
         try
         {
@@ -253,7 +254,7 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
 
         _dbCxt.Entry(act).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo un error al actualizar la actividad. Intente mas tarde");
+        await EnsureSavedAsync("Hubo un error al actualizar la actividad. Intente mas tarde", _dbCxt);
         
         try
         {
@@ -292,7 +293,7 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
         
         _dbCxt.Entry(act).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo un error al eliminar la actividad. Intente mas tarde");
+        await EnsureSavedAsync("Hubo un error al eliminar la actividad. Intente mas tarde", _dbCxt);
         
         try
         {
@@ -329,7 +330,7 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
         act.DeletedAt = null;
         act.ModifiedAt = DateTime.Now;
 
-        await EnsureSavedAsync("Hubo un error al restaurar la actividad. Intente mas tarde");
+        await EnsureSavedAsync("Hubo un error al restaurar la actividad. Intente mas tarde", _dbCxt);
         
         try
         {
@@ -363,13 +364,6 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
             .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
 
         return requeriment ?? throw new NotFoundException("Requerimiento no encontrado");
-    }
-
-    private async Task EnsureSavedAsync(string errorMessage)
-    {
-        int result = await _dbCxt.SaveChangesAsync();
-        if (result <= 0)
-            throw new InternalServerErrorException(errorMessage);
     }
 
     private (DateOnly start, DateOnly end) GetDateRangeFromWeek(int year, int weekNumber)

@@ -9,10 +9,13 @@ namespace AppTiemposV3.Api.Exports.PDF
 {
     public class ReportDocumentPDF : IDocument
     {
+        private readonly IConfiguration _config;
         public ListReportDto Reporte { get; }
-        public ReportDocumentPDF(ListReportDto reporte)
+        public ReportDocumentPDF(ListReportDto reporte, IConfiguration config)
         {
             Reporte = reporte;
+            _config = config;
+
         }
 
         public void Compose(IDocumentContainer cnt)
@@ -230,7 +233,6 @@ namespace AppTiemposV3.Api.Exports.PDF
                 return;
             }
 
-            // Obtenemos los nombres de las columnas del primer registro
             List<string>? columnNames = data.First().Keys.ToList();
 
             cnt.PaddingTop(10).Table(table =>
@@ -311,7 +313,7 @@ namespace AppTiemposV3.Api.Exports.PDF
             int year = DateTime.Now.Year;
             cnt.Element(EstiloFooter).AlignCenter().Text(t =>
             {
-                t.Span("Generado por TimeTracker - Sistema de Gestión de Tiempos y Actividades").FontSize(8).FontColor(Color.FromHex("#a0aec0")).SemiBold().FontFamily("Segoe UI");
+                t.Span($"Generado por {_config["appName"]} - Sistema de Gestión de Tiempos y Actividades").FontSize(8).FontColor(Color.FromHex("#a0aec0")).SemiBold().FontFamily("Segoe UI");
                 t.EmptyLine();
                 t.Span($"© {year} - Todos los derechos reservados").FontSize(8).FontColor(Color.FromHex("#a0aec0")).SemiBold().FontFamily("Segoe UI");
                 t.EmptyLine();

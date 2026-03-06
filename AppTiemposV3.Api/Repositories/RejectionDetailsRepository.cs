@@ -1,15 +1,15 @@
-using System.Net;
 using AppTiemposV3.Api.Data;
 using AppTiemposV3.Api.Entities;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.Exceptions;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using System.Net;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
-using static AppTiemposV3.Api.Helpers.Helpers;
 
 namespace AppTiemposV3.Api.Repositories;
 
@@ -62,7 +62,7 @@ public class RejectionDetailsRepository : IRejectionDetailContract<RejectionDeta
             
         await _dbCxt.RejectionDetails.AddAsync(rejDetails);
 
-        await EnsureSavedAsync("Hubo un error al crear el detalle del rechazo");
+        await EnsureSavedAsync("Hubo un error al crear el detalle del rechazo", _dbCxt);
         
         await UpdateCountRejections(dto.RejectionId, "Create");
 
@@ -82,7 +82,7 @@ public class RejectionDetailsRepository : IRejectionDetailContract<RejectionDeta
         
         _dbCxt.Entry(rejDetail).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo problemas para actualizar el registro");
+        await EnsureSavedAsync("Hubo problemas para actualizar el registro", _dbCxt);
         
         await UpdateCountRejections(rejDetail.RejectionId, "Update");
         
@@ -98,7 +98,7 @@ public class RejectionDetailsRepository : IRejectionDetailContract<RejectionDeta
         
         _dbCxt.Entry(rejDetail).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo problemas para eliminar el registro");
+        await EnsureSavedAsync("Hubo problemas para eliminar el registro", _dbCxt);
 
         await UpdateCountRejections(rejDetail.RejectionId, "Delete");
         
@@ -115,7 +115,7 @@ public class RejectionDetailsRepository : IRejectionDetailContract<RejectionDeta
         
         _dbCxt.Entry(rejDetail).State = EntityState.Modified;
 
-        await EnsureSavedAsync("Hubo problemas para restaurar el registro");
+        await EnsureSavedAsync("Hubo problemas para restaurar el registro", _dbCxt);
         
         await UpdateCountRejections(rejDetail.RejectionId, "Restore");
         
@@ -175,20 +175,6 @@ public class RejectionDetailsRepository : IRejectionDetailContract<RejectionDeta
             throw new NotFoundException("El RejectionId no existe");
         
         return exists;
-    }
-    
-    /// <summary>
-    /// Intenta guardar los cambios pendientes en el contexto de la base de datos.
-    /// </summary>
-    /// <param name="errorMessage">Mensaje de error a lanzar si no se guardan cambios.</param>
-    /// <exception cref="InternalServerErrorException">
-    /// Se lanza si no se guardan cambios en la base de datos.
-    /// </exception>
-    private async Task EnsureSavedAsync(string errorMessage)
-    {
-        int result = await _dbCxt.SaveChangesAsync();
-        if (result <= 0)
-            throw new InternalServerErrorException(errorMessage);
     }
     
     /// <summary>

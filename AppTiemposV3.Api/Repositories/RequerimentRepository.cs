@@ -92,7 +92,7 @@ namespace AppTiemposV3.Api.Repositories
             
             await _dbCxt.Requeriments.AddAsync(req);
 
-            await EnsureSavedAsync("Hubo un error al crear el requerimiento");
+            await EnsureSavedAsync("Hubo un error al crear el requerimiento", _dbCxt);
 
             try
             {
@@ -133,7 +133,7 @@ namespace AppTiemposV3.Api.Repositories
             
             _dbCxt.Entry(req).State = EntityState.Modified;
 
-            await EnsureSavedAsync("Hubo problemas para eliminar el registro");
+            await EnsureSavedAsync("Hubo problemas para eliminar el registro", _dbCxt);
 
             try
             {
@@ -171,7 +171,7 @@ namespace AppTiemposV3.Api.Repositories
             req.ModifiedAt = DateTime.Now;
             req.DeletedAt = null;
 
-            await EnsureSavedAsync("Hubo problemas para restaurar el registro");
+            await EnsureSavedAsync("Hubo problemas para restaurar el registro", _dbCxt);
 
             try
             {
@@ -347,7 +347,7 @@ namespace AppTiemposV3.Api.Repositories
             
             _dbCxt.Entry(req).State = EntityState.Modified;
 
-            await EnsureSavedAsync("Hubo un error al actualizar el req. Intente mas tarde");
+            await EnsureSavedAsync("Hubo un error al actualizar el req. Intente mas tarde", _dbCxt);
 
             try
             {
@@ -412,20 +412,6 @@ namespace AppTiemposV3.Api.Repositories
                 .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
 
             return requeriment ?? throw new NotFoundException("Requerimiento no encontrado");
-        }
-
-        /// <summary>
-        /// Intenta guardar los cambios pendientes en el contexto de la base de datos.
-        /// </summary>
-        /// <param name="errorMessage">Mensaje de error a lanzar si no se guardan cambios.</param>
-        /// <exception cref="InternalServerErrorException">
-        /// Se lanza si no se guardan cambios en la base de datos.
-        /// </exception>
-        private async Task EnsureSavedAsync(string errorMessage)
-        {
-            int result = await _dbCxt.SaveChangesAsync();
-            if (result <= 0)
-                throw new InternalServerErrorException(errorMessage);
         }
 
         /// <summary>

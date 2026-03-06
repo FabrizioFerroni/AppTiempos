@@ -75,10 +75,6 @@ public partial class Sidebar : ComponentBase, IDisposable
     private async void RefreshData()
     {
         await GetProgressDay();
-        // 1. Opcional: Volver a poner isLoading = true si traes datos de BD
-        // 2. Ejecutar la lógica para recalcular TodayHoursWorked
-
-        // 3. Forzar el refresco de la UI
         await InvokeAsync(StateHasChanged);
     }
 
@@ -302,7 +298,6 @@ public partial class Sidebar : ComponentBase, IDisposable
     
     private void HandleDisabledButtonChanged()
     {
-        // Refresca los datos o actualiza el estado del botón
         InvokeAsync(async () =>
         {
             await GetAllActivities();

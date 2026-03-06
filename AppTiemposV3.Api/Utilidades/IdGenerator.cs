@@ -1,3 +1,5 @@
+using static System.Linq.Enumerable;
+
 namespace AppTiemposV3.Api.Utilidades;
 
 public static class IdGenerator
@@ -8,7 +10,7 @@ public static class IdGenerator
 
     public static string Generate(int length = 10)
     {
-        return new string(Enumerable.Repeat(chars, length)
+        return new string(Repeat(chars, length)
             .Select(s => s[random.Next(s.Length)]).ToArray()).ToLower();
     }
 }

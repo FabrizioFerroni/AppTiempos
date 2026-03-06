@@ -244,11 +244,6 @@ public class GenericRepository : IGenericContract
         }
 
         // Paginado + mapeo
-        /*List<TDto> resDto = await queryable
-            .Paginar(pagination)
-            .ProjectTo<TDto>(_mapper.ConfigurationProvider)
-            .ToListAsync();*/
-
         return PageableResponse.CreatePageableResponse(
             resDto,
             pagination.Pagina,
@@ -460,39 +455,14 @@ public class GenericRepository : IGenericContract
                 : queryable.OrderByDescending(e => EF.Property<DateTime>(e, "CreatedAt"));
         }
 
-        //bool hasCollections = typeof(TEntity)
-        //            .GetProperties()
-        //            .Any(p =>
-        //                p.PropertyType.IsGenericType &&
-        //                p.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>)
-        //            );
-
         bool hasNavigations = HasNavigations<TEntity>();
 
         List<TDto> resDto;
 
-        /*if (hasCollections)
-        {
-            queryable = ApplyIncludes(queryable);
-
-            List<TEntity>? entities = await queryable
-                .PaginarAdvanced(pagination)
-                .ToListAsync();
-
-            resDto = _mapper.Map<List<TDto>>(entities);
-        }
-        else
-        {
-            resDto = await queryable
-                .PaginarAdvanced(pagination)
-                .ProjectTo<TDto>(_mapper.ConfigurationProvider)
-                .ToListAsync();
-        }*/
-
         if (hasNavigations)
         {
             List<TEntity>? list = await queryable
-                .IncludeAllNavigations<TEntity>() // si lo tenés
+                .IncludeAllNavigations<TEntity>() 
                 .PaginarAdvanced(pagination)
                 .ToListAsync();
 
@@ -505,11 +475,6 @@ public class GenericRepository : IGenericContract
                 .ProjectTo<TDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
         }
-
-        //List<TDto> resDto = await queryable
-        //    .PaginarAdvanced(pagination)
-        //    .ProjectTo<TDto>(_mapper.ConfigurationProvider)
-        //    .ToListAsync();
 
         return PageableResponse.CreatePageableResponse(
             resDto,

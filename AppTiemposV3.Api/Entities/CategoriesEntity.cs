@@ -12,10 +12,6 @@ public class CategoriesEntity : BaseEntity
     public string? Color { get; set; } = string.Empty;
     
     public string? Slug {  get; set; } = string.Empty;
-    
-    /*public ICollection<ActivitiesEntity> Activities { get; set; } = new List<ActivitiesEntity>();
-    
-    public ICollection<TrainingEntity> Trainings { get; set; } = new List<TrainingEntity>();*/
-    
+        
     public ICollection<RequerimentsEntity> Requeriments { get; set; } = new List<RequerimentsEntity>();
 }

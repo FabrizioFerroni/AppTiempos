@@ -8,7 +8,6 @@ namespace AppTiemposV3.Api.Utilidades
 
         public static byte[] ConvertSvgToPng(string base64Svg, int width = 128, int height = 128)
         {
-            // quitar prefijo
             string? base64 = base64Svg.Substring(base64Svg.IndexOf(",") + 1);
             byte[]? svgBytes = Convert.FromBase64String(base64);
 
