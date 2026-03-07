@@ -1,6 +1,6 @@
 # ⏱️ AppTiempos - Mini CRM de Tiempos
 
-Este proyecto es un mini CRM desarrollado con **.NET 8**, utilizando **Blazor** para el frontend y **ASP.NET Web API** para el backend. Su objetivo es ayudarte a **gestionar y controlar el tiempo dedicado a tareas** de forma simple y eficiente.
+Este proyecto es un mini CRM desarrollado con **.NET 8**, utilizando **Blazor Web Assembly** para el frontend y **ASP.NET Web API** para el backend. Su objetivo es ayudarte a **gestionar y controlar el tiempo dedicado a tareas** de forma simple y eficiente.
 
 ## 🛠️ Tecnologías utilizadas
 
@@ -41,13 +41,49 @@ git clone https://github.com/FabrizioFerroni/AppTiempos.git
 cd AppTiempos
 ```
 
-### 2. Configurar la base de datos
+### 2. Configurar la base de datos y archivo de configuración
 
 Crear una base de datos MySQL (por ejemplo `minicrm_db`) y agregar la cadena de conexión en el archivo `appsettings.json` dentro de `AppTiempos.Api`:
 
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "server=localhost;port=3306;database=minicrm_db;user=root;password=tu_clave"
+  "DefaultConnection": "server=localhost/ip;port=3306;database=minicrm_db;user=tu_user;password=tu_clave"
+}
+```
+
+Además, tambien en el archivo `appsettings.json` se pueden configurar otros parámetros como el puerto del API, opciones de logging, etc.
+
+```json
+"Serilog": {
+    "MinimumLevel": {
+        "Default": "Information",
+        "Override": {
+            "Quartz": "Warning",
+            "Microsoft": "Warning"
+        }
+    }
+},
+"AllowedHosts": "*",
+"Jwt": {
+    "Secret": "tu-clave-super-secreta",
+    "SecretRefresh": "tu-clave-super-secreta",
+    "Issuer": "url del back",
+    "Audience": "url del front"
+},
+"appName": "nombre de app",
+"urlFront": "url de front",
+"emailSoporte": "email soporte",
+"logoUrl": "url de una imagen de logo corporativo para las plantillas de mail",
+"origins": [ "url para los cors" ],
+"Email": {
+    "Secret": "tu-clave-super-secreta",
+    "RefreshTokenTTL": 2,
+    "EmailFrom": "nombre que quieres que salga en el envio de mail",
+    "SmtpHost": "smtp servidor de correo",
+    "SmtpPort": puerto srv correo,
+    "SmtpUser": "username correo",
+    "SmtpPass": "password correo",
+    "AdminEmail": "correo admin"
 }
 ```
 
@@ -83,7 +119,6 @@ Esto levantará tanto el frontend Blazor como el backend WebAPI y otros servicio
 ## 📌 Notas
 
 - Este proyecto está pensado como base para futuras ampliaciones, como reportes, exportaciones, integración con calendarios, etc.
-- Se puede extender fácilmente para uso personal o para equipos chicos.
 
 ## 📄 Licencia
 
