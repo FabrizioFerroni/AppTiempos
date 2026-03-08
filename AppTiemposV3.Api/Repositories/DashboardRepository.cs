@@ -1,14 +1,14 @@
-using System.Net;
-using System.Text.Json;
 using AppTiemposV3.Api.Data;
 using AppTiemposV3.Api.Entities;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.Exceptions;
-using Microsoft.AspNetCore.Identity;
-using MySqlConnector;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using Microsoft.AspNetCore.Identity;
+using MySqlConnector;
+using System.Net;
+using System.Text;
 
 namespace AppTiemposV3.Api.Repositories;
 
@@ -36,27 +36,29 @@ public class DashboardRepository : IDashboardContract<DashboardKPIDto>
         string yearweekCon = $"{year}{weekNumber:D2}";
         int yearweek = Convert.ToInt32(yearweekCon);
 
-        string sql = @"SELECT 
-                            DAYNAME(a.StartDate) AS Day,
-                            WEEKDAY(a.StartDate) + 1 AS DayNumber,
-                            COALESCE(ROUND(SUM(
-                                TIMESTAMPDIFF(
-                                    SECOND,
-                                    CONCAT(a.StartDate, ' ', a.StartTime),
-                                    CONCAT(a.StartDate, ' ', a.EndTime)
-                                )
-                            ) / 3600, 2), 0) AS HoursTotal
-                        FROM activities AS a
-                        WHERE a.EndTime IS NOT NULL
-                            AND a.UserId = @userId  
-                            AND YEARWEEK(a.StartDate, 1) = @yearweek
-                        GROUP BY a.StartDate
-                        ORDER BY a.StartDate;
-                        ";
+        StringBuilder? sb = new StringBuilder();
+
+        sb.AppendLine("SELECT");
+        sb.AppendLine("    DAYNAME(a.StartDate) AS Day,");
+        sb.AppendLine("    WEEKDAY(a.StartDate) + 1 AS DayNumber,");
+        sb.AppendLine("    COALESCE(ROUND(SUM(");
+        sb.AppendLine("        TIMESTAMPDIFF(");
+        sb.AppendLine("            SECOND,");
+        sb.AppendLine("            CONCAT(a.StartDate, ' ', a.StartTime),");
+        sb.AppendLine("            CONCAT(a.StartDate, ' ', a.EndTime)");
+        sb.AppendLine("        )");
+        sb.AppendLine("    ) / 3600, 2), 0) AS HoursTotal");
+        sb.AppendLine("FROM activities AS a");
+        sb.AppendLine("WHERE a.EndTime IS NOT NULL");
+        sb.AppendLine("    AND a.UserId = @userId");
+        sb.AppendLine("    AND YEARWEEK(a.StartDate, 1) = @yearweek");
+        sb.AppendLine("GROUP BY a.StartDate");
+        sb.AppendLine("ORDER BY a.StartDate;");
+
         MySqlParameter filtro = new MySqlParameter("@yearweek", yearweek);
         MySqlParameter userFiltro = new MySqlParameter("@userId", _userId);
         
-        List<Dictionary<string, object?>> DashboardKPIChartData = await QueryRawAsync(_dbCxt, sql, filtro, userFiltro);
+        List<Dictionary<string, object?>> DashboardKPIChartData = await QueryRawAsync(_dbCxt, sb.ToString(), filtro, userFiltro);
         
         List<DashboardKPIChart> chartDays = new();
 
@@ -74,46 +76,48 @@ public class DashboardRepository : IDashboardContract<DashboardKPIDto>
         
         chartDays = CompleteMissingDays(chartDays);
         resp.DashboardKPIChart = chartDays;
-        
-        string sqlHs = @"
-            SELECT
-                COALESCE(ROUND((
-                    SELECT 
-                        SUM(
-                            TIMESTAMPDIFF(
-                                SECOND,
-                                CONCAT(a.StartDate, ' ', a.StartTime),
-                                CONCAT(a.StartDate, ' ', a.EndTime)
-                            )
-                        ) / 3600
-                    FROM activities AS a
-                    WHERE a.EndTime IS NOT NULL
-                      AND YEARWEEK(a.StartDate, 1) = @yearweekHs
-                      AND a.UserId = @userId  
-                ), 2),0 ) AS TotalHours,
-                
-                (
-                    SELECT 
-                        COUNT(a.Id)
-                    FROM activities AS a
-                    WHERE a.StatusMessage = 'completed'
-                      AND a.EndTime IS NOT NULL
-                      AND YEARWEEK(a.StartDate, 1) = @yearweekHs
-                      AND a.UserId = @userId  
-                ) AS CompletedTasks,                
-                (
-                    SELECT COUNT(a.Id)
-                    FROM activities AS a
-                    WHERE a.StatusMessage = 'in-progress'
-                      AND YEARWEEK(a.StartDate, 1) = @yearweekHs
-                      AND a.UserId = @userId  
-                ) AS PendingTasks;
-        ";
+
+        StringBuilder? sbHs = new StringBuilder();
+
+
+        sbHs.AppendLine("SELECT");
+        sbHs.AppendLine("    COALESCE(ROUND((");
+        sbHs.AppendLine("        SELECT");
+        sbHs.AppendLine("            SUM(");
+        sbHs.AppendLine("                TIMESTAMPDIFF(");
+        sbHs.AppendLine("                    SECOND,");
+        sbHs.AppendLine("                    CONCAT(a.StartDate, ' ', a.StartTime),");
+        sbHs.AppendLine("                    CONCAT(a.StartDate, ' ', a.EndTime)");
+        sbHs.AppendLine("                )");
+        sbHs.AppendLine("            ) / 3600");
+        sbHs.AppendLine("        FROM activities AS a");
+        sbHs.AppendLine("        WHERE a.EndTime IS NOT NULL");
+        sbHs.AppendLine("            AND YEARWEEK(a.StartDate, 1) = @yearweekHs");
+        sbHs.AppendLine("            AND a.UserId = @userId");
+        sbHs.AppendLine("    ), 2), 0) AS TotalHours,");
+        sbHs.AppendLine("    (");
+        sbHs.AppendLine("        SELECT");
+        sbHs.AppendLine("            COUNT(a.Id)");
+        sbHs.AppendLine("        FROM activities AS a");
+        sbHs.AppendLine("        WHERE a.StatusMessage = 'completed'");
+        sbHs.AppendLine("            AND a.EndTime IS NOT NULL");
+        sbHs.AppendLine("            AND YEARWEEK(a.StartDate, 1) = @yearweekHs");
+        sbHs.AppendLine("            AND a.UserId = @userId");
+        sbHs.AppendLine("    ) AS CompletedTasks,");
+        sbHs.AppendLine("    (");
+        sbHs.AppendLine("        SELECT");
+        sbHs.AppendLine("            COUNT(a.Id)");
+        sbHs.AppendLine("        FROM activities AS a");
+        sbHs.AppendLine("        WHERE a.StatusMessage = 'in-progress'");
+        sbHs.AppendLine("            AND YEARWEEK(a.StartDate, 1) = @yearweekHs");
+        sbHs.AppendLine("            AND a.UserId = @userId");
+        sbHs.AppendLine("    ) AS PendingTasks;");
+
         MySqlParameter filtroHs = new MySqlParameter("@yearweekHs", yearweek);
         
         MySqlParameter userFiltroHs = new MySqlParameter("@userId", _userId);
         
-        List<Dictionary<string, object?>> HorasKPIData = await QueryRawAsync(_dbCxt, sqlHs, filtroHs, userFiltroHs);
+        List<Dictionary<string, object?>> HorasKPIData = await QueryRawAsync(_dbCxt, sbHs.ToString(), filtroHs, userFiltroHs);
 
         foreach (Dictionary<string, object?> row in HorasKPIData)
         {
