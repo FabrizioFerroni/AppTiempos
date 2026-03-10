@@ -92,6 +92,16 @@ window.downloadFileFromStream = (fileName, contentType, base64String) => {
     console.log("✅ Archivo descargado:", fileName);
 };
 
+window.downloadFileAttachment = (fileName, base64String) => {
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = `${base64String}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    console.log("✅ Archivo descargado:", fileName);
+};
+
 
 async function downloadFileFromStreamSQL(fileName, contentStreamReference) {
     const arrayBuffer = await contentStreamReference.arrayBuffer();

@@ -2,6 +2,8 @@ using static System.Text.RegularExpressions.Regex;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using static AppTiemposV3.Web.Utils.CssHelper;
+using Microsoft.AspNetCore.Components.Forms;
+using static AppTiemposV3.Web.Utils.Helpers;
 
 namespace AppTiemposV3.Web.Components.UI;
 
@@ -44,7 +46,14 @@ public partial class Input : ComponentBase
     
     [Parameter(CaptureUnmatchedValues = true)] 
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
-    
+
+    [Parameter] public EventCallback<string> OnFileSelected { get; set; }
+    private string? SelectedFileName;
+
+    private string? fileName;
+    //[Parameter] public EventCallback<InputFileChangeEventArgs> OnFileChanged { get; set; }
+    [Parameter] public EventCallback<IBrowserFile> OnFileChanged { get; set; }
+
     private string CurrentValue
     {
         get => Value ?? string.Empty;
@@ -86,5 +95,18 @@ public partial class Input : ComponentBase
         if (Readonly) attrs["readonly"] = true;
 
         return attrs;
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        fileName = e.File.Name;
+        StateHasChanged();
+        await OnFileChanged.InvokeAsync(e.File);
+    }
+
+    public void Clear()
+    {
+        fileName = string.Empty;
+        StateHasChanged();
     }
 }

@@ -322,9 +322,9 @@ public partial class Index : ComponentBase,  IDisposable
         await newModalRef!.ShowAsync(IdModal);
     }
 
-    private async Task DocumentsModal()
+    private async Task DocumentsModal(Guid id)
     {
-        await docModalRef!.ShowAsync(IdModal);
+        await docModalRef!.ShowAsync(IdModal, id);
     }
     
     private async Task ShowModal(Guid id)

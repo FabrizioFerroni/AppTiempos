@@ -1,0 +1,157 @@
+﻿@using AppTiemposV3.SharedClases.Enums
+@using System.Globalization
+<Modal Method="newDocument" IdElement="Id" Id=@($"dialog-modal-new-document-{IdModalStr}") Class="select-none">
+    <div class="px-6 my-4">
+        <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
+            <span class="text-gray-700 dark:text-gray-300 text-md flex items-center gap-2">
+                <Upload Class="h-5 w-5" />
+                Insertar documento
+            </span>
+            <Button Variant="ghost"
+                    Size="sm"
+                    Command="close"
+                    CommandFor=@($"newDocument-{Id}")
+                    Class="text-xs cursor-pointer"
+                    Disabled="@(IsLoadingNew)"
+                    OnClick="() => ClearInputs()"
+                    >
+                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4" />
+            </Button>
+        </div>
+
+        @if (isError)
+        {
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative mt-2" role="alert">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                <div class="block sm:inline">
+                    @messageError
+                </div>
+                <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
+                    <Close Class="h-6 w-6 text-red-500" />
+                </button>
+            </div>
+        }
+
+        <EditForm Enhance Model=@createDto class="space-y-4 mt-4" novalidate OnValidSubmit=@SendUploadDocument FormName="CreateInvitationForm" @key="createDto">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <Label For="nombreCompleto" Id="nombreCompletoLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Etapa
+                </Label>
+                <Select TItem="Etapas"
+                        Items="@OptionsEtapas"
+                        Id="etapa"
+                        Value="EtapaSeleccionada"
+                        ValueChanged="OnEtapaSelectedChanged"
+                        Placeholder="Selecciona la etapa del requerimiento"
+                        ItemTextSelector="x => x.ToString()"
+                        ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                        ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                        EnableSearch="false"
+                        HeightClass="max-h-[120px]">
+                </Select>
+                <ValidationMessage For="() => createDto.Etapa" class="text-xs text-red-600" />
+            </div>
+
+            <div class="space-y-2">
+                <Label For="AttachmentBy" Id="AttachmentByLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Adj./Editado por
+                </Label>
+                <Input Type="text"
+                       @bind-Value="@createDto.AttachmentBy"
+                       Id="AttachmentBy"
+                       Name="AttachmentBy"
+                       Placeholder="Ej: ROJOSOFT\user"
+                       Autocomplete="off"
+                       Required
+                       Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
+                <ValidationMessage For="() => createDto.AttachmentBy" class="text-xs text-red-600" />
+            </div>
+
+            <div class="space-y-2">
+                <Label For="Descripcion" Id="DescripcionLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                   Descripcion
+                </Label>
+                <Input Type="text"
+                       @bind-Value="createDto.Descripcion"
+                       Id="Descripcion"
+                       Name="Descripcion"
+                       Placeholder="Ej: descripcion del archivo"
+                       Autocomplete="off"
+                       Required
+                       Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
+                <ValidationMessage For="() => createDto.Descripcion" class="text-xs text-red-600" />
+            </div>
+
+            <div class="space-y-2">
+                <Label For="AttachmentAt" Id="AttachmentAtLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Adjuntado el
+                </Label>
+                <Input 
+                    Type="date"
+                    Value="@createDto.AttachmentAt.ToString("yyyy-MM-dd")"
+                    ValueChanged="@(v => createDto.AttachmentAt = DateTime.TryParseExact(v, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime d) ? d : DateTime.Now)"
+                    Min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                    Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 mt-2" 
+                    />
+                <ValidationMessage For="() => createDto.AttachmentAt" class="text-xs text-red-600" />
+            </div>
+
+            <div class="space-y-2">
+                <Label For="FileInput" Id="FileLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Archivo
+                </Label>
+
+                <Input 
+                    Type="file"
+                    Id="FileInput"
+                    @ref="fileInputRef"
+                    Name="FileInput"
+                    OnFileChanged="CargarArchivo"
+                    Required
+                       Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"             />
+            </div>
+
+            <div class="space-y-2">
+                <pre class="text-gray-700 dark:text-gray-300 text-sm text-wrap">
+Para optimizar el rendimiento del sistema sólo se permite adjuntar documentos con un tamaño menor a 1 Mb.
+
+Consejos:
+Utilice formatos con compresión nativa como .docx, .xlsx, .pptx, .ppsx, .jpg.
+Si utiliza otros formatos comprímalos utilizando algún compresor antes de adjuntarlos.
+
+Nota: Los formatos .docx, .xlsx, .pptx, .ppsx, .jpg entre otros, no necesitan ser comprimidos. Estos formatos ya se almacenan comprimidos y no requieren compresores adicionales, facilitando la apertura y eventualmente edición de los documentos adjuntos.
+Los archivos de imágenes .bmp tienen gran tamaño, es recomendable convertirlo a .jpg antes de adjuntarlos.
+
+Las imágenes del portapapeles se convierten automáticamente a .jpg al adjuntarlas.
+                </pre>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4">
+                <div class="flex gap-2">
+                    <Button Type="submit" Disabled="@(IsLoadingNew)"
+                            Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
+
+                        @if (IsLoadingNew)
+                        {
+                            <LoaderCircle Class="mr-3 size-5 animate-spin" />
+                            <span>Subiendo Documento...</span>
+                        }
+                        else
+                        {
+                            <Upload Class="me-2 size-5" />
+                            <span>
+                                Subir Documento
+                            </span>
+                        }
+                    </Button>
+                </div>
+            </div>
+        </EditForm>
+
+    </div>
+</Modal>
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNew-{Id}") command="show-modal" commandfor=@($"newDocument-{Id}")></button>
+<button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalNew-{Id}") command="close" commandfor="@($"newDocument-{Id}")"></button> 
