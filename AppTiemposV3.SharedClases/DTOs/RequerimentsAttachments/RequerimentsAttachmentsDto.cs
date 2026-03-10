@@ -11,6 +11,7 @@ namespace AppTiemposV3.SharedClases.DTOs.RequerimentsAttachments
     {
         public Guid Id { get; set; }
         public string FileName { get; set; } = string.Empty;
+        public string FileNameOriginal { get; set; } = string.Empty;
         public string Descripcion { get; set; } = string.Empty;
         public Etapas Etapa { get; set; }
         public string AttachmentBy { get; set; } = string.Empty;

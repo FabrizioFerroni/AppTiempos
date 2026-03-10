@@ -1,4 +1,5 @@
 ﻿using AppTiemposV3.Api.Services.Interfaces;
+using MongoDB.Bson;
 
 namespace AppTiemposV3.Api.Services
 {
@@ -42,7 +43,7 @@ namespace AppTiemposV3.Api.Services
             }
         }
 
-        public async Task<string> Almacenar(string contenedor, IFormFile archivo)
+        public async Task<string> Almacenar(string contenedor, IFormFile archivo, string fileName)
         {
             try
             {
@@ -51,7 +52,6 @@ namespace AppTiemposV3.Api.Services
                     throw new Exception("WebRootPath no está configurado. Verificá Program.cs y que exista la carpeta wwwroot.");
                 }
 
-                string nombreArchivo = $"{archivo.FileName}";
                 string folder = Path.Combine(_env.WebRootPath, contenedor);
 
                 if (!Directory.Exists(folder))
@@ -59,7 +59,7 @@ namespace AppTiemposV3.Api.Services
                     Directory.CreateDirectory(folder);
                 }
 
-                string ruta = Path.Combine(folder, nombreArchivo);
+                string ruta = Path.Combine(folder, fileName);
 
                 using (MemoryStream? ms = new MemoryStream())
                 {

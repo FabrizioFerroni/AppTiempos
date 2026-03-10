@@ -9,6 +9,7 @@ using AppTiemposV3.SharedClases.Exceptions;
 using AppTiemposV3.SharedClases.Utilidades.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Bson;
 using Mysqlx.Cursor;
 using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 using static AppTiemposV3.Api.Helpers.Helpers;
@@ -46,8 +47,10 @@ namespace AppTiemposV3.Api.Repositories
 
             IFormFile? formFile = ConvertByteArrayToIFormFile(fileBytes, fileName, "application/octet-stream");
 
+            string extension = Path.GetExtension(formFile.FileName);
+            string nombreArchivo = $"{ObjectId.GenerateNewId()}{extension}";
 
-            string fecha = DateTime.Now.ToString("dd-MM-yyyy");
+            string fecha = dto.AttachmentAt.ToString("dd-MM-yyyy");
 
             string folder = Path.Combine(
                             _contenedor,
@@ -55,7 +58,7 @@ namespace AppTiemposV3.Api.Repositories
                             fecha,
                             dto.RequerimentId.ToString()
                         );
-            string? ruta = await _archiveService.Almacenar(folder, formFile);
+            string? ruta = await _archiveService.Almacenar(folder, formFile, nombreArchivo);
 
             if (ruta == null)
             {
@@ -66,7 +69,8 @@ namespace AppTiemposV3.Api.Repositories
             {
                 Descripcion = dto.Descripcion,
                 AttachmentBy = dto.AttachmentBy,
-                FileName = fileName,
+                FileNameOriginal = fileName,
+                FileName = nombreArchivo,
                 FilePath = ruta,
                 AttachmentAt = dto.AttachmentAt,
                 Etapa = dto.Etapa,
@@ -148,6 +152,7 @@ namespace AppTiemposV3.Api.Repositories
                 {
                     Id = r.Id,
                     FileName = r.FileName,
+                    FileNameOriginal = r.FileNameOriginal,
                     Descripcion = r.Descripcion,
                     Etapa = r.Etapa,
                     AttachmentBy = r.AttachmentBy,
@@ -176,6 +181,7 @@ namespace AppTiemposV3.Api.Repositories
                 {
                     Id = r.Id,
                     FileName = r.FileName,
+                    FileNameOriginal = r.FileNameOriginal,
                     Descripcion = r.Descripcion,
                     Etapa = r.Etapa,
                     AttachmentBy = r.AttachmentBy,
@@ -200,6 +206,7 @@ namespace AppTiemposV3.Api.Repositories
             {
                 Id = attachmentsDb!.Id,
                 FileName = attachmentsDb.FileName,
+                FileNameOriginal = attachmentsDb.FileNameOriginal,
                 Descripcion = attachmentsDb.Descripcion,
                 Etapa = attachmentsDb.Etapa,
                 AttachmentBy = attachmentsDb.AttachmentBy,
@@ -224,12 +231,16 @@ namespace AppTiemposV3.Api.Repositories
 
             string? ruta = string.Empty;
             string nameFile = string.Empty;
+            string nombreArchivo = string.Empty;
 
             if (fileBytes != null && !string.IsNullOrWhiteSpace(fileName))
             {
                 IFormFile? formFile = ConvertByteArrayToIFormFile(fileBytes, fileName, "application/octet-stream");
 
-                string fecha = DateTime.Now.ToString("dd-MM-yyyy");
+                string extension = Path.GetExtension(formFile.FileName);
+                nombreArchivo = $"{ObjectId.GenerateNewId()}{extension}";
+
+                string fecha = dto.AttachmentAt.ToString("dd-MM-yyyy");
 
                 string folder = Path.Combine(
                                 _contenedor,
@@ -238,18 +249,19 @@ namespace AppTiemposV3.Api.Repositories
                                 dto.RequerimentId.ToString()
                             );
 
-                ruta = await _archiveService.Editar(docReq.FilePath, folder, formFile);
+                ruta = await _archiveService.Editar(docReq.FilePath, folder, formFile, nombreArchivo);
                 nameFile = fileName;
             }
             else
             {
                 ruta = docReq.FilePath;
-                nameFile = docReq.FileName;
+                nameFile = docReq.FileNameOriginal;
             }
 
             docReq.Descripcion = dto.Descripcion;
             docReq.AttachmentBy = dto.AttachmentBy;
-            docReq.FileName = nameFile;
+            docReq.FileName = nombreArchivo ?? docReq.FileName;
+            docReq.FileNameOriginal = nameFile;
             docReq.FilePath = ruta;
             docReq.AttachmentAt = dto.AttachmentAt;
             docReq.Etapa = dto.Etapa;

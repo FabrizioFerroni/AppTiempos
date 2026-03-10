@@ -10,6 +10,7 @@ namespace AppTiemposV3.Api.Entities
         [Required]
         public string AttachmentBy { get; set; } = String.Empty;
         public string FileName { get; set; } = string.Empty;
+        public string FileNameOriginal { get; set; } = string.Empty;
         public string FilePath { get; set; } = string.Empty;
         public DateTime AttachmentAt { get; set; } = DateTime.UtcNow;
         public Etapas Etapa { get; set; } = Etapas.Alta;

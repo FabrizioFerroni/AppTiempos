@@ -572,6 +572,9 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
             e.Property(id => id.Descripcion)
                 .HasDefaultValueSql(null);
 
+            e.Property(id => id.FileNameOriginal)
+                .HasDefaultValueSql(null);
+
             e.Property(et => et.Etapa)
                 .HasConversion<int>()
                 .HasDefaultValueSql("1");
