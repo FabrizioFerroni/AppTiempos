@@ -5,6 +5,7 @@ using AppTiemposV3.Api.Middlewares;
 using AppTiemposV3.Api.Repositories;
 using AppTiemposV3.Api.Scheduled;
 using AppTiemposV3.Api.Services;
+using AppTiemposV3.Api.Services.Interfaces;
 using AppTiemposV3.Api.Utilidades;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
@@ -15,6 +16,7 @@ using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
+using AppTiemposV3.SharedClases.DTOs.RequerimentsAttachments;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.DTOs.Users;
 using AppTiemposV3.SharedClases.GenericModels;
@@ -32,17 +34,17 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using Quartz;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 using Swashbuckle.AspNetCore.Filters;
+using System.Runtime.InteropServices;
 using System.Text;
-using static System.Text.Encoding;
-using static System.Console;
 using System.Text.Json.Serialization;
 using static QuestPDF.Infrastructure.LicenseType;
 using static QuestPDF.Settings;
-using TimeOnlyJsonConverter = AppTiemposV3.Api.Utilidades.TimeOnlyJsonConverter;
+using static System.Console;
+using static System.Text.Encoding;
 using static System.TimeZoneInfo;
-using Serilog.Sinks.SystemConsole.Themes;
-using System.Runtime.InteropServices;
+using TimeOnlyJsonConverter = AppTiemposV3.Api.Utilidades.TimeOnlyJsonConverter;
 
 
 WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
@@ -224,6 +226,7 @@ services.AddAuthentication(opt =>
     });
 
 services.AddHttpContextAccessor();
+services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
 // Services and repositories
 services.AddScoped<IAuthContract, AuthRepository>();
 services.AddScoped<IAuditContract<AuditsResponseDto>, AuditRepository>();
@@ -236,6 +239,7 @@ services.AddScoped<ITrainingContract<TrainingResponseDto>, TrainingRepository>()
 services.AddScoped<IRejectionContract<RejectionResponseDto>, RejectionRepository>();
 services.AddScoped<IRejectionDetailContract<RejectionDetailResponseDto>, RejectionDetailsRepository>();
 services.AddScoped<IInvitationContract<InvitationResponseDto>, InvitationRepository>();
+services.AddScoped<IRequerimentAttachmentContract<RequerimentsAttachmentsDto>, RequerimentAttachmentRepository>();
 services.AddScoped<IReportContract, ReportRepository>();
 services.AddScoped<IConfigurationContract, ConfigurationRepository>();
 services.AddScoped<IBackupContract, BackupRepository>();
@@ -316,11 +320,25 @@ services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 try
 {
     WebApplication? app = builder.Build();
+
+    if (string.IsNullOrEmpty(app.Environment.WebRootPath))
+    {
+        app.Environment.WebRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+    }
+
+    // Asegurarnos de que la carpeta física exista para que no explote al guardar
+    if (!Directory.Exists(app.Environment.WebRootPath))
+    {
+        Directory.CreateDirectory(app.Environment.WebRootPath);
+    }
+
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
         app.UseSwaggerUI();
     }
+
+    app.UseStaticFiles();
 
     app.UseCors("DefaultCorsPolicy");
     app.UseMiddleware<ExceptionMiddleware>();

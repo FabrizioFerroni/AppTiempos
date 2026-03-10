@@ -30,6 +30,7 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
     public DbSet<NotificationConfigEntity> NotificationConfigEntity { get; set; } = null!;
     public DbSet<WorkingSaturdayEntity> WorkingSaturdays { get; set; }
     public DbSet<BackupLogsEntity> BackupLogs { get; set; }
+    public DbSet<RequerimentAttachmentEntity> RequerimentAttachments { get; set; } = null!;
 
 
 
@@ -68,6 +69,7 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
         builder.Entity<WorkingSaturdayEntity>(e => e.ToTable(name: "configuraciones_sabados"));
         builder.Entity<NotificationConfigEntity>(e => e.ToTable(name: "configuraciones_notificaciones"));
         builder.Entity<BackupLogsEntity>(e => e.ToTable(name: "configuraciones_backups_logs"));
+        builder.Entity<RequerimentAttachmentEntity>(e => e.ToTable(name: "requeriments_attachments"));
 
         Type[]? excludedTypes = new[] { typeof(CategoriesEntity) };
 
@@ -542,6 +544,37 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
             bl.Property(c => c.CreatedAt)
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+
+        builder.Entity<RequerimentAttachmentEntity>(e =>
+        {
+            e.HasOne(r => r.User)
+                  .WithMany(u => u.RequerimentsAttachments)
+                  .HasForeignKey(r => r.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(r => r.Requeriments)
+                  .WithMany(u => u.RequerimentsAttachments)
+                  .HasForeignKey(r => r.RequerimentId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(r => r.UserId)
+             .HasDatabaseName("IX_Requeriments_UserId");
+
+            e.Property(c => c.CreatedAt)
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            e.Property(id => id.IsDeleted)
+            .HasDefaultValue(false);
+
+            e.Property(id => id.Descripcion)
+                .HasDefaultValueSql(null);
+
+            e.Property(et => et.Etapa)
+                .HasConversion<int>()
+                .HasDefaultValueSql("1");
         });
     }
 }   

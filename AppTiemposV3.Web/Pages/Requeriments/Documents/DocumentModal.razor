@@ -1,6 +1,11 @@
+@using AppTiemposV3.SharedClases.DTOs.RequerimentsAttachments
+@using AppTiemposV3.Web.Pages.Requeriments.Documents.Modals
+@using static AppTiemposV3.Web.Utils.Helpers
+@using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
 
+@* 95vw *@
 <Modal Method="document" IdElement="@Id"
-       Id=@($"dialog-modal-{IdModalStr}") StylePanel="width: calc(95vw - 15px); max-width: calc(95vw - 15px); height: calc(90vh - 100px); max-height: calc(90vh - 100px)">
+       Id=@($"dialog-modal-{IdModalStr}") StylePanel="width: calc(65vw - 15px); max-width: calc(65vw - 15px); height: calc(90vh - 100px); max-height: calc(90vh - 100px)">
     <div class="px-6 my-4">
         <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
             <div class="flex flex-col gap-1 items-start justify-start">
@@ -19,42 +24,8 @@
                         Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
                         Command="show-modal"
                         CommandFor=@($"document-add-{Id}")
-                        OnClick="() => {  }"
-                    >
+                        OnClick="() => NewModal()">
                         <Plus Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
-                    </Button>
-                    <Button
-                        Variant="outline"
-                        Size="sm"
-                        Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
-                        Command="show-modal"
-                        CommandFor=@($"document-edit-{Id}")
-                        Disabled=@(IsDisabled)
-                        OnClick="() => {  }"
-                    >
-                        <Edit Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
-                    </Button>
-                    <Button
-                        Variant="outline"
-                        Size="sm"
-                        Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
-                        Command="show-modal"
-                        CommandFor=@($"document-delete-{Id}")
-                        Disabled=@(IsDisabled)
-                        OnClick="() => {  }"
-                    >
-                        <Trash2 Class="text-red-600 hover:text-red-800 h-4 w-4"/>
-                    </Button>
-                    <Button
-                        Variant="outline"
-                        Size="sm"
-                        Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
-                        Command="show-modal"
-                        CommandFor=@($"document-download-{Id}")
-                        OnClick="() => {  }"
-                        Disabled=@(IsDisabled)
-                    >
-                        <HardDriveDownload Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
                     </Button>
                 </div>
                 <Button
@@ -71,9 +42,30 @@
             </div>
         </div>
 
-        
+        @if (IsLoadingData)
+        {
+            <div class="animate-pulse mt-4">
+                <div class="flex gap-4 border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                    }
+                </div>
 
-        @if (countData == 0)
+                @for (int i = 0; i < 3; i++)
+                {
+                    <div class="flex gap-4 mb-4">
+                        <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                        <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                        <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                        <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                        <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                        <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                    </div>
+                }
+            </div>
+        }
+        else if (countData == 0)
         {
             <div class="relative w-full h-[calc(90vh-180px)]">
                 <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
@@ -89,11 +81,88 @@
         }
         else
         {
-        }
+            <div class="overflow-x-auto  border border-transparent dark:border-transparent border-b-gray-200 dark:border-b-gray-700 mt-4">
+                <Table Class="select-none">
+                    <TableHeader Class="[&_tr]:border-b-gray-200 [&_tr]:dark:border-b-gray-700">
+                        <TableRow Class="hover:bg-transparent dark:hover:bg-transparent">
+                            <TableHead Class="text-gray-700 dark:text-gray-300">Documento</TableHead>
+                            <TableHead Class="text-gray-700 dark:text-gray-300">Descripción</TableHead>
+                            <TableHead Class="text-gray-700 dark:text-gray-300">Etapa</TableHead>
+                            <TableHead Class="text-gray-700 dark:text-gray-300">Adjuntado/Editado por</TableHead>
+                            <TableHead Class="text-gray-700 dark:text-gray-300">Fecha</TableHead>
+                            <TableHead Class="text-center flex justify-end items-center pacciones text-gray-700 dark:text-gray-300">Acciones</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody Class="[&_tr]:border-b-gray-200 [&_tr]:dark:border-b-gray-700">
+                        @foreach (RequerimentsAttachmentsDto item in respDto)
+                        {
+                            <TableRow Id="@item.Id.ToString()" Class="hover:bg-gray-400 dark:hover:bg-gray-700 ">
+                                <TableCell Class="font-medium text-gray-700 dark:text-gray-300 py-4 px-2">
+                                    @item.FileName
+                                </TableCell>
+                                <TableCell Class="font-medium text-gray-700 dark:text-gray-300 py-4 px-2">
+                                    @item.Descripcion
+                                </TableCell>
+                                <TableCell Class="font-medium text-gray-700 dark:text-gray-300 py-4 px-2">
+                                    @item.Etapa
+                                </TableCell>
+                                <TableCell Class="font-medium text-gray-700 dark:text-gray-300 py-4 px-2">
+                                    @item.AttachmentBy
+                                </TableCell>
+                                <TableCell Class="font-medium text-gray-700 dark:text-gray-300 py-4 px-2">
+                                    @FormatDateOnly(item.AttachmentAt)
+                                </TableCell>
+                                <TableCell Class="py-4 px-2">
+                                    <div class="flex justify-end items-center gap-2 h-full">
+                                        <Button Variant="outline"
+                                                Size="sm"
+                                                Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
+                                                Command="show-modal"
+                                                CommandFor=@($"document-edit-{Id}")
+                                                OnClick="async () => { await EditAttachment(item.Id, item.RequerimentId);  }">
+                                            <Edit Class="dark:text-gray-300 text-gray-600 h-4 w-4" />
+                                        </Button>
+                                        <Button Variant="outline"
+                                                Size="sm"
+                                                Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
+                                                Disabled="@DeletingIds.Contains(item.Id)"
+                                                OnClick="async () => { await DeleteFile(item.Id, item.RequerimentId); }">
 
+                                            @if (DeletingIds.Contains(item.Id))
+                                            {
+                                                <LoaderCircle Class="dark:text-gray-300 text-gray-600 h-4 w-4 animate-spin" />
+                                            }
+                                            else
+                                            {
+                                                <Trash2 Class="text-red-600 hover:text-red-800 h-4 w-4" />
+                                            }
+                                        </Button>
+                                        <Button Variant="outline"
+                                                Size="sm"
+                                                Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600 cursor-pointer"
+                                                Disabled=@IsDownloadingDocument
+                                                OnClick="async () => { await DownloadFile(item.FileName, item.FileBytes); }">
+                                            @if (IsDownloadingDocument)
+                                            {
+                                                <LoaderCircle Class="dark:text-gray-300 text-gray-600 h-4 w-4 animate-spin" />
+                                            }
+                                            else
+                                            {
+                                                <HardDriveDownload Class="dark:text-gray-300 text-gray-600 h-4 w-4" />
+                                            }
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        }
+                    </TableBody>
+                </Table>
+            </div>
+        }
     </div>
 </Modal>
 
-
 <button type="button" @ref="showModalRef" class="hidden" id=@($"showModalDocument-{Id}") command="show-modal" commandfor=@($"document-{Id}")></button>      
 <button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalDocument-{Id}") command="close" commandfor="@($"document-{Id}")"></button>  
+<NewDocument @ref="newModalRef" OnSaved="HandleSaved" />
+<EditDocument @ref="editModalRef" OnSaved="HandleSaved" />

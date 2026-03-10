@@ -38,4 +38,5 @@ public class UserEntity : IdentityUser<Guid>
     public ICollection<ReportEntity> Reports { get; set; } = new List<ReportEntity>();
     public ICollection<ConfigurationEntity> Configurations { get; set; } = new List<ConfigurationEntity>();
     public ICollection<BackupLogsEntity> BackupsLogs { get; set; } = new List<BackupLogsEntity>();
+    public ICollection<RequerimentAttachmentEntity> RequerimentsAttachments { get; set; } = new List<RequerimentAttachmentEntity>();
 }
