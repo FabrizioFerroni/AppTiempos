@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
-        <Nullable>enable</Nullable>
+        <Nullable>disable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <PreserveCompilationContext>true</PreserveCompilationContext>
         <CopyRefAssembliesToPublishDirectory>true</CopyRefAssembliesToPublishDirectory>
@@ -57,11 +57,15 @@
 
 	<Target Name="GenerateColorsJson" BeforeTargets="Build">
 		<PropertyGroup>
-			<ConsoleProjectPath Condition="'$(DOTNET_RUNNING_IN_CONTAINER)' != 'true'">..\AppTiemposV3.Console\AppTiemposV3.Console.csproj</ConsoleProjectPath>
-			<ConsoleProjectPath Condition="'$(DOTNET_RUNNING_IN_CONTAINER)' == 'true'">../AppTiemposV3.Console/AppTiemposV3.Console.csproj</ConsoleProjectPath>
+			<IsLinux>$([MSBuild]::IsOSPlatform('Linux'))</IsLinux>
+
+			<ConsoleProjectPath Condition="'$(IsLinux)' != 'true'">..\AppTiemposV3.Console\AppTiemposV3.Console.csproj</ConsoleProjectPath>
+			<ConsoleProjectPath Condition="'$(IsLinux)' == 'true'">../AppTiemposV3.Console/AppTiemposV3.Console.csproj</ConsoleProjectPath>
+
+			<OutputPathJson>Files/colors.json</OutputPathJson>
 		</PropertyGroup>
 
-		<Exec Command="dotnet run --project $(ConsoleProjectPath) $(ProjectDir)Files/colors.json" />
+		<Exec Command="dotnet run --project $(ConsoleProjectPath) $(OutputPathJson)" />
 	</Target>
 
     <Target Name="GenerateColorsJson" BeforeTargets="Build">
