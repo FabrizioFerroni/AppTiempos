@@ -386,10 +386,17 @@ try
             {
                 if(response.Result == 1)
                 {
-                    logger.LogInformation("✅ Migraciones aplicadas correctamente.");
+                    logger.LogInformation($"✅ {response.Response}");
                 } else if(response.Result == 2)
                 {
-                    logger.LogInformation("✅ No se realiza migraciones, ya que ya el user admin ya fue creado.");
+                    logger.LogInformation($"ℹ️ {response.Response}");
+                }
+            }
+            else
+            {
+                if (response.Result == 3)
+                {
+                    logger.LogInformation($"❌ {response.Response}");
                 }
             }
         }
