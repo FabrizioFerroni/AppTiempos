@@ -19,7 +19,6 @@ COPY ["AppTiemposV3.Console/AppTiemposV3.Console.csproj", "AppTiemposV3.Console/
 COPY ["AppTiemposV3.ServiceDefaults/AppTiemposV3.ServiceDefaults.csproj", "AppTiemposV3.ServiceDefaults/"]
 
 RUN dotnet restore "AppTiemposV3.Api/AppTiemposV3.Api.csproj"
-RUN dotnet restore "AppTiemposV3.Console/AppTiemposV3.Console.csproj"
 
 COPY . .
 
