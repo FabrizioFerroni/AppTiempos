@@ -24,6 +24,7 @@ using AppTiemposV3.SharedClases.Utilidades;
 using AppTiemposV3.SharedClases.Utilidades.Interfaces;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -39,13 +40,16 @@ using Swashbuckle.AspNetCore.Filters;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json.Serialization;
+using static AppTiemposV3.Api.Data.DbSeeder;
 using static QuestPDF.Infrastructure.LicenseType;
 using static QuestPDF.Settings;
+using static Serilog.Events.LogEventLevel;
 using static System.Console;
 using static System.Text.Encoding;
 using static System.TimeZoneInfo;
 using TimeOnlyJsonConverter = AppTiemposV3.Api.Utilidades.TimeOnlyJsonConverter;
-
+using static Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders;
+using Serilog.Events;
 
 WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
 
@@ -58,7 +62,23 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
+LogEventLevel logEventBd;
+if (builder.Environment.IsDevelopment())
+{
+    logEventBd = Information;
+}
+else
+{
+    logEventBd = LogEventLevel.Error;
+}
+
 builder.Host.UseSerilog((context, configuration) => configuration
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Error)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", logEventBd)
+    .MinimumLevel.Override("AppTiemposV3.Api", Information) 
+    .Enrich.FromLogContext()
     .WriteTo.Console(
         outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] : {Message:lj}{NewLine}{Exception}",
         theme: AnsiConsoleTheme.Sixteen,
@@ -72,6 +92,27 @@ builder.Host.UseSerilog((context, configuration) => configuration
 builder.AddServiceDefaults();
 
 IServiceCollection? services = builder.Services;
+
+string keysPath;
+
+if (builder.Environment.IsDevelopment())
+{
+    keysPath = Path.Combine(builder.Environment.ContentRootPath, "keys");
+}
+else
+{
+    keysPath = "/app/keys";
+}
+
+if (!Directory.Exists(keysPath))
+{
+    Directory.CreateDirectory(keysPath);
+}
+
+services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+    .SetApplicationName("AppTiemposV3")
+    .SetDefaultKeyLifetime(TimeSpan.FromDays(14)); 
 
 services.AddSingleton(_ =>
     new MapperConfiguration(conf =>
@@ -142,6 +183,8 @@ services.AddSwaggerGen(opt =>
 
     opt.OperationFilter<SecurityRequirementsOperationFilter>();
 });
+
+
 
 // Starting
 string connectBdMySql = builder.Configuration.GetConnectionString("MySQL") ?? 
@@ -326,7 +369,36 @@ try
         app.Environment.WebRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
     }
 
-    // Asegurarnos de que la carpeta física exista para que no explote al guardar
+    using (IServiceScope? scope = app.Services.CreateScope())
+    {
+        IServiceProvider? servicesProv = scope.ServiceProvider;
+        IConfiguration? config = servicesProv.GetRequiredService<IConfiguration>();
+        ILogger<Program>? logger = servicesProv.GetRequiredService<ILogger<Program>>();
+
+        try
+        {
+            AppDbContext? context = servicesProv.GetRequiredService<AppDbContext>();
+            context.Database.Migrate(); 
+
+            DbSeederDto? response = await SeedData(servicesProv, config);
+
+            if (response.Status)
+            {
+                if(response.Result == 1)
+                {
+                    logger.LogInformation("✅ Migraciones aplicadas correctamente.");
+                } else if(response.Result == 2)
+                {
+                    logger.LogInformation("✅ No se realiza migraciones, ya que ya el user admin ya fue creado.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {            
+            logger.LogError(ex, "Ocurrió un error al migrar o sembrar la base de datos.");
+        }
+    }
+
     if (!Directory.Exists(app.Environment.WebRootPath))
     {
         Directory.CreateDirectory(app.Environment.WebRootPath);
@@ -343,38 +415,26 @@ try
     app.UseCors("DefaultCorsPolicy");
     app.UseMiddleware<ExceptionMiddleware>();
 
-    app.UseHttpsRedirection();
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseHttpsRedirection();
+    }
+
+    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = XForwardedFor | XForwardedProto
+    });
 
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.MapDefaultEndpoints();
 
     app.MapControllers();
     app.Run();
 }
 catch (Exception ex)
 {
-    // Pon un punto de interrupción (Breakpoint) aquí
     Console.WriteLine(ex.ToString());
     throw;
 }
-
-
-//WebApplication? app = builder.Build();
-
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
-
-//app.UseCors("DefaultCorsPolicy");
-//app.UseMiddleware<ExceptionMiddleware>();
-
-//app.UseHttpsRedirection();
-
-//app.UseAuthentication();
-//app.UseAuthorization();
-
-//app.MapControllers();
-

@@ -22,7 +22,7 @@
         
         (async function obtenerDatos() {
             try {
-                const apiUrl = "https://localhost:7260/api/generics/colors";
+                const apiUrl = "#API_URL#/api/generics/colors";
                 const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error('Error en la petición: ' + response.status);
 
@@ -82,7 +82,7 @@
     <link rel="stylesheet" href="css/output.css" />
     <link rel="stylesheet" href="css/app.min.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <link href="AppTiemposV3.web.styles.css" rel="stylesheet" />
+    <link href="AppTiemposV3.Web.styles.css" rel="stylesheet" />
     <style>
         @keyframes loading-bar {
             0% {
