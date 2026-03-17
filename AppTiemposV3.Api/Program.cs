@@ -50,6 +50,7 @@ using static System.TimeZoneInfo;
 using TimeOnlyJsonConverter = AppTiemposV3.Api.Utilidades.TimeOnlyJsonConverter;
 using static Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders;
 using Serilog.Events;
+using Microsoft.AspNetCore.HttpOverrides;
 
 WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
 
@@ -427,10 +428,21 @@ try
         app.UseHttpsRedirection();
     }
 
+
     app.UseForwardedHeaders(new ForwardedHeadersOptions
     {
         ForwardedHeaders = XForwardedFor | XForwardedProto
     });
+
+    ForwardedHeadersOptions options = new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = XForwardedFor | XForwardedProto
+    };
+
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+
+    app.UseForwardedHeaders(options);
 
     app.UseAuthentication();
     app.UseAuthorization();
