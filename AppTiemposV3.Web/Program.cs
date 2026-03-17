@@ -25,7 +25,11 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using static AppTiemposV3.SharedClases.Utilidades.JsonOptions;
 
+
+
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
+
 
 IServiceCollection? services = builder.Services;
 
@@ -35,12 +39,17 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 services.AddScoped<AuthHeaderHandler>();
-//services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7260") });
-services.AddHttpClient("API", client =>
-    {
-        client.BaseAddress = new Uri("https://localhost:7260");
-    })
-    .AddHttpMessageHandler<AuthHeaderHandler>();
+
+string apiBaseUrl = "#API_URL#";
+string urlFinal = apiBaseUrl.StartsWith("#") ? "https://localhost:7260" : apiBaseUrl;
+
+
+
+builder.Services.AddHttpClient("API", client =>
+{
+    client.BaseAddress = new Uri(urlFinal);
+})
+.AddHttpMessageHandler<AuthHeaderHandler>();
 
 JsonSerializerOptions? jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 jsonOptions.Converters.Add(new TimeOnlyJsonConverter());
@@ -74,6 +83,7 @@ services.AddSingleton<NotificationService>();
 services.AddScoped<ActivityStateService>();
 
 WebAssemblyHost? host = builder.Build();
+
 
 ColorService? colorService = host.Services.GetRequiredService<ColorService>();
 await colorService.InitializeAsync();
@@ -143,20 +153,21 @@ await js.InvokeVoidAsync("eval", @"
     document.head.appendChild(script);
 ");
 
-await js.InvokeVoidAsync("eval", @"
-(async function() {
-    try {
-        const response = await fetch('https://localhost:7260/api/generics/colors');
+
+await js.InvokeVoidAsync("eval", $@"
+(async function() {{
+    try {{
+        const response = await fetch('{urlFinal}/api/generics/colors');
         const data = await response.json();
         const accent = localStorage.getItem('color-accent') || 'Azul';
         const color = data.find(c => c.name?.trim().toLowerCase() === accent.trim().toLowerCase());
         const clases = (color?.gradient || 'bg-gradient-to-br from-blue-500 to-indigo-500').split(' ');
-        ['logo','progressBar','dot-1','dot-2','dot-3'].forEach(id => {
+        ['logo','progressBar','dot-1','dot-2','dot-3'].forEach(id => {{
             const el = document.getElementById(id);
             if(el) el.classList.add(...clases);
-        });
-    } catch(e) { console.error(e); }
-})();
+        }});
+    }} catch(e) {{ console.error(e); }}
+}})();
 ");
 
 LayoutState? layoutState = host.Services.GetRequiredService<LayoutState>();

@@ -6,10 +6,12 @@ using DocumentFormat.OpenXml.Vml.Office;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
 using System.Text.Json;
 using static Grpc.Core.Metadata;
+using Microsoft.Extensions.Logging; // añadir
 
 namespace AppTiemposV3.Api.Data;
 
@@ -41,6 +43,12 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
 
     public AppDbContext(DbContextOptions options) : base(options)
     {
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.ConfigureWarnings(w =>
+            w.Default(WarningBehavior.Ignore));
     }
 
     protected override void OnModelCreating(ModelBuilder builder)

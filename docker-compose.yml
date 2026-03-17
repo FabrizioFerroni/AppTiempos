@@ -1,0 +1,78 @@
+services:
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:9.0
+    container_name: aspire-dashboard
+    ports:
+      - "18888:18888" 
+      - "18889:18889"
+      - "18890:18890"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:18888
+      - ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+      - Dashboard__Frontend__AuthMode=BrowserToken
+      - Dashboard__Frontend__BrowserToken=${frontendPass} # Tu token de acceso
+      - Dashboard__Otlp__AuthMode=ApiKey
+      - Dashboard__Otlp__PrimaryApiKey=${apikey}
+      - Dashboard__Otlp__SuppressUnsecuredMessage=true
+      - Dashboard__Otlp__Cors__AllowedOrigins=http://apptiempos-api:8080
+    networks:
+      - apptiempos
+
+  api:
+    container_name: apptiempos-api
+    image: apptiempos-api:1.0
+    build:
+      context: .
+      dockerfile: AppTiemposV3.Api/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+      - OTEL_EXPORTER_OTLP_HEADERS=x-otlp-api-key=${apikey}
+      - OTEL_SERVICE_NAME=AppTiempos-Api
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_EXPORTER_OTLP_INSECURE=true
+      - OTEL_DIAGNOSTICS_ENABLED=true
+      - ASPNETCORE_DETAILEDERRORS=true
+    volumes:
+      - app_keys:/app/keys
+      - app_logs:/app/Logs
+      - app_wwwroot:/app/wwwroot
+      - app_files:/app/Files
+    restart: always
+    networks:
+      - apptiempos
+
+  web:
+    container_name: apptiempos-web
+    image: apptiempos-web:1.0
+    build:
+      context: .
+      dockerfile: AppTiemposV3.Web/Dockerfile
+      args:
+        - PUBLIC_API_URL=${PUBLIC_URL}
+    ports:
+      - "80:80"
+    restart: always
+    volumes:
+      - app_web_wwwroot:/src/wwwroot
+    networks:
+      - apptiempos
+    depends_on:
+      - api
+
+networks:
+  apptiempos:
+    external: true
+
+volumes:
+  app_keys:
+    external: true
+  app_logs:
+    external: true
+  app_wwwroot:
+    external: true
+  app_files:
+    external: true
+  app_web_wwwroot:
+    external: true

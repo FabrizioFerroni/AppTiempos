@@ -19,7 +19,7 @@
 		<PackageReference Include="System.Net.Http" Version="4.3.4" />
     </ItemGroup>
 
-    <ItemGroup>
+    <!--<ItemGroup>
       <ProjectReference Include="..\AppTiemposV3.SharedClases\AppTiemposV3.SharedClases.csproj" />
     </ItemGroup>
 
@@ -40,7 +40,30 @@
 
     <ItemGroup>
       <Folder Include="Pages\Reports\EditReport\" />
-    </ItemGroup>
+    </ItemGroup>-->
+
+	<ItemGroup>
+		<ProjectReference Include="..\AppTiemposV3.SharedClases\AppTiemposV3.SharedClases.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<_ContentIncludedByDefault Remove="wwwroot\data\colors.json" />
+		<_ContentIncludedByDefault Remove="Components\UI\SidebarProvider\Sidebar.razor" />
+		<_ContentIncludedByDefault Remove="Pages\Rejections\Components\RejectionFilters.razor" />
+		<_ContentIncludedByDefault Remove="Pages\Rejections\Components\RejectionKpis.razor" />
+		<_ContentIncludedByDefault Remove="Pages\Rejections\Components\RejectionPagination.razor" />
+		<_ContentIncludedByDefault Remove="Pages\Rejections\Components\RejectionsTable.razor" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Components\UI\AlertTittle.razor.cs">
+			<DependentUpon>AlertTitle.razor</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Pages\Reports\EditReport\" />
+	</ItemGroup>
 
 	<Target Name="EjecutarNpm" BeforeTargets="Build">
 		<Exec Command="npm run tailwind:build" />
