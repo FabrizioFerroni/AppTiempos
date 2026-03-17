@@ -57,20 +57,21 @@
 
 	<Target Name="GenerateColorsJson" BeforeTargets="Build">
 		<PropertyGroup>
-			<IsLinux>$([MSBuild]::IsOSPlatform('Linux'))</IsLinux>
+			<PathSep Condition="'$(OS)' == 'Windows_NT'">\</PathSep>
+			<PathSep Condition="'$(OS)' != 'Windows_NT'">/</PathSep>
 
-			<ConsoleProjectPath Condition="'$(IsLinux)' != 'true'">..\AppTiemposV3.Console\AppTiemposV3.Console.csproj</ConsoleProjectPath>
-			<ConsoleProjectPath Condition="'$(IsLinux)' == 'true'">../AppTiemposV3.Console/AppTiemposV3.Console.csproj</ConsoleProjectPath>
-
-			<OutputPathJson>Files/colors.json</OutputPathJson>
+			<ConsoleProject>..$(PathSep)AppTiemposV3.Console$(PathSep)AppTiemposV3.Console.csproj</ConsoleProject>
+			<OutputPathJson>Files$(PathSep)colors.json</OutputPathJson>
 		</PropertyGroup>
 
-		<Exec Command="dotnet run --project $(ConsoleProjectPath) $(OutputPathJson)" />
+		<Message Importance="high" Text="Generando colors.json en $(OS) usando: $(ConsoleProject)" />
+
+		<Exec Command="dotnet run --project &quot;$(ConsoleProject)&quot; &quot;$(OutputPathJson)&quot;" />
 	</Target>
 
-    <Target Name="GenerateColorsJson" BeforeTargets="Build">
-        <Exec Command="dotnet run --project ..\AppTiemposV3.Console\AppTiemposV3.Console.csproj $(ProjectDir)Files/colors.json" />
-    </Target>
+    <!--<Target Name="GenerateColorsJson" BeforeTargets="Build">
+        <Exec Command="dotnet run  project ..\AppTiemposV3.Console\AppTiemposV3.Console.csproj $(ProjectDir)Files/colors.json" />
+    </Target>-->
 
     <ItemGroup>
         <Content Update="Files\MailTemplates\*.cshtml">
