@@ -25,11 +25,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using static AppTiemposV3.SharedClases.Utilidades.JsonOptions;
 
-
-
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
-
-
 
 IServiceCollection? services = builder.Services;
 
@@ -41,9 +37,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 services.AddScoped<AuthHeaderHandler>();
 
 string apiBaseUrl = "#API_URL#";
-string urlFinal = apiBaseUrl.StartsWith("#") ? "https://localhost:7260" : apiBaseUrl;
-
-
+string urlFinal = apiBaseUrl.StartsWith("#") ? "http://api:8080" : apiBaseUrl;
 
 builder.Services.AddHttpClient("API", client =>
 {
@@ -83,7 +77,6 @@ services.AddSingleton<NotificationService>();
 services.AddScoped<ActivityStateService>();
 
 WebAssemblyHost? host = builder.Build();
-
 
 ColorService? colorService = host.Services.GetRequiredService<ColorService>();
 await colorService.InitializeAsync();

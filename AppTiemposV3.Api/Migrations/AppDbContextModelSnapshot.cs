@@ -75,6 +75,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasColumnType("time");
 
                     b.Property<string>("StatusMessage")
+                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(15)
                         .HasColumnType("varchar(15)")
@@ -153,6 +154,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Metadata")
+                        .IsRequired()
                         .HasColumnType("json");
 
                     b.Property<DateTime?>("ModifiedAt")
@@ -316,6 +318,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasDefaultValueSql("0");
 
                     b.Property<string>("Type")
+                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("longtext")
                         .HasDefaultValueSql("Manual");
@@ -350,6 +353,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("DayName")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime?>("DeletedAt")
@@ -615,6 +619,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Status")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<Guid>("UserId")
@@ -661,6 +666,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Status")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<int>("TotalRejections")
@@ -744,12 +750,14 @@ namespace AppTiemposV3.Api.Migrations
                         .HasDefaultValueSql("0");
 
                     b.Property<string>("Schedule")
+                        .IsRequired()
                         .HasColumnType("json");
 
                     b.Property<string>("TableBase")
                         .HasColumnType("longtext");
 
                     b.Property<string>("UrlIdentificator")
+                        .IsRequired()
                         .HasMaxLength(36)
                         .HasColumnType("varchar(36)");
 
@@ -794,12 +802,15 @@ namespace AppTiemposV3.Api.Migrations
                         .HasDefaultValueSql("1");
 
                     b.Property<string>("FileName")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("FileNameOriginal")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("FilePath")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<bool>("IsDeleted")
@@ -901,6 +912,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasDatabaseName("IX_Requeriments_UserId");
 
                     b.HasIndex("UserId", "FolderId")
+                        .IsUnique()
                         .HasDatabaseName("IX_Requeriments_UserId_FolderId");
 
                     b.HasIndex("UserId", "ReqID")
@@ -958,6 +970,7 @@ namespace AppTiemposV3.Api.Migrations
                         .HasColumnType("time");
 
                     b.Property<string>("Status")
+                        .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("longtext")
                         .HasDefaultValueSql("En Progreso");

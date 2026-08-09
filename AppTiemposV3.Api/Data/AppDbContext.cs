@@ -6,12 +6,12 @@ using DocumentFormat.OpenXml.Vml.Office;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using static Grpc.Core.Metadata;
-using Microsoft.Extensions.Logging; // añadir
+using Microsoft.Extensions.Logging;
 
 namespace AppTiemposV3.Api.Data;
 
@@ -34,7 +34,11 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
     public DbSet<BackupLogsEntity> BackupLogs { get; set; }
     public DbSet<RequerimentAttachmentEntity> RequerimentAttachments { get; set; } = null!;
 
-
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.ConfigureWarnings(w =>
+               w.Default(WarningBehavior.Ignore));
+    }  
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -43,12 +47,6 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
 
     public AppDbContext(DbContextOptions options) : base(options)
     {
-    }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.ConfigureWarnings(w =>
-            w.Default(WarningBehavior.Ignore));
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -142,12 +140,8 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
              .HasDatabaseName("IX_Requeriments_UserId_ReqID")
              .IsUnique();
 
-            //e.HasIndex(r => new { r.UserId, r.FolderId })
-            //    .HasDatabaseName("IX_Requeriments_UserId_FolderId")
-            //    .IsUnique();
-
             e.HasIndex(r => new { r.UserId, r.FolderId })
-             .HasDatabaseName("IX_Requeriments_UserId_FolderId");
+            .HasDatabaseName("IX_Requeriments_UserId_FolderId");
 
             e.Property(c => c.CreatedAt)
             .HasColumnType("timestamp")

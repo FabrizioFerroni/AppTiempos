@@ -43,17 +43,17 @@ namespace AppTiemposV3.Api.Scheduled
 
                     // 1. Validar Hora (HH:mm)
                     DateTime ahora = DateTime.Now;
+                   /* TimeSpan horaActual = ahora.TimeOfDay;
+                    TimeSpan horaProg = TimeSpan.Parse(backup.Time!);*/
 
                     TimeSpan horaActual = ahora.TimeOfDay;
 
                     if (!TimeSpan.TryParse(backup.Time, out TimeSpan horaProg))
-                    {
+                    { 
                         _logger.LogWarning("Formato de hora inválido para backup: '{Time}'",  backup.Time);
                         continue;
                     }
 
-                    /*TimeSpan horaActual = ahora.TimeOfDay;
-                    TimeSpan horaProg = TimeSpan.Parse(backup.Time!);*/
 
                     bool esHora = horaActual >= horaProg && horaActual < horaProg.Add(TimeSpan.FromMinutes(5));
                     if (!esHora) continue;

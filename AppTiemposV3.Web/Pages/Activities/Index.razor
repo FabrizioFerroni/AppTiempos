@@ -225,7 +225,6 @@
                                                 Id=@($"edit-button-{activity.Id}")
                                                 OnClick="@(() => EditModal(activity.Id))"
                                                 Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-blue-800/20 dark:hover:border-blue-900/50 cursor-pointer"
-                                                Disabled=@(activity.IsLoaded)
                                                 >
                                                 <Edit Class="w-4 h-4"/>
                                             </Button>

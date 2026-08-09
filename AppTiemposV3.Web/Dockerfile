@@ -20,7 +20,14 @@ RUN apt-get update && apt-get install -y dos2unix
 
 RUN dos2unix Program.cs wwwroot/index.html && \
     sed -i "s|#API_URL#|${PUBLIC_API_URL}|g" Program.cs && \
-    sed -i "s|#API_URL#|${PUBLIC_API_URL}|g" wwwroot/index.html 
+    sed -i "s|#API_URL#|${PUBLIC_API_URL}|g" wwwroot/index.html && \
+    echo "------------------------------------------" && \
+    echo "🔍 VERIFICACION EN INDEX.HTML:" && \
+    grep "apiUrl =" wwwroot/index.html || true && \
+    echo "------------------------------------------" && \
+    echo "🔍 VERIFICACION EN PROGRAM.CS:" && \
+    grep "apiBaseUrl =" Program.cs || true && \
+    echo "------------------------------------------"
 
 RUN npm install
 
