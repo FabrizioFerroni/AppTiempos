@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
-        <Nullable>disable</Nullable>
+        <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <PreserveCompilationContext>true</PreserveCompilationContext>
         <CopyRefAssembliesToPublishDirectory>true</CopyRefAssembliesToPublishDirectory>
@@ -55,23 +55,15 @@
       <ProjectReference Include="..\AppTiemposV3.SharedClases\AppTiemposV3.SharedClases.csproj" />
     </ItemGroup>
 
-	<Target Name="GenerateColorsJson" BeforeTargets="Build">
-		<PropertyGroup>
-			<PathSep Condition="'$(OS)' == 'Windows_NT'">\</PathSep>
-			<PathSep Condition="'$(OS)' != 'Windows_NT'">/</PathSep>
 
-			<ConsoleProject>..$(PathSep)AppTiemposV3.Console$(PathSep)AppTiemposV3.Console.csproj</ConsoleProject>
-			<OutputPathJson>Files$(PathSep)colors.json</OutputPathJson>
-		</PropertyGroup>
+    <Target Name="GenerateColorsJson" BeforeTargets="Build">
+       <PropertyGroup>
+             <ConsoleProjectPath Condition="'$(DOTNET_RUNNING_IN_CONTAINER)' != 'true'">..\AppTiemposV3.Console\AppTiemposV3.Console.csproj</ConsoleProjectPath>
+             <ConsoleProjectPath Condition="'$(DOTNET_RUNNING_IN_CONTAINER)' == 'true'">../AppTiemposV3.Console/AppTiemposV3.Console.csproj</ConsoleProjectPath>
+       </PropertyGroup>
 
-		<Message Importance="high" Text="Generando colors.json en $(OS) usando: $(ConsoleProject)" />
-
-		<Exec Command="dotnet run --project &quot;$(ConsoleProject)&quot; &quot;$(OutputPathJson)&quot;" />
-	</Target>
-
-    <!--<Target Name="GenerateColorsJson" BeforeTargets="Build">
-        <Exec Command="dotnet run  project ..\AppTiemposV3.Console\AppTiemposV3.Console.csproj $(ProjectDir)Files/colors.json" />
-    </Target>-->
+      <Exec Command="dotnet run --project $(ConsoleProjectPath) $(ProjectDir)Files/colors.json" />
+   </Target>
 
     <ItemGroup>
         <Content Update="Files\MailTemplates\*.cshtml">

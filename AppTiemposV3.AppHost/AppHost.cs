@@ -1,17 +1,9 @@
-IDistributedApplicationBuilder? builder = DistributedApplication.CreateBuilder(args);
+var builder = DistributedApplication.CreateBuilder(args);
 
-/*builder.AddProject<Projects.AppTiemposV3_Api>("api");
+builder.AddProject<Projects.AppTiemposV3_Api>("api");
 
 
-builder.AddProject<Projects.AppTiemposV3_Web>("frontend");*/
-
-IResourceBuilder<ProjectResource>? api = builder.AddProject<Projects.AppTiemposV3_Api>("api");
-
-// Registras la Web (Blazor) y le pasas la referencia de la API
-builder.AddProject<Projects.AppTiemposV3_Web>("frontend")
-       .WithReference(api)
-       .WithExternalHttpEndpoints()
-       .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5108");
+builder.AddProject<Projects.AppTiemposV3_Web>("frontend");
 
 
 builder.Build().Run();

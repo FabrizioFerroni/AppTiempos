@@ -1,4 +1,4 @@
-﻿@page "/app/configuraciones"
+@page "/app/configuraciones"
 @using AppTiemposV3.SharedClases.Constants
 @using AppTiemposV3.SharedClases.DTOs.Configurations
 @using AppTiemposV3.SharedClases.DTOs.Reports
@@ -794,7 +794,7 @@
 
                                     <Button
                                         Class=@($"flex items-center gap-2 {ColorService.GetButtonClassess()}")
-                                        Disabled="@(IsSavingConfig || tab == "backup" || tab == "import")"
+                                        Disabled="@(IsSavingConfig || tab == "import")"
                                         Type="submit"
                                     >
                                         @if(IsSavingConfig)

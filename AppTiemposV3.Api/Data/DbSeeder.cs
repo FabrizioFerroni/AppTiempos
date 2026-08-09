@@ -1,4 +1,4 @@
-﻿using AppTiemposV3.Api.Entities;
+using AppTiemposV3.Api.Entities;
 using Microsoft.AspNetCore.Identity;
 using static AppTiemposV3.SharedClases.Enums.Areas;
 
@@ -38,7 +38,7 @@ namespace AppTiemposV3.Api.Data
                 return new DbSeederDto 
                 { 
                     Status = false,
-                    Response = "No se encontró Security__AdminEmail o Security__AdminPassword en la configuración.",
+                    Response = "Seeder: No se encontró Security__AdminEmail o Security__AdminPassword en la configuración.",
                     Result = 3
                 };
             }
@@ -53,7 +53,7 @@ namespace AppTiemposV3.Api.Data
                     Email = adminEmail,
                     FullName = "Administrador Sistema",
                     EmailConfirmed = true,
-                    IsAccountConfigurated = false,
+                    IsAccountConfigurated = true,
                     Area = Desarrollo 
                 };
 
@@ -62,24 +62,16 @@ namespace AppTiemposV3.Api.Data
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(user, "Admin");
-                    dto.Status = true;
-                    dto.Response = "Se creó el usuario administrador y se asignó el rol.";
-                    dto.Result = 1;
                 }
-                else
-                {
-                    string errorMessages = string.Join(", ", result.Errors.Select(e => e.Description));
-                    logger.LogError($"Seeder ERROR: No se pudo crear el usuario admin. Errores: {errorMessages}");
 
-                    dto.Status = false;
-                    dto.Response = $"Fallo al crear admin: {errorMessages}";
-                    dto.Result = 3;
-                }
+                dto.Status = true;
+                dto.Response = "Seeder: Se crearon el user principal de la app";
+                dto.Result = 1;
             }
             else
             {
                 dto.Status = true;
-                dto.Response = "El usuario ya fue creado, se salto seeder";
+                dto.Response = "Seeder: El usuario ya fue creado, se salto seeder";
                 dto.Result = 2;
             }
 
