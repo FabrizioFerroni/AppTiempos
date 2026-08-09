@@ -743,6 +743,10 @@ namespace AppTiemposV3.Api.Repositories
 
             List<RequerimentsEntity>? nuevosRequerimientos = new List<RequerimentsEntity>();
 
+            int? currentFolderId = await _dbCxt.Requeriments
+                        .Where(r => r.UserId == _userId && r.FolderId != null)
+                        .MaxAsync(r => (int?)r.FolderId) ?? 0;
+
             foreach (IXLRangeRow? fila in filas)
             {
                 IXLCell? celdaNombre = fila.Cell(1);
@@ -777,6 +781,9 @@ namespace AppTiemposV3.Api.Repositories
 
                 CategoriesEntity category = await _dbCxt.Categories.FirstAsync(c => c.Name == categoryName);
 
+
+                
+
                 if (!reqsHash.Contains(reqID))
                 {
 
@@ -787,14 +794,28 @@ namespace AppTiemposV3.Api.Repositories
                            .Select(c => c.Id)
                            .ToListAsync();
 
+                    
+
+                    // ... dentro del loop:
+
                     if (allowedCategoryGuids.Contains(category.Id))
+                    {
+                        currentFolderId++;
+                        folderId = currentFolderId;
+                    }
+                    else
+                    {
+                        folderId = null;
+                    }
+
+                    /*if (allowedCategoryGuids.Contains(category.Id))
                     {
                         folderId = await FolderIdIdentity(_userId);
                     }
                     else
                     {
                         folderId = null;
-                    }
+                    }*/
 
                     RequerimentsEntity req = new RequerimentsEntity()
                     {

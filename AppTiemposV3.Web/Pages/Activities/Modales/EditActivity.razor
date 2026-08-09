@@ -272,7 +272,7 @@
 
                             <div class="flex items-center justify-end mt-6">
                                    <Button Type="submit"
-                                           Disabled="@(IsLoadingEdit || !IsRequerimentIdSelected || IsPastDateEndTimeTime)"
+                                           Disabled="@(IsLoadingEdit || !IsRequerimentIdSelected)"
                                            Class=@($"{ColorService.GetButtonClassess()} text-white font-medium py-2.5 cursor-pointer")>
 
                                           @if (IsLoadingEdit)

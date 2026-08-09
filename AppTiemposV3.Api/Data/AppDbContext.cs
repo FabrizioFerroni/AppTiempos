@@ -142,9 +142,12 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
              .HasDatabaseName("IX_Requeriments_UserId_ReqID")
              .IsUnique();
 
+            //e.HasIndex(r => new { r.UserId, r.FolderId })
+            //    .HasDatabaseName("IX_Requeriments_UserId_FolderId")
+            //    .IsUnique();
+
             e.HasIndex(r => new { r.UserId, r.FolderId })
-                .HasDatabaseName("IX_Requeriments_UserId_FolderId")
-                .IsUnique();
+             .HasDatabaseName("IX_Requeriments_UserId_FolderId");
 
             e.Property(c => c.CreatedAt)
             .HasColumnType("timestamp")
