@@ -66,7 +66,7 @@ public partial class Index : ComponentBase, IDisposable
     private DeleteActivity? deleteModalRef;
     #endregion
     #endregion
-    
+
     #region Inicializacion
 
     protected async override Task OnInitializedAsync()

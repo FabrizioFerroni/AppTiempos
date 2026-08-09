@@ -10,7 +10,8 @@ IResourceBuilder<ProjectResource>? api = builder.AddProject<Projects.AppTiemposV
 // Registras la Web (Blazor) y le pasas la referencia de la API
 builder.AddProject<Projects.AppTiemposV3_Web>("frontend")
        .WithReference(api)
-       .WithExternalHttpEndpoints();
+       .WithExternalHttpEndpoints()
+       .WithEnvironment("ASPNETCORE_URLS", "http://0.0.0.0:5108");
 
 
 builder.Build().Run();
