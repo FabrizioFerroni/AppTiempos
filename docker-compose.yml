@@ -40,6 +40,7 @@ services:
       - app_wwwroot:/app/wwwroot
       - app_files:/app/Files
       - ./backups:/app/Backups
+      - ./certs/ca.pem:/app/certs/ca.pem:ro
     restart: always
     networks:
       - apptiempos
