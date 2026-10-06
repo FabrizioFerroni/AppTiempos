@@ -39,6 +39,7 @@ services:
       - app_logs:/app/Logs
       - app_wwwroot:/app/wwwroot
       - app_files:/app/Files
+      - ./backups:/app/Backups
     restart: always
     networks:
       - apptiempos
