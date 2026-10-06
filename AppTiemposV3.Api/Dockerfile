@@ -5,9 +5,9 @@ EXPOSE 8080
 EXPOSE 8081
 
 USER root
-RUN mkdir -p /app/keys /app/wwwroot /app/Backups && \
-    chown -R app:app /app/keys /app/wwwroot /app/Backups && \
-    chmod -R 755 /app/keys /app/wwwroot /app/Backups
+RUN mkdir -p /app/keys /app/wwwroot /app/Backups /app/certs && \
+    chown -R app:app /app/keys /app/wwwroot /app/Backups /app/certs && \
+    chmod -R 755 /app/keys /app/wwwroot /app/Backups /app/certs
 
 USER app
 
