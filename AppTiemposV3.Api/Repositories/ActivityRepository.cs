@@ -104,10 +104,10 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
             .Where(a => a.UserId == user.Id)
             .OrderByDescending(a => a.StartDate)
             .ThenByDescending(a => a.StartTime)
+            .Take(3)
             .ToListAsync();
 
         List<ActivityResponseDto> activitiesDto = _iMapper.Map<List<ActivityResponseDto>>(activitiesEntities);
-        // aca
 
         return new DataAResponse<ActivityResponseDto>(true, activitiesDto, HttpStatusCode.OK);
     }

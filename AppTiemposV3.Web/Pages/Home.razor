@@ -105,10 +105,11 @@
                 </Card>
             </div>
             @* Fin Tarjeta de resumenes *@
+
             @* Grafico y Acciones rapidas *@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 @*  Gráfico de horas por día  *@
-                <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle Class="flex items-center gap-2">
                             <TrendingUp Class="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -139,7 +140,7 @@
                 </Card>
 
                 @*  Botones de acción rápida *@
-                <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40">
+                <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm">
                     <CardHeader>
                         <CardTitle>
                             Acciones Rápidas
@@ -179,14 +180,15 @@
                 </Card>
             </div>
             @* Fin Grafico y Acciones rapidas *@
+
             @* Actividades recientes *@
-            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm z-40 mb-4">
+            <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm mb-4">
                 <CardHeader>
                     <CardTitle>
                         Actividad Reciente
                     </CardTitle>
                     <CardDescription>
-                        Últimas tareas registradas de @($"{(isWeekActual ? "esta semana" : $"la semana del {weekRange}")}")
+                        Últimas 3 tareas registradas de @($"{(isWeekActual ? "esta semana" : $"la semana del {weekRange}")}")
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -228,7 +230,7 @@
                             {
                                 @foreach (ActivityResponseDto activity in ActivitiesThree)
                                 {
-                                    <div
+                                    <a href="/app/actividad/@activity.UrlIndetificator"
                                         id="@activity.Id"
                                         class="activity-item card-hover flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 transition-colors">
                                         
@@ -248,7 +250,7 @@
                                                 @GetStatusName(activity.StatusMessage)
                                             </div>
                                         </div>
-                                    </div>
+                                    </a>
                                 }
                             }
                         }
