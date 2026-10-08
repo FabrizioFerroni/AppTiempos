@@ -36,8 +36,12 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 services.AddScoped<AuthHeaderHandler>();
 
-string apiBaseUrl = "#API_URL#";
-string urlFinal = apiBaseUrl.StartsWith("#") ? "http://api:8080" : apiBaseUrl;
+#if DEBUG
+    string urlFinal = "https://localhost:7260";
+#else
+    string apiBaseUrl = "#API_URL#";
+    string urlFinal = apiBaseUrl.StartsWith("#") ? "http://api:8080" : apiBaseUrl;
+#endif
 
 builder.Services.AddHttpClient("API", client =>
 {
