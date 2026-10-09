@@ -223,12 +223,12 @@ namespace AppTiemposV3.Api.Repositories
                 oldConfig.ModifiedAt = DateTime.Now;
                 _dbCxt.Entry(oldConfig).State = EntityState.Modified;
 
-                await EnsureSavedAsync(
-                "Hubo un error al actualizar la nueva configuracion",
-                _dbCxt
-            );
+                await EnsureSavedAsync("Hubo un error al actualizar la nueva configuracion", _dbCxt);
+
+                //Se crea una nueva configuración actual para tener la anterior como copia.
                 ConfigurationEntity? newConfig = MapDtoToEntity(dto);
                 await _dbCxt.Configurations.AddAsync(newConfig);
+                await EnsureSavedAsync("Hubo un error al actualizar la nueva configuración", _dbCxt);
             }
             else
             {

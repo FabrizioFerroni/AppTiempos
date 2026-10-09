@@ -91,6 +91,11 @@ ReqID  | StartDate  | StartTime | EndTime | Descripcion               | IsLoaded
 ReqID  | IsResolved | RejectionDate  | RejectionReason     | RejectionDetails        | SolutionDate | SolutionDetails        | ExtimatedFixTime | ActualFixTime | Status
 012345 | false      | 01/03/2026     | Razon del rechazo   | Detalles del rechazo    | 01/03/2026   | Detalle de la solucion | 00:50            | 00:35         | estado del rechazo  --EJEMPLO";
 
+        private bool IsErrorValidateSaturday = false;
+
+        private string ErrorMessageValidateSaturday = string.Empty;
+
+        private CancellationTokenSource? _errorCts;
 
         #endregion
 
@@ -270,15 +275,28 @@ ReqID  | IsResolved | RejectionDate  | RejectionReason     | RejectionDetails   
 
         private void AddWorkingSaturday()
         {
+            List<string> errors = new List<string>();
+
             if (NewSaturdayDate is null || NewSaturdayStart is null || NewSaturdayEnd is null)
+            {
+                _ = ShowValidationErrorAsync("Completa la fecha, la hora de inicio y la hora de fin.");
                 return;
+            }
+
+            if (NewSaturdayDate.Value.DayOfWeek != DayOfWeek.Saturday)
+                errors.Add($"El día {NewSaturdayDate.Value:dd/MM/yyyy} no corresponde a un sábado.");
 
             if (NewSaturdayEnd <= NewSaturdayStart)
-                return;
+                errors.Add("La hora de fin debe ser posterior a la hora de inicio.");
 
-            // Evitar duplicados
             if (WorkingSaturdays.Any(s => s.Date == NewSaturdayDate))
+                errors.Add("Ya existe un sábado cargado con esa fecha.");
+
+            if (errors.Count > 0)
+            {
+                _ = ShowValidationErrorAsync(string.Join(" ", errors));
                 return;
+            }
 
             WorkingSaturdays.Add(new WorkingSaturday
             {
@@ -286,6 +304,8 @@ ReqID  | IsResolved | RejectionDate  | RejectionReason     | RejectionDetails   
                 StartTime = NewSaturdayStart.Value,
                 EndTime = NewSaturdayEnd.Value
             });
+
+            WorkingSaturdays.Sort((a, b) => a.Date.CompareTo(b.Date));
 
             // Reset inputs
             NewSaturdayDate = null;
@@ -333,13 +353,16 @@ ReqID  | IsResolved | RejectionDate  | RejectionReason     | RejectionDetails   
                 WeeklyPar.StartTime = actualCfg.WeeklyPar.StartTime;
                 WeeklyPar.EndTime = actualCfg.WeeklyPar.EndTime;
 
-                WorkingSaturdays = actualCfg.WorkingSaturdays.Select(nt => new WorkingSaturday
-                {
-                    Id = nt.Id,
-                    Date = nt.Date,
-                    StartTime = nt.StartTime,
-                    EndTime = nt.EndTime
-                }).ToList();
+                WorkingSaturdays = actualCfg.WorkingSaturdays
+                    .OrderBy(nt => nt.Date)
+                    .Select(nt => new WorkingSaturday
+                    {
+                        Id = nt.Id,
+                        Date = nt.Date,
+                        StartTime = nt.StartTime,
+                        EndTime = nt.EndTime
+                    })
+                    .ToList();
 
                 backup = new BackupScheduled
                 {
@@ -716,6 +739,30 @@ ReqID  | IsResolved | RejectionDate  | RejectionReason     | RejectionDetails   
             IsDownloaded = true;
             StateHasChanged();
         }
+
+        private async Task ShowValidationErrorAsync(string message, int seconds = 5)
+        {
+            _errorCts?.Cancel();
+            _errorCts?.Dispose();
+            _errorCts = new CancellationTokenSource();
+
+            CancellationToken token = _errorCts.Token;
+
+            ErrorMessageValidateSaturday = message;
+            IsErrorValidateSaturday = true;
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(seconds), token);
+
+                IsErrorValidateSaturday = false;
+                ErrorMessageValidateSaturday = null;
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
         #endregion
 
         #region Limpiar
@@ -723,6 +770,8 @@ ReqID  | IsResolved | RejectionDate  | RejectionReason     | RejectionDetails   
         {
             ColorService.OnColorChanged -= HandleColorChanged;
             State.OnSidebarChanged -= StateHasChanged;
+            _errorCts?.Cancel();
+            _errorCts?.Dispose();
         }
         #endregion
 
