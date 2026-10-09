@@ -20,7 +20,7 @@
     <Navbar Title="Configuración del Sistema" Subtitle="Personaliza tu experiencia en TimeTracker" OnToggleSidebar="HandleSidebarToggle" />
     <article class="content px-4">
         <div class="px-6 space-y-6 mt-6">
-            <div class="container mx-auto p-6 w-[135rem] max-w-[135rem]">
+            <div class="lg:mx-auto p-6">
                 @if(IsLoadingConfig){
                     <LoadingData Title="Cargando configuracion" Subtitle="Espere unos segundos ..." />
                 }
@@ -300,6 +300,23 @@
                                             </p>
                                         </CardHeader>
                                         <CardContent Class="space-y-4">
+
+                                            @if (IsErrorValidateSaturday)
+                                            {
+                                                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 mt-3">
+                                                <div class="flex items-start gap-3">
+                                                    <Calendar Class="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5" />
+                                                    <div>
+                                                        <h4 class="font-medium text-red-800 dark:text-red-200">
+                                                            Error
+                                                        </h4>
+                                                        <p class="text-sm text-red-700 dark:text-red-300 mt-1">
+                                                            @ErrorMessageValidateSaturday
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            }
                                             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                                 <div>
                                                     <Label>Fecha</Label>
