@@ -5,6 +5,7 @@ using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.Exceptions;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using static AppTiemposV3.SharedClases.Helpers.TimeFormatHelper;
 using Microsoft.AspNetCore.Identity;
 using MySqlConnector;
 using System.Net;
@@ -26,111 +27,81 @@ public class DashboardRepository : IDashboardContract<DashboardKPIDto>
         _userManager = userManager;
         _userContext = userContext;
     }
-    
+
     public async Task<DataResponse<DashboardKPIDto>> GetKpiDashboard(int year, int weekNumber)
     {
-        DashboardKPIDto? resp = new DashboardKPIDto();
-        
+        DashboardKPIDto resp = new DashboardKPIDto();
+
         _ = await GetUserByIdAsync(_userId);
 
-        string yearweekCon = $"{year}{weekNumber:D2}";
-        int yearweek = Convert.ToInt32(yearweekCon);
+        int yearweek = Convert.ToInt32($"{year}{weekNumber:D2}");
 
-        StringBuilder? sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
         sb.AppendLine("SELECT");
-        sb.AppendLine("    DAYNAME(a.StartDate) AS Day,");
-        sb.AppendLine("    WEEKDAY(a.StartDate) + 1 AS DayNumber,");
-        sb.AppendLine("    COALESCE(ROUND(SUM(");
-        sb.AppendLine("        TIMESTAMPDIFF(");
-        sb.AppendLine("            SECOND,");
-        sb.AppendLine("            CONCAT(a.StartDate, ' ', a.StartTime),");
-        sb.AppendLine("            CONCAT(a.StartDate, ' ', a.EndTime)");
-        sb.AppendLine("        )");
-        sb.AppendLine("    ) / 3600, 2), 0) AS HoursTotal");
-        sb.AppendLine("FROM activities AS a");
-        sb.AppendLine("WHERE a.EndTime IS NOT NULL");
-        sb.AppendLine("    AND a.UserId = @userId");
-        sb.AppendLine("    AND YEARWEEK(a.StartDate, 1) = @yearweek");
-        sb.AppendLine("GROUP BY a.StartDate");
-        sb.AppendLine("ORDER BY a.StartDate;");
+        sb.AppendLine("    DAYNAME(A.StartDate) AS Day,");
+        sb.AppendLine("    WEEKDAY(A.StartDate) + 1 AS DayNumber,");
+        sb.AppendLine("    COALESCE(SUM(TIMESTAMPDIFF(MINUTE, A.StartTime, A.EndTime)), 0) AS MinutesTotal");
+        sb.AppendLine("FROM activities AS A");
+        sb.AppendLine("WHERE A.EndTime IS NOT NULL");
+        sb.AppendLine("    AND A.IsDeleted = 0");
+        sb.AppendLine("    AND A.UserId = @userId");
+        sb.AppendLine("    AND YEARWEEK(A.StartDate, 1) = @yearweek");
+        sb.AppendLine("GROUP BY A.StartDate");
+        sb.AppendLine("ORDER BY A.StartDate;");
 
-        MySqlParameter filtro = new MySqlParameter("@yearweek", yearweek);
-        MySqlParameter userFiltro = new MySqlParameter("@userId", _userId);
-        
-        List<Dictionary<string, object?>> DashboardKPIChartData = await QueryRawAsync(_dbCxt, sb.ToString(), filtro, userFiltro);
-        
+        List<Dictionary<string, object?>> chartData = await QueryRawAsync(
+            _dbCxt,
+            sb.ToString(),
+            new MySqlParameter("@yearweek", yearweek),
+            new MySqlParameter("@userId", _userId));
+
         List<DashboardKPIChart> chartDays = new();
 
-        foreach (Dictionary<string, object?> row in DashboardKPIChartData)
+        foreach (Dictionary<string, object?> row in chartData)
         {
-            DashboardKPIChart chart = new DashboardKPIChart
+            int minutes = Convert.ToInt32(row["MinutesTotal"]);
+
+            chartDays.Add(new DashboardKPIChart
             {
                 Day = TranslateDayToSpanish(row["Day"]!.ToString()!),
                 DayNumber = Convert.ToInt16(row["DayNumber"]!.ToString()!),
-                HoursTotal = Convert.ToDouble(row["HoursTotal"]!.ToString()!)
-            };
-
-            chartDays.Add(chart);
+                HoursTotal = FormatoDbl(minutes)
+            });
         }
-        
-        chartDays = CompleteMissingDays(chartDays);
-        resp.DashboardKPIChart = chartDays;
 
-        StringBuilder? sbHs = new StringBuilder();
+        resp.DashboardKPIChart = CompleteMissingDays(chartDays);
 
+        StringBuilder sbHs = new StringBuilder();
 
         sbHs.AppendLine("SELECT");
-        sbHs.AppendLine("    COALESCE(ROUND((");
-        sbHs.AppendLine("        SELECT");
-        sbHs.AppendLine("            SUM(");
-        sbHs.AppendLine("                TIMESTAMPDIFF(");
-        sbHs.AppendLine("                    SECOND,");
-        sbHs.AppendLine("                    CONCAT(a.StartDate, ' ', a.StartTime),");
-        sbHs.AppendLine("                    CONCAT(a.StartDate, ' ', a.EndTime)");
-        sbHs.AppendLine("                )");
-        sbHs.AppendLine("            ) / 3600");
-        sbHs.AppendLine("        FROM activities AS a");
-        sbHs.AppendLine("        WHERE a.EndTime IS NOT NULL");
-        sbHs.AppendLine("            AND YEARWEEK(a.StartDate, 1) = @yearweekHs");
-        sbHs.AppendLine("            AND a.UserId = @userId");
-        sbHs.AppendLine("    ), 2), 0) AS TotalHours,");
-        sbHs.AppendLine("    (");
-        sbHs.AppendLine("        SELECT");
-        sbHs.AppendLine("            COUNT(a.Id)");
-        sbHs.AppendLine("        FROM activities AS a");
-        sbHs.AppendLine("        WHERE a.StatusMessage = 'completed'");
-        sbHs.AppendLine("            AND a.EndTime IS NOT NULL");
-        sbHs.AppendLine("            AND YEARWEEK(a.StartDate, 1) = @yearweekHs");
-        sbHs.AppendLine("            AND a.UserId = @userId");
-        sbHs.AppendLine("    ) AS CompletedTasks,");
-        sbHs.AppendLine("    (");
-        sbHs.AppendLine("        SELECT");
-        sbHs.AppendLine("            COUNT(a.Id)");
-        sbHs.AppendLine("        FROM activities AS a");
-        sbHs.AppendLine("        WHERE a.StatusMessage = 'in-progress'");
-        sbHs.AppendLine("            AND YEARWEEK(a.StartDate, 1) = @yearweekHs");
-        sbHs.AppendLine("            AND a.UserId = @userId");
-        sbHs.AppendLine("    ) AS PendingTasks;");
+        sbHs.AppendLine("    COALESCE(SUM(CASE WHEN A.EndTime IS NOT NULL");
+        sbHs.AppendLine("        THEN TIMESTAMPDIFF(MINUTE, A.StartTime, A.EndTime) END), 0) AS TotalMinutes,");
+        sbHs.AppendLine("    COALESCE(SUM(A.StatusMessage = 'completed' AND A.EndTime IS NOT NULL), 0) AS CompletedTasks,");
+        sbHs.AppendLine("    COALESCE(SUM(A.StatusMessage = 'in-progress'), 0) AS PendingTasks");
+        sbHs.AppendLine("FROM activities AS A");
+        sbHs.AppendLine("WHERE A.UserId = @userId");
+        sbHs.AppendLine("    AND A.IsDeleted = 0");
+        sbHs.AppendLine("    AND YEARWEEK(A.StartDate, 1) = @yearweek;");
 
-        MySqlParameter filtroHs = new MySqlParameter("@yearweekHs", yearweek);
-        
-        MySqlParameter userFiltroHs = new MySqlParameter("@userId", _userId);
-        
-        List<Dictionary<string, object?>> HorasKPIData = await QueryRawAsync(_dbCxt, sbHs.ToString(), filtroHs, userFiltroHs);
+        List<Dictionary<string, object?>> kpiData = await QueryRawAsync(
+            _dbCxt,
+            sbHs.ToString(),
+            new MySqlParameter("@yearweek", yearweek),
+            new MySqlParameter("@userId", _userId));
 
-        foreach (Dictionary<string, object?> row in HorasKPIData)
+        Dictionary<string, object?>? kpiRow = kpiData.FirstOrDefault();
+
+        if (kpiRow != null)
         {
-            resp.TotalHours = Convert.ToDouble(row["TotalHours"]!.ToString()!);
-            resp.CompletedTasks = Convert.ToInt32(row["CompletedTasks"]!.ToString()!);
-            resp.PendingTasks = Convert.ToInt32(row["PendingTasks"]!.ToString()!);
+            resp.TotalHours = FormatoDbl(Convert.ToInt32(kpiRow["TotalMinutes"]));
+            resp.CompletedTasks = Convert.ToInt32(kpiRow["CompletedTasks"]);
+            resp.PendingTasks = Convert.ToInt32(kpiRow["PendingTasks"]);
         }
-        
 
-        DataResponse<DashboardKPIDto> respback = new DataResponse<DashboardKPIDto>(true, resp, HttpStatusCode.OK);
-        return respback;
+        return new DataResponse<DashboardKPIDto>(true, resp, HttpStatusCode.OK);
     }
-    
+
     private async Task<UserEntity> GetUserByIdAsync(Guid userId)
     {
         UserEntity? user = await _userManager.FindByIdAsync(userId.ToString());
