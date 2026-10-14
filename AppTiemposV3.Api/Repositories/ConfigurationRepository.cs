@@ -5,15 +5,17 @@ using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs.Configurations;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
-using static AppTiemposV3.Api.Helpers.DatabaseHelper;
-using static AppTiemposV3.Api.Helpers.Helpers;
-using static AppTiemposV3.Api.Utilidades.GenerateSlug;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
-using static AppTiemposV3.SharedClases.Utilidades.DateHelper;
+using AppTiemposV3.SharedClases.Helpers;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using MySqlConnector;
 using System.Text;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using static AppTiemposV3.SharedClases.Helpers.TimeFormatHelper;
+using static AppTiemposV3.Api.Utilidades.GenerateSlug;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.SharedClases.Utilidades.DateHelper;
 using static NanoidDotNet.Nanoid;
 using static NanoidDotNet.Nanoid.Alphabets;
 using static System.Globalization.CharUnicodeInfo;
@@ -21,9 +23,7 @@ using static System.Globalization.UnicodeCategory;
 using static System.IO.FileAccess;
 using static System.IO.FileMode;
 using static System.Net.HttpStatusCode;
-using static System.StringComparison;
 using static System.Text.NormalizationForm;
-using MySqlConnector;
 
 namespace AppTiemposV3.Api.Repositories
 {
@@ -597,15 +597,13 @@ namespace AppTiemposV3.Api.Repositories
         {
             try
             {
-                ProgressHoursConfigDto resp = new ProgressHoursConfigDto();
-
                 UserEntity user = await GetUserByIdAsync(_userId);
 
-                StringBuilder? sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder();
 
                 sb.AppendLine("WITH MetaHoy AS (");
-                sb.AppendLine("   SELECT ");
-                sb.AppendLine("       CD.MinHours");;
+                sb.AppendLine("   SELECT");
+                sb.AppendLine("       ROUND(CD.MinHours * 60) AS MinutosMeta");
                 sb.AppendLine("   FROM configuraciones_dias AS CD");
                 sb.AppendLine("   INNER JOIN configuraciones AS C ON C.Id = CD.ConfigurationEntityId");
                 sb.AppendLine("   WHERE C.ActualConfig = 1");
@@ -613,57 +611,63 @@ namespace AppTiemposV3.Api.Repositories
                 sb.AppendLine("   AND CD.DayName = ELT(WEEKDAY(@DateToday) + 1, 'Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo')");
                 sb.AppendLine("),");
                 sb.AppendLine("ProgresoReal AS (");
-                sb.AppendLine("   SELECT ");
-                sb.AppendLine("       COALESCE(SUM(TIMESTAMPDIFF(MINUTE, A.StartTime, A.EndTime)) / 60.0, 0) AS HorasRealizadas ");
-                sb.AppendLine("   FROM activities AS A ");
-                sb.AppendLine("   WHERE A.StartDate = @DateToday ");
-                sb.AppendLine("   AND A.UserId = @UserId ");
+                sb.AppendLine("   SELECT");
+                sb.AppendLine("       COALESCE(SUM(TIMESTAMPDIFF(MINUTE, A.StartTime, A.EndTime)), 0) AS MinutosRealizados");
+                sb.AppendLine("   FROM activities AS A");
+                sb.AppendLine("   WHERE A.StartDate = @DateToday");
+                sb.AppendLine("   AND A.UserId = @UserId");
+                sb.AppendLine("   AND A.IsDeleted = 0");
                 sb.AppendLine(")");
                 sb.AppendLine("");
-                sb.AppendLine("SELECT ");
-                sb.AppendLine("   CONCAT(REPLACE(ROUND(PR.HorasRealizadas, 1), '.', ','), 'h') AS HorasRealizadasTexto,");
-                sb.AppendLine("   ROUND(PR.HorasRealizadas, 1) AS HorasRealizadasDbl,");
-                sb.AppendLine("   MH.MinHours AS MetaDelDia,");
-                sb.AppendLine("   CASE ");
-                sb.AppendLine("      WHEN MH.MinHours <= 0 THEN 0");
-                sb.AppendLine("      WHEN (PR.HorasRealizadas / MH.MinHours) * 100 > 100 THEN 100");
-                sb.AppendLine("      ELSE ROUND((PR.HorasRealizadas / MH.MinHours) * 100, 0)");
-                sb.AppendLine("   END AS Porcentaje,");
-                sb.AppendLine("   CONCAT(");
-                sb.AppendLine("      FLOOR(GREATEST(0, MH.MinHours - PR.HorasRealizadas)), 'h ',");
-                sb.AppendLine("      ROUND((GREATEST(0, MH.MinHours - PR.HorasRealizadas) - FLOOR(GREATEST(0, MH.MinHours - PR.HorasRealizadas))) * 60), 'min'");
-                sb.AppendLine("   ) AS HorasFaltantesFormateado");
+                sb.AppendLine("SELECT");
+                sb.AppendLine("   PR.MinutosRealizados,");
+                sb.AppendLine("   MH.MinutosMeta");
                 sb.AppendLine("FROM ProgresoReal AS PR");
                 sb.AppendLine("CROSS JOIN MetaHoy AS MH");
 
                 string sql = sb.ToString();
 
-                List<MySqlParameter> parameters = new List<MySqlParameter>();
-
-                parameters.Add(new MySqlParameter("@UserId", user.Id));
-                parameters.Add(new MySqlParameter("@DateToday", DateTime.Today.ToString("yyyy-MM-dd")));
+                List<MySqlParameter> parameters = new List<MySqlParameter>
+                {
+                    new MySqlParameter("@UserId", user.Id),
+                    new MySqlParameter("@DateToday", DateTime.Today.ToString("yyyy-MM-dd"))
+                };
 
                 List<Dictionary<string, object?>> totalData = await QueryRawFullAsync(_dbCxt, sql, parameters.ToArray());
-
                 Dictionary<string, object?>? row = totalData.FirstOrDefault();
 
-                if (row != null)
-                {
-                    resp.HorasRealizadas = row["HorasRealizadasTexto"]?.ToString() ?? "0h";
-                    resp.HorasRealizadasDbl = Convert.ToDouble(row["HorasRealizadasDbl"] ?? 0);
-                    resp.MetaDelDia = Convert.ToDouble(row["MetaDelDia"] ?? 0);
-                    resp.Porcentaje = Convert.ToInt32(row["Porcentaje"] ?? 0);
-                    resp.HorasFaltantes = row["HorasFaltantesFormateado"]?.ToString() ?? "0h 0min";
-                }
+                int minutosRealizados = row != null ? Convert.ToInt32(row["MinutosRealizados"] ?? 0) : 0;
+                int minutosMeta = row != null ? Convert.ToInt32(row["MinutosMeta"] ?? 0) : 0;
+
+                ProgressHoursConfigDto resp = BuildProgressDto(minutosRealizados, minutosMeta);
 
                 return new DataResponse<ProgressHoursConfigDto>(true, resp, OK);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine($"{ex.Message}");
                 throw;
             }
         }
+
+        private ProgressHoursConfigDto BuildProgressDto(int minutosRealizados, int minutosMeta)
+        {
+            int minutosFaltantes = Math.Max(0, minutosMeta - minutosRealizados);
+
+            int porcentaje = minutosMeta <= 0
+                ? 0
+                : Math.Min(100, (int)Math.Round((minutosRealizados / (double)minutosMeta) * 100));
+
+            return new ProgressHoursConfigDto
+            {
+                HorasRealizadas = Formato(minutosRealizados),
+                HorasRealizadasDbl = FormatoDbl(minutosRealizados),
+                MetaDelDia = FormatoDbl(minutosMeta),
+                Porcentaje = porcentaje,
+                HorasFaltantes = Formato(minutosFaltantes)
+            };
+        }
+
 
         private async Task<UserEntity> GetUserByIdAsync(Guid userId)
         {

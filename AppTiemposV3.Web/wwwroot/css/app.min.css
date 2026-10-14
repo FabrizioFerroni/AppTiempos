@@ -994,12 +994,6 @@
   .w-\[50rem\] {
     width: 50rem;
   }
-  .w-\[134rem\] {
-    width: 134rem;
-  }
-  .w-\[135rem\] {
-    width: 135rem;
-  }
   .w-\[350px\] {
     width: 350px;
   }
@@ -1020,9 +1014,6 @@
   }
   .max-w-\[50rem\] {
     max-width: 50rem;
-  }
-  .max-w-\[135rem\] {
-    max-width: 135rem;
   }
   .max-w-lg {
     max-width: var(--container-lg);
@@ -3171,11 +3162,6 @@
   .lg\:mx-auto {
     @media (width >= 64rem) {
       margin-inline: auto;
-    }
-  }
-  .lg\:max-w-\[134rem\] {
-    @media (width >= 64rem) {
-      max-width: 134rem;
     }
   }
   .lg\:grid-cols-2 {
