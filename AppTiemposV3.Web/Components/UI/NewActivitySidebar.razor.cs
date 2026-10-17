@@ -20,19 +20,19 @@ public partial class NewActivitySidebar : ComponentBase
     [Inject] private IJSRuntime? JS { get; set; }
     [Inject] private ColorService ColorService { get; set; } = null!;
     [Inject] private IRequerimentContract<RequerimentResponseDto> RequerimentsService { get; set; } = null!;
-    [Inject] private IActivityContract<ActivityResponseDto>  ActivityService { get; set; } = null!;
+    [Inject] private IActivityContract<ActivityResponseDto> ActivityService { get; set; } = null!;
     [Inject] private NotificationService Toltip { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = null!;
     [Parameter] public EventCallback<SavedEventArgs> OnSaved { get; set; }
     //[Parameter] public EventCallback<DateOnly> OnSaved { get; set; }
-    
-    
+
+
     public DateOnly StartDate { get; set; }
-    
+
     private string CurrentUrl => Nav.Uri.Replace(Nav.BaseUri, "/");
-    
+
     private string IdModalStr = Generate(LowercaseLettersAndDigits, 10);
-    
+
     private bool isError = false;
     private bool IsPastDateTime { get; set; } = false;
     private MarkupString messageError = new("");
@@ -44,22 +44,22 @@ public partial class NewActivitySidebar : ComponentBase
         Etapa = Etapas.Alta,
         RequerimentId = Guid.Empty
     };
-    
+
     private ValidationResultDto validationResult = new()
     {
         IsValid = true,
     };
-    
+
     private bool IsLoadingNew = false;
-    
+
     private ElementReference showModalRef;
     private ElementReference closeModalRef;
-    
+
     //Requerimientos
     private bool isSuccessReq;
     private MarkupString? messageSuccessReq = new("");
     private string? RequerimientoSeleccionado = "";
-    private List<string> OptionsRequeriments = new() {};
+    private List<string> OptionsRequeriments = new() { };
     private bool IsRequerimentIdSelected = false;
     private Guid IdModalRequeriment = Guid.NewGuid();
     private bool IsRequerimentsNotLoaded { get; set; } = true;
@@ -68,7 +68,7 @@ public partial class NewActivitySidebar : ComponentBase
         .Where(e => e != Etapas.None)
         .ToList();
     private Etapas? EtapaSeleccionadaNullable = Etapas.Alta;
-    
+
     private Etapas EtapaSeleccionada
     {
         get => EtapaSeleccionadaNullable ?? default; // default es el primer valor del enum
@@ -94,7 +94,7 @@ public partial class NewActivitySidebar : ComponentBase
         StateHasChanged();
     }
     #endregion
-    
+
     #region Funciones
     private Task OnEtapaSelectedChanged(Etapas value)
     {
@@ -106,17 +106,17 @@ public partial class NewActivitySidebar : ComponentBase
     {
         await GetAllRequeriments();
     }
-    
+
     private void HandleRequerimentSelected(string reqId)
     {
         OnRequerimentSelectedChanged(reqId);
     }
-    
+
     private async Task HandleRequerimentSuccess(MarkupString msg)
     {
         await ShowSuccess(msg);
     }
-    
+
     private async Task ShowSuccess(MarkupString message)
     {
         messageSuccessReq = message;
@@ -126,14 +126,14 @@ public partial class NewActivitySidebar : ComponentBase
 
         messageSuccessReq = null;
         StateHasChanged();
-        
+
         isSuccessReq = false;
     }
-    
+
     public async Task GetAllRequeriments()
     {
         IsRequerimentsNotLoaded = true;
-         StateHasChanged(); // asegura render previo
+        StateHasChanged(); // asegura render previo
         try
         {
             DataAResponse<RequerimentResponseDto> requeriments = await RequerimentsService.GetAllRequeriments();
@@ -144,7 +144,7 @@ public partial class NewActivitySidebar : ComponentBase
             Console.WriteLine(e);
             throw;
         }
-        
+
         IsRequerimentsNotLoaded = false;
         StateHasChanged();
     }
@@ -160,7 +160,7 @@ public partial class NewActivitySidebar : ComponentBase
             }
         }
     }
-    
+
     private string StartTimeString
     {
         get => activityDto.StartTime.ToString("HH:mm"); // formato 24h válido para <input type="time">
@@ -173,18 +173,18 @@ public partial class NewActivitySidebar : ComponentBase
             }
         }
     }
-    
+
     private void CheckIfPast()
     {
         DateTime selectedDateTime = activityDto.StartDate.ToDateTime(activityDto.StartTime);
         bool wasPast = IsPastDateTime;
-        
+
         IsPastDateTime = selectedDateTime < DateTime.Now;
-        
+
         if (IsPastDateTime != wasPast)
             InvokeAsync(StateHasChanged);
     }
-    
+
     private async Task SendNewActivity()
     {
         Console.WriteLine($"Actividad a crear: {JsonConvert.SerializeObject(activityDto)}");
@@ -193,7 +193,7 @@ public partial class NewActivitySidebar : ComponentBase
             IsLoadingNew = true;
             isError = false;
             StateHasChanged();
-            
+
             GeneralResponse? response = await ActivityService!.CreateActivity(activityDto);
             SavedEventArgs? args = new SavedEventArgs
             {
@@ -201,7 +201,7 @@ public partial class NewActivitySidebar : ComponentBase
                 Success = false,
                 StartDate = DateOnly.FromDateTime(DateTime.Now)
             };
-            
+
             if (response?.Flag == true)
             {
                 await JS!.InvokeVoidAsync("modalHelpers.clickElement", closeModalRef);
@@ -217,7 +217,7 @@ public partial class NewActivitySidebar : ComponentBase
                 isError = true;
                 messageError = (MarkupString)(response?.Message?.Replace("\n", "<br />") ?? "Error desconocido");
             }
-            
+
             StateHasChanged();
         }
         catch (Exception ex)
@@ -231,15 +231,18 @@ public partial class NewActivitySidebar : ComponentBase
             StateHasChanged();
         }
     }
-    
+
     private Task OnRequerimentSelectedChanged(string value)
     {
         RequerimientoSeleccionado = value;
-        
+
         _ = SafeRunAsync(async () =>
         {
-            DataResponse<Guid> requerimentId = await ActivityService.GetRequerimentActivity(value);
-            activityDto.RequerimentId = requerimentId.Data;
+            DataResponse<RequerimentDataActivity> response = await ActivityService.GetRequerimentActivity(value);
+            RequerimentDataActivity reqAct = response.Data;
+            activityDto.RequerimentId = reqAct.Id;
+            activityDto.Description = reqAct.Title;
+            await OnEtapaSelectedChanged(reqAct.EtapaActual);
             IsRequerimentIdSelected = true;
             StateHasChanged();
         });
@@ -247,8 +250,8 @@ public partial class NewActivitySidebar : ComponentBase
         return Task.CompletedTask;
     }
     #endregion
-    
-    
+
+
     #region Scripts
     private async Task SafeRunAsync(Func<Task> action)
     {
@@ -262,10 +265,12 @@ public partial class NewActivitySidebar : ComponentBase
         }
     }
     #endregion
-    
+
     private void OnResetNewAct()
     {
         RequerimientoSeleccionado = "";
+        IsRequerimentIdSelected = false;
+        OnEtapaSelectedChanged(Etapas.Alta);
         activityDto = new()
         {
             StartDate = DateOnly.FromDateTime(DateTime.Today),

@@ -4,13 +4,12 @@ using AppTiemposV3.SharedClases.DTOs.Activities;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.Web.Services;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-// using Newtonsoft.Json;
+using System.Text.Json;
 using static NanoidDotNet.Nanoid;
 using static NanoidDotNet.Nanoid.Alphabets;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
-using System.Text.Json;
 
 namespace AppTiemposV3.Web.Pages.Activities.Modales;
 
@@ -23,39 +22,40 @@ public partial class EditActivity : ComponentBase
     [Inject] private IJSRuntime? JS { get; set; }
     [Inject] private ColorService ColorService { get; set; } = null!;
     [Inject] private IRequerimentContract<RequerimentResponseDto> RequerimentsService { get; set; } = null!;
-    [Inject] private IActivityContract<ActivityResponseDto>  ActivityService { get; set; } = null!;
+    [Inject] private IActivityContract<ActivityResponseDto> ActivityService { get; set; } = null!;
     [Parameter] public EventCallback<SavedEventArgs> OnSaved { get; set; }
-    
+
     private string IdModalStr = Generate(LowercaseLettersAndDigits, 10);
-    
+
     private bool isError = false;
     private bool IsPastDateTime { get; set; } = false;
     private bool IsPastDateEndTimeTime { get; set; } = false;
+    private bool _isHydrating;
     private MarkupString messageError = new("");
 
     private UpdateActivityDto activityDto = new();
 
     private ActivityResponseDto? OriginalActivityData;
-    
+
     private ValidationResultDto validationResult = new()
     {
         IsValid = true,
     };
-    
+
     private bool IsLoadingEdit = false;
     private bool IsLoadingData { get; set; } = true;
     private bool IsLoadingInProgress = false;
-    
+
     private ElementReference showModalRef;
     private ElementReference closeModalRef;
-    
+
     //Requerimientos
     private bool isSuccessReq;
     private MarkupString? messageSuccessReq = new("");
     private string? RequerimientoSeleccionado = "";
     private string? EstadoSeleccionado = "";
-    private List<string> OptionsRequeriments = new() {};
-    private List<string> OptionsEstados = new() {"Pendiente", "En Progreso", "Completado"};
+    private List<string> OptionsRequeriments = new() { };
+    private List<string> OptionsEstados = new() { "Pendiente", "En Progreso", "Completado" };
     private bool IsRequerimentIdSelected = false;
     private Guid IdModalRequeriment = Guid.NewGuid();
     private bool IsRequerimentsLoaded = true;
@@ -64,17 +64,19 @@ public partial class EditActivity : ComponentBase
         .Where(e => e != Etapas.None)
         .ToList();
     private Etapas? EtapaSeleccionadaNullable = Etapas.Alta;
-    
+
     private Etapas EtapaSeleccionada
     {
         get => EtapaSeleccionadaNullable ?? default; // default es el primer valor del enum
         set => EtapaSeleccionadaNullable = value;
     }
+
+    private static string NormalizeReqId(string value) => value.Contains("ReqID") ? value : $"ReqID{value}";
     #endregion
-    
-    
+
+
     #region Inicializacion
-    
+
     public async Task ShowAsync(Guid id, Guid idActivity)
     {
         Id = id;
@@ -95,7 +97,7 @@ public partial class EditActivity : ComponentBase
         StateHasChanged();
 
     }
-    
+
     private async Task LoadDataAct(Guid idActivity, bool saveOriginal)
     {
         try
@@ -133,65 +135,82 @@ public partial class EditActivity : ComponentBase
         }
     }
     #endregion
-    
+
     #region Funciones
 
     private async Task FillDataCamps(ActivityResponseDto activity)
     {
-        activityDto.Id = activity?.Id;
-        activityDto.StartDate = activity!.StartDate;
-        if (TimeOnly.TryParse(activity!.StartTime, out TimeOnly startTime))
-        {
-            activityDto.StartTime = startTime;
-            CheckIfPast();
-        }
-        if (TimeOnly.TryParse(activity!.EndTime, out TimeOnly endTime))
-        {
-            Console.WriteLine(endTime);
-            TimeOnly end = endTime;
+        _isHydrating = true;
 
-            // Redondea al minuto más cercano (sin segundos ni milisegundos)
-            if (end.Second >= 30)
+        try
+        {
+
+            activityDto.Id = activity?.Id;
+            activityDto.StartDate = activity!.StartDate;
+            if (TimeOnly.TryParse(activity!.StartTime, out TimeOnly startTime))
             {
-                end = end.AddMinutes(1);
+                activityDto.StartTime = startTime;
+                CheckIfPast();
+            }
+            if (TimeOnly.TryParse(activity!.EndTime, out TimeOnly endTime))
+            {
+                Console.WriteLine(endTime);
+                TimeOnly end = endTime;
+
+                // Redondea al minuto más cercano (sin segundos ni milisegundos)
+                if (end.Second >= 30)
+                {
+                    end = end.AddMinutes(1);
+                }
+
+                end = new TimeOnly(end.Hour, end.Minute);
+
+                // Asignalo al modelo
+                activityDto.EndTime = end;
+                CheckIfPastEndTime();
+            }
+            else
+            {
+                activityDto.EndTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute);
             }
 
-            end = new TimeOnly(end.Hour, end.Minute);
+            activityDto.Description = activity!.Description;
+            await OnEtapaSelectedChanged(activity!.Etapa);
+            activityDto.IsLoaded = activity?.IsLoaded ?? false;
+            activityDto.Comment = activity!.Comment;
+            _ = OnEstadoSelectedChangedBD(activity!.StatusMessage);
+            activityDto.StatusMessage = activity!.StatusMessage;
+            //await OnRequerimentSelectedChanged(activity!.Requeriment.ReqID);
+            RequerimientoSeleccionado = NormalizeReqId(activity.Requeriment.ReqID);
+            activityDto.RequerimentId = activity.Requeriment.Id;
+            IsRequerimentIdSelected = true;
+            activityDto.RequerimentId = activity?.Requeriment.Id;
 
-            // Asignalo al modelo
-            activityDto.EndTime = end;
-            CheckIfPastEndTime();
+            StateHasChanged();
         }
-        else
+        catch (Exception ex)
         {
-            activityDto.EndTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute);
+            Console.WriteLine(ex.Message);
         }
-        
-        activityDto.Description = activity!.Description;
-        await OnEtapaSelectedChanged(activity!.Etapa);
-        activityDto.IsLoaded = activity?.IsLoaded ?? false;
-        activityDto.Comment = activity!.Comment;
-        _ = OnEstadoSelectedChangedBD(activity!.StatusMessage);
-        activityDto.StatusMessage = activity!.StatusMessage;
-        await OnRequerimentSelectedChanged(activity!.Requeriment.ReqID);
-        activityDto.RequerimentId = activity?.Requeriment.Id;
-            
-        StateHasChanged();
+        finally
+        {
+            _isHydrating = false;
+        }
     }
-    
+
     private Task OnEstadoSelectedChanged(string estado)
     {
         EstadoSeleccionado = OnEstadoSelectedChangedBD(estado);
         activityDto.StatusMessage = GetStatusName(estado);
         return Task.CompletedTask;
-        
+
     }
-    
+
     private string OnEstadoSelectedChangedBD(string estado)
     {
         EstadoSeleccionado = GetStatusNameR(estado);
         return GetStatusNameR(estado);
-        
+
     }
     private Task OnEtapaSelectedChanged(Etapas value)
     {
@@ -203,22 +222,22 @@ public partial class EditActivity : ComponentBase
     {
         await GetAllRequeriments();
     }
-    
+
     private void HandleRequerimentSelected(string reqId)
     {
         OnRequerimentSelectedChanged(reqId);
     }
-    
+
     private void HandleLoadedCheck(bool check)
     {
         activityDto.IsLoaded = check;
     }
-    
+
     private async Task HandleRequerimentSuccess(MarkupString msg)
     {
         await ShowSuccess(msg);
     }
-    
+
     private async Task ShowSuccess(MarkupString message)
     {
         messageSuccessReq = message;
@@ -228,10 +247,10 @@ public partial class EditActivity : ComponentBase
 
         messageSuccessReq = null;
         StateHasChanged();
-        
+
         isSuccessReq = false;
     }
-    
+
     public async Task GetAllRequeriments()
     {
         IsRequerimentsLoaded = true;
@@ -262,7 +281,7 @@ public partial class EditActivity : ComponentBase
             }
         }
     }
-    
+
     private string StartTimeString
     {
         get => activityDto.StartTime.ToString("HH:mm"); // formato 24h válido para <input type="time">
@@ -275,8 +294,8 @@ public partial class EditActivity : ComponentBase
             }
         }
     }
-    
-    
+
+
     private string EndTimeString
     {
         get
@@ -285,7 +304,7 @@ public partial class EditActivity : ComponentBase
             TimeOnly parsed = new TimeOnly(activityDto.EndTime.Hour, activityDto.EndTime.Minute);
             hora = parsed.ToString("HH:mm");
             return hora;
-        }   
+        }
         set
         {
             if (TimeOnly.TryParse(value, out TimeOnly parsed))
@@ -297,10 +316,10 @@ public partial class EditActivity : ComponentBase
             }
         }
     }
-    
+
     private string? IsLoadedString
     {
-        get => activityDto.IsLoaded.ToString(); 
+        get => activityDto.IsLoaded.ToString();
         set
         {
             if (bool.TryParse(value, out bool parsed))
@@ -309,7 +328,7 @@ public partial class EditActivity : ComponentBase
             }
         }
     }
-    
+
     private void CheckIfPast()
     {
         DateTime selectedDateTime = activityDto.StartDate.ToDateTime(activityDto.StartTime);
@@ -345,7 +364,7 @@ public partial class EditActivity : ComponentBase
             isError = false;
             StateHasChanged();
             GeneralResponse? response = await ActivityService!.UpdateActivity(IdActivity, activityDto);
-            
+
             if (response?.Flag == true)
             {
                 ActivityState.NotifyActivityUpdated();
@@ -378,35 +397,32 @@ public partial class EditActivity : ComponentBase
             StateHasChanged();
         }
     }
-    
+
     private Task OnRequerimentSelectedChanged(string value)
     {
-        if (value.Contains("ReqID"))
-        {
-            RequerimientoSeleccionado = value;
-        }
-        else
-        {
-            RequerimientoSeleccionado = $"ReqID{value}";
-        }
+        if (_isHydrating) return Task.CompletedTask;
 
-        if (OriginalActivityData is null || activityDto.RequerimentId != OriginalActivityData!.Requeriment.Id)
+        RequerimientoSeleccionado = NormalizeReqId(value);
+
+        _ = SafeRunAsync(async () =>
         {
-            _ = SafeRunAsync(async () =>
-            {
-                DataResponse<Guid> requerimentId = await ActivityService.GetRequerimentActivity(value);
-                activityDto.RequerimentId = requerimentId.Data;
-                IsRequerimentIdSelected = true;
-                StateHasChanged();
-            });
-        }
+            DataResponse<RequerimentDataActivity> response = await ActivityService.GetRequerimentActivity(value);
+            RequerimentDataActivity reqAct = response.Data;
+            activityDto.RequerimentId = reqAct.Id;
+            activityDto.Description = reqAct.Title;
+            activityDto.Etapa = reqAct.EtapaActual;
+            await OnEtapaSelectedChanged(reqAct.EtapaActual);
+            IsRequerimentIdSelected = true;
+            StateHasChanged();
+        });
 
         return Task.CompletedTask;
     }
-    
+
     private string GetStatusName(string status)
     {
-        switch (status) {
+        switch (status)
+        {
             case "Completado":
                 return "completed";
             case "En Progreso":
@@ -420,7 +436,8 @@ public partial class EditActivity : ComponentBase
 
     private string GetStatusNameR(string status)
     {
-        switch (status) {
+        switch (status)
+        {
             case "completed":
                 return "Completado";
             case "in-progress":
@@ -432,8 +449,8 @@ public partial class EditActivity : ComponentBase
         }
     }
     #endregion
-    
-    
+
+
     #region Scripts
     private async Task SafeRunAsync(Func<Task> action)
     {
@@ -447,23 +464,17 @@ public partial class EditActivity : ComponentBase
         }
     }
     #endregion
-    
-    /*private async Task OnResetEditAct(Guid id)
-    {
-        IsLoadingData = false;
-        StateHasChanged();
-        await LoadDataAct(id, false);
-    }*/
 
     private async Task OnResetEditAct(Guid idActivity)
     {
         IsLoadingData = true;
+        IsRequerimentIdSelected = false;
         StateHasChanged();
 
         // Restaurar la copia original sin hacer request
         if (OriginalActivityData != null)
         {
-            ActivityResponseDto? resp =  JsonSerializer.Deserialize<ActivityResponseDto>(
+            ActivityResponseDto? resp = JsonSerializer.Deserialize<ActivityResponseDto>(
                 JsonSerializer.Serialize(OriginalActivityData)
             );
 
