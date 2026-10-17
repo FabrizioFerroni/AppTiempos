@@ -11,7 +11,7 @@ using static AppTiemposV3.SharedClases.GenericModels.Generics;
 
 namespace AppTiemposV3.Web.Services;
 
-public class ActivityService: IActivityContract<ActivityResponseDto>
+public class ActivityService : IActivityContract<ActivityResponseDto>
 {
     private readonly HttpClient _httpClient;
     private readonly string BaseUrl = "/api";
@@ -38,22 +38,22 @@ public class ActivityService: IActivityContract<ActivityResponseDto>
 
     public async Task<Pageable<List<ActivityResponseDto>>> GetAllActivitiesPerDayPag(PaginationDto pagination, DateOnly startDate)
     {
-        if(pagination.Ordenar == "")
+        if (pagination.Ordenar == "")
         {
             pagination.Ordenar = "StartDateTimeCombo";
         }
-        
-        if(pagination.Ordenar == "Descripcion")
+
+        if (pagination.Ordenar == "Descripcion")
         {
             pagination.Ordenar = "Description";
         }
-        
-        if(pagination.Ordenar == "ReqID")
+
+        if (pagination.Ordenar == "ReqID")
         {
             pagination.Ordenar = "RequerimentId";
         }
-        
-        if(pagination.Ordenar == "Fecha y Hora de inicio")
+
+        if (pagination.Ordenar == "Fecha y Hora de inicio")
         {
             pagination.Ordenar = "StartDateTimeCombo";
         }
@@ -64,7 +64,7 @@ public class ActivityService: IActivityContract<ActivityResponseDto>
                      $"&registrosPorPagina={pagination.RegistrosPorPagina}" +
                      $"&ascending={pagination.Ascending}" +
                      $"&ordenar={pagination.Ordenar}";
-        
+
         if (!string.IsNullOrWhiteSpace(pagination.Search))
             url += $"&search={pagination.Search}";
 
@@ -76,12 +76,12 @@ public class ActivityService: IActivityContract<ActivityResponseDto>
     {
         string dateString = startDate.ToString("yyyy-MM-dd");
         string url = $"{BaseUrl}/activities/t/date/{dateString}";
-        
+
         DataAResponse<ActivityResponseDto>? activities = await _httpClient.GetFromJsonAsync<DataAResponse<ActivityResponseDto>>(url, options);
-        
-        if (activities is null) 
+
+        if (activities is null)
             return new DataAResponse<ActivityResponseDto>(true, [], HttpStatusCode.OK);
-        
+
         return activities;
     }
 
@@ -98,87 +98,87 @@ public class ActivityService: IActivityContract<ActivityResponseDto>
         string url = $"{BaseUrl}/activities/u/ultimos-3/{yearString}/{weekNumberString}";
 
         DataAResponse<ActivityResponseDto>? activities = await _httpClient.GetFromJsonAsync<DataAResponse<ActivityResponseDto>>(url, options);
-        
-        if (activities is null) 
+
+        if (activities is null)
             return new DataAResponse<ActivityResponseDto>(true, [], HttpStatusCode.OK);
-        
+
         return activities;
     }
 
     public async Task<DataResponse<ActivityResponseDto>> GetActivityById(Guid id)
     {
         DataResponse<ActivityResponseDto>? activity = await _httpClient.GetFromJsonAsync<DataResponse<ActivityResponseDto>>($"{BaseUrl}/activities/a/{id}", options);
-        
-        if (activity is null) 
+
+        if (activity is null)
             return new DataResponse<ActivityResponseDto>(true, null!, HttpStatusCode.OK);
-        
+
         return activity;
     }
 
     public async Task<DataResponse<ActivityResponseDto>> GetActivityByUrl(string url)
     {
         DataResponse<ActivityResponseDto>? activity = await _httpClient.GetFromJsonAsync<DataResponse<ActivityResponseDto>>($"{BaseUrl}/activities/{url}", options);
-        
-        if (activity is null) 
+
+        if (activity is null)
             return new DataResponse<ActivityResponseDto>(true, null!, HttpStatusCode.OK);
-        
+
         return activity;
     }
 
-    public async Task<DataResponse<Guid>> GetRequerimentActivity(string reqId)
+    public async Task<DataResponse<RequerimentDataActivity>> GetRequerimentActivity(string reqId)
     {
         if (reqId.StartsWith("ReqID"))
         {
-            reqId =  reqId.Replace("ReqID", "");
+            reqId = reqId.Replace("ReqID", "");
         }
-        
-        DataResponse<Guid>? requerimentId = await _httpClient.GetFromJsonAsync<DataResponse<Guid>>($"{BaseUrl}/activities/r/{reqId}", options);
-        
-        if (requerimentId is null) 
-            return new DataResponse<Guid>(true, Guid.Empty, HttpStatusCode.OK);
-        
+
+        DataResponse<RequerimentDataActivity>? requerimentId = await _httpClient.GetFromJsonAsync<DataResponse<RequerimentDataActivity>>($"{BaseUrl}/activities/r/{reqId}", options);
+
+        if (requerimentId is null)
+            return new DataResponse<RequerimentDataActivity>(true, new RequerimentDataActivity(), HttpStatusCode.OK);
+
         return requerimentId;
     }
 
     public async Task<GeneralResponse> CreateActivity(CreateActivityDto dto)
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/activities", GenerateStringContent(SerializeObj(dto)));
-        
+
         string apiResponse = await response.Content.ReadAsStringAsync();
-        
+
         ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
-        
-        if(!response.IsSuccessStatusCode)
+
+        if (!response.IsSuccessStatusCode)
             return new GeneralResponse(false, resultError?.Message!);
-        
+
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
     public async Task<GeneralResponse> UpdateActivity(Guid id, UpdateActivityDto dto)
     {
         HttpResponseMessage? response = await _httpClient.PutAsync($"{BaseUrl}/activities/{id}", GenerateStringContent(SerializeObj(dto)));
-        
+
         string apiResponse = await response.Content.ReadAsStringAsync();
-        
+
         ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
-        
-        if(!response.IsSuccessStatusCode)
+
+        if (!response.IsSuccessStatusCode)
             return new GeneralResponse(false, resultError?.Message!);
-        
+
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
     public async Task<GeneralResponse> DeleteActivity(Guid id)
     {
         HttpResponseMessage? response = await _httpClient.DeleteAsync($"{BaseUrl}/activities/{id}");
-        
+
         string apiResponse = await response.Content.ReadAsStringAsync();
-        
+
         ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
-        
-        if(!response.IsSuccessStatusCode)
+
+        if (!response.IsSuccessStatusCode)
             return new GeneralResponse(false, resultError?.Message!);
-        
+
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 

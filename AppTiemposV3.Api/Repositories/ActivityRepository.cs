@@ -95,7 +95,7 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
     public async Task<DataAResponse<ActivityResponseDto>> GetLastThreeActivities(int year, int weekNumber)
     {
         UserEntity user = await GetUserByIdAsync(_userId);
-        
+
         (DateOnly start, DateOnly end) = GetDateRangeFromWeek(year, weekNumber);
 
         List<ActivitiesEntity> activitiesEntities = await _dbCxt.Activities
@@ -112,7 +112,7 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
 
         return new DataAResponse<ActivityResponseDto>(true, activitiesDto, HttpStatusCode.OK);
     }
-    
+
     public async Task<DataResponse<ActivityResponseDto>> GetActivityById(Guid id)
     {
         UserEntity? user = await GetUserByIdAsync(_userId);
@@ -121,13 +121,13 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
             .Include(r => r.Requeriment)
             .Include(u => u.User)
             .FirstOrDefaultAsync(a => a.Id == id && a.UserId == user.Id);
-        
-        if(act == null)
+
+        if (act == null)
             throw new NotFoundException("No activities found");
-        
+
         ActivityResponseDto actReq = _iMapper.Map<ActivityResponseDto>(act);
 
-        return new DataResponse<ActivityResponseDto> (true, actReq, HttpStatusCode.OK);
+        return new DataResponse<ActivityResponseDto>(true, actReq, HttpStatusCode.OK);
     }
 
     private static TimeSpan CalcularDuracion(IntervaloActividad intervalo)
@@ -172,40 +172,47 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
                 .ThenInclude(r => r.Category)
             .Include(u => u.User)
             .FirstOrDefaultAsync(a => a.UrlIndetificator == url && a.UserId == user.Id);
-        
-        if(act == null)
+
+        if (act == null)
             throw new NotFoundException("No activities found");
 
         await SetWorkedTimesAsync(act);
 
         ActivityResponseDto actReq = _iMapper.Map<ActivityResponseDto>(act);
 
-        return new DataResponse<ActivityResponseDto> (true, actReq, HttpStatusCode.OK);
+        return new DataResponse<ActivityResponseDto>(true, actReq, HttpStatusCode.OK);
     }
 
-    public async Task<DataResponse<Guid>> GetRequerimentActivity(string reqId)
+    public async Task<DataResponse<RequerimentDataActivity>> GetRequerimentActivity(string reqId)
     {
         if (reqId.StartsWith("ReqID"))
         {
-            reqId =  reqId.Replace("ReqID", "");
+            reqId = reqId.Replace("ReqID", "");
         }
-        
+
         RequerimentsEntity? req = await _dbCxt.Requeriments
             .FirstOrDefaultAsync(r => r.ReqID == reqId && r.UserId == _userId);
-        
+
         if (req == null)
             throw new NotFoundException("No requeriment found");
 
 
         RequerimentResponseDto resCat = _iMapper.Map<RequerimentResponseDto>(req);
 
-        return new DataResponse<Guid> (true, resCat.Id, HttpStatusCode.OK);
+        RequerimentDataActivity response = new()
+        {
+            Id = resCat.Id,
+            Title = resCat.Titulo,
+            EtapaActual = resCat.EtapaActual
+        };
+
+        return new DataResponse<RequerimentDataActivity>(true, response, HttpStatusCode.OK);
     }
 
     public async Task<GeneralResponse> CreateActivity(CreateActivityDto dto)
     {
         ActivitiesEntity act = _iMapper.Map<ActivitiesEntity>(dto);
-        
+
         UserEntity? user = await GetUserByIdAsync(_userId);
 
         RequerimentsEntity? req = await GetRequerimentByIdAsync(dto.RequerimentId, _userId); //_dbCxt.Requeriments.FirstOrDefaultAsync(r => r.Id.Equals(dto.RequerimentId));
@@ -215,18 +222,18 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
         act.UrlIndetificator = await Nanoid.GenerateAsync(Nanoid.Alphabets.LowercaseLettersAndDigits, 10);
         act.UserId = user.Id;
         act.StatusMessage = "in-progress";
-            
+
         await _dbCxt.Activities.AddAsync(act);
 
         await EnsureSavedAsync("Hubo un error al crear la actividad", _dbCxt);
-        
+
         try
         {
-            string reqId = !string.IsNullOrWhiteSpace(req.ReqID) ? $"Se creo una nueva actividad para el ReqID{req.ReqID}" : $"Se creo una nueva actividad"; 
+            string reqId = !string.IsNullOrWhiteSpace(req.ReqID) ? $"Se creo una nueva actividad para el ReqID{req.ReqID}" : $"Se creo una nueva actividad";
 
             await _auditHelperService.CreateAuditAsync(
                 user!.FullName,
-                reqId, 
+                reqId,
                 AuditAction.Created.ToString(),
                 nameof(ActivitiesEntity),
                 "activities",
@@ -250,19 +257,19 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
             .Include(r => r.Requeriment)
             .Include(u => u.User)
             .FirstOrDefaultAsync(a => a.Id == id && a.UserId == user.Id);
-        
+
         ActivitiesEntity? oldAct = await _dbCxt.Activities
             .Include(r => r.Requeriment)
             .Include(u => u.User)
             .FirstOrDefaultAsync(a => a.Id == id && a.UserId == user.Id);
-            
+
         _iMapper.Map(dto, act);
 
         if (dto.EndTime < dto.StartTime)
         {
             throw new BadRequestException("La hora de fin no puede ser menor a la hora de inicio.");
         }
-        
+
         if (dto.EndTime < act!.StartTime)
         {
             throw new BadRequestException("La hora de fin no puede ser menor a la hora de inicio.");
@@ -276,7 +283,7 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
         _dbCxt.Entry(act).State = EntityState.Modified;
 
         await EnsureSavedAsync("Hubo un error al actualizar la actividad. Intente mas tarde", _dbCxt);
-        
+
         try
         {
             await _auditHelperService.CreateAuditAsync(
@@ -305,17 +312,17 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
             .Include(r => r.Requeriment)
             .Include(u => u.User)
             .FirstOrDefaultAsync(a => a.Id == id && a.UserId == user.Id);
-        
-        if(act == null)
+
+        if (act == null)
             throw new NotFoundException("No activities found");
-            
+
         act.IsDeleted = true;
         act.DeletedAt = DateTime.Now;
-        
+
         _dbCxt.Entry(act).State = EntityState.Modified;
 
         await EnsureSavedAsync("Hubo un error al eliminar la actividad. Intente mas tarde", _dbCxt);
-        
+
         try
         {
             await _auditHelperService.CreateAuditAsync(
@@ -343,16 +350,16 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
             .Include(r => r.Requeriment)
             .Include(u => u.User)
             .FirstOrDefaultAsync(a => a.Id == id && a.UserId == user.Id);
-        
-        if(act == null)
+
+        if (act == null)
             throw new NotFoundException("No activities found");
-            
+
         act.IsDeleted = false;
         act.DeletedAt = null;
         act.ModifiedAt = DateTime.Now;
 
         await EnsureSavedAsync("Hubo un error al restaurar la actividad. Intente mas tarde", _dbCxt);
-        
+
         try
         {
             await _auditHelperService.CreateAuditAsync(
@@ -371,7 +378,7 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
 
         return new GeneralResponse(true, "Se restauró con éxito la actividadcon");
     }
-    
+
 
     private async Task<UserEntity> GetUserByIdAsync(Guid userId)
     {
