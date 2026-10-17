@@ -1,6 +1,7 @@
-using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 using AppTiemposV3.SharedClases.Enums;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 //using Newtonsoft.Json;
 using static AppTiemposV3.SharedClases.Utilidades.SanitizeText;
 
@@ -30,7 +31,21 @@ public class ActivityResponseDto
     public Etapas Etapa { get; set; } = Etapas.Alta;
 
     public TimeSpan WorkedTime { get; set; }
-    
+
+    public TimeSpan WorkedTimeAlta { get; set; }
+
+    public TimeSpan WorkedTimeAprobacion { get; set; }
+
+    public TimeSpan WorkedTimeEvaluacion { get; set; }
+
+    public TimeSpan WorkedTimeEjecucion { get; set; }
+
+    public TimeSpan WorkedTimePrueba { get; set; }
+
+    public TimeSpan WorkedTimeImplementacion { get; set; }
+
+    public TimeSpan WorkedTimeValidacion { get; set; }
+
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     // public TimeSpan? TimeElapsed => EndTime.HasValue ? EndTime.Value - StartTime : null;
     public string? TimeElapsed => EndTime is not null
@@ -58,6 +73,8 @@ public class RequerimentDtoA
     public string? Descripcion {  get; set; } = string.Empty;
     
     public Estados? Estado { get; set; } = null;
+
+    public Etapas? EtapaActual { get; set; } = null;
         
     public string? ConjuntoCambios { get; set; } = null;
     
