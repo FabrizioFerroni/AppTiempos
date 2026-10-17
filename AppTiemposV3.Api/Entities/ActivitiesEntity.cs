@@ -41,7 +41,28 @@ public class ActivitiesEntity : BaseEntity
     
     [NotMapped]
     public TimeSpan WorkedTime { get; set; }
-    
+
+    [NotMapped]
+    public TimeSpan WorkedTimeAlta { get; set; }
+
+    [NotMapped]
+    public TimeSpan WorkedTimeAprobacion { get; set; }
+
+    [NotMapped]
+    public TimeSpan WorkedTimeEvaluacion { get; set; }
+
+    [NotMapped]
+    public TimeSpan WorkedTimeEjecucion { get; set; }
+
+    [NotMapped]
+    public TimeSpan WorkedTimePrueba { get; set; }
+
+    [NotMapped]
+    public TimeSpan WorkedTimeImplementacion { get; set; }
+
+    [NotMapped]
+    public TimeSpan WorkedTimeValidacion { get; set; }
+
     [Required]
     public required Guid UserId { get; set; } = Guid.Empty;
 

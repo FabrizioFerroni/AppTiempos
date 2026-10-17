@@ -1,13 +1,15 @@
-using System.Globalization;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Activities;
+using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.Web.Components.Icons;
 using AppTiemposV3.Web.Pages.Activities.Modales;
 using AppTiemposV3.Web.Pages.Requeriments.Modals;
 using AppTiemposV3.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Globalization;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
 
@@ -21,7 +23,11 @@ public partial class Details : ComponentBase, IDisposable
     [Inject] private NotificationService Toltip { get; set; } = default!;
     [Inject] private IActivityContract<ActivityResponseDto>  ActivityService { get; set; } = null!;
     [Inject] private NavigationManager Nav { get; set; } = null!;
-    
+
+    private bool _mostrarDetalleEtapas;
+
+    private void ToggleDetalleEtapas() => _mostrarDetalleEtapas = !_mostrarDetalleEtapas;
+
     private bool IsLoadingData { get; set; } = true;
     private ActivityResponseDto? ActivityRes { get; set; }
     
@@ -117,18 +123,7 @@ public partial class Details : ComponentBase, IDisposable
     }
 
     private string ObtenerTiempoDesarrolloSP(string storypoints)
-    {
-        /*double storyPointsStr = Double.Parse(storypoints, CultureInfo.InvariantCulture);
-        if (storypoints == "0:00")
-        {
-            return "0h 00m";
-        }
-        
-        int horas = (int)storyPointsStr;
-        int minutos = (int)Math.Round((storyPointsStr - horas) * 60);
-        
-        return $"{horas.ToString("0")}m {minutos.ToString("00")}m";*/
-        
+    {        
         if (!double.TryParse(storypoints, NumberStyles.Any, CultureInfo.InvariantCulture, out double storyPoints))
             storyPoints = 0.0;
         
@@ -175,12 +170,6 @@ public partial class Details : ComponentBase, IDisposable
                 porcentaje = 1;
                 break;
         }
-
-        /*double horasEstimadas = storyPoints * porcentaje;
-        int horas = (int)horasEstimadas;
-        int minutos = (int)Math.Round((horasEstimadas - horas) * 60);
-
-        return $"{horas.ToString("0")}m {minutos.ToString("00")}m";*/
         
         int totalSeconds = (int)Math.Round(storyPoints * porcentaje * 3600.0);
         
@@ -209,85 +198,105 @@ public partial class Details : ComponentBase, IDisposable
 
         return $"{horas}h {minutos:00}m";
     }
-    
-    private string ObtainTimeEstimatedHMS(string storyPointsStr, string area)
+
+    private TimeSpan ObtainTimeEstimatedNew(string storyPointsStr, string area)
     {
-        // Parsear de forma segura con InvariantCulture
         if (!double.TryParse(storyPointsStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double storyPoints))
             storyPoints = 0;
-        double porcentaje = 0;
-        
-        switch (area)
+
+        double porcentaje = area switch
         {
-            case "Desarrollo":
-                porcentaje = 0.8;
-                break;
-            case "Testing":
-                porcentaje = 0.2;
-                break;
-            default:
-                porcentaje = 1;
-                break;
-        }
-        
-        double horasEstimadas = storyPoints * porcentaje;
+            "Desarrollo" => 0.8,
+            "Testing" => 0.2,
+            _ => 1
+        };
 
-        // Convertir a segundos totales y redondear
-        int totalSeconds = (int)Math.Round(horasEstimadas * 3600.0);
+        int totalSeconds = (int)Math.Round(storyPoints * porcentaje * 3600.0);
 
-        int horas = totalSeconds / 3600;
-        int minutos = (totalSeconds % 3600) / 60;
-        int segundos = 0;
-
-        return $"{horas:00}:{minutos:00}:{segundos:00}";
+        return TimeSpan.FromMinutes(totalSeconds / 60);
     }
 
-    private StatusItem ObtainStatus(TimeSpan workedTime, string storypoints, string area)
+    private string ObtainTimeEstimatedHMS(string storyPointsStr, string area)
     {
-        string storyPointInHour = ObtainTimeEstimatedHMS(storypoints, area);
-        TimeSpan timeSpan = new TimeSpan(workedTime.Hours, workedTime.Minutes, 0);
-        
-        Console.WriteLine($"Tiempo total del requerimiento: {storyPointInHour}");
-        Console.WriteLine($"Tiempo total de las tareas: {timeSpan}");
+        TimeSpan ts = ObtainTimeEstimatedNew(storyPointsStr, area);
+        return $"{(int)ts.TotalHours:00}:{ts.Minutes:00}:00";
+    }
 
-        // Parseamos ese string a TimeSpan
-        
-        TimeSpan estimatedTime;
-        if (!TimeSpan.TryParse(storyPointInHour, out estimatedTime))
+    private static bool TieneDetalleEtapas(ActivityResponseDto act)
+    {
+        TimeSpan[] tiempos =
         {
-            // Si viene algo como "50:27:00", tratamos los dos primeros como minutos
-            string[] parts = storyPointInHour.Split(':');
-            if (parts.Length == 3 && int.Parse(parts[0]) >= 24) // más de 24 horas => probablemente minutos
-            {
-                int minutes = int.Parse(parts[0]);
-                int seconds = int.Parse(parts[1]);
-                int milliseconds = int.Parse(parts[2]);
-                estimatedTime = new TimeSpan(0, minutes, seconds); // hh:mm:ss -> 0h + X min + Y sec
-            }
-            else
-            {
-                estimatedTime = TimeSpan.Zero;
-            }
+            act.WorkedTimeAlta,
+            act.WorkedTimeAprobacion,
+            act.WorkedTimeEvaluacion,
+            act.WorkedTimeEjecucion,
+            act.WorkedTimePrueba,
+            act.WorkedTimeImplementacion,
+            act.WorkedTimeValidacion
+        };
+
+        return tiempos.Count(t => t > TimeSpan.Zero) >= 2;
+    }
+
+    private static TimeSpan GetWorkedTimeActual(ActivityResponseDto act) => act.Requeriment.EtapaActual switch
+    {
+        Etapas.Alta => act.WorkedTimeAlta,
+        Etapas.Aprobacion => act.WorkedTimeAprobacion,
+        Etapas.Evaluacion => act.WorkedTimeEvaluacion,
+        Etapas.Ejecucion => act.WorkedTimeEjecucion,
+        Etapas.Prueba => act.WorkedTimePrueba,
+        Etapas.Implementacion => act.WorkedTimeImplementacion,
+        Etapas.Validacion => act.WorkedTimeValidacion,
+        _ => TimeSpan.Zero
+    };
+
+    private StatusItem ObtainStatus(TimeSpan workedTime, string storypoints, string area, Etapas? etapa, string? category)
+    {
+        TimeSpan estimatedTime = ObtainTimeEstimatedNew(storypoints, area);
+
+        TimeSpan worked = TimeSpan.FromMinutes(Math.Floor(workedTime.TotalMinutes));
+
+        // Solo se evalúa en ejecución, para Desarrollo o Testing, y si existe una estimación
+        bool aplicaControl = etapa == Etapas.Ejecucion
+                             && (area == "Desarrollo" || area == "Testing")
+                             && estimatedTime > TimeSpan.Zero;
+
+        string status = string.Empty;
+
+        if (aplicaControl)
+        {
+            if (worked > estimatedTime) status = "over";
+            else if (worked < estimatedTime) status = "under";
+            else status = "within";
         }
 
-        // Determinamos el estado comparando los tiempos
-        string status;
-        
-        if (timeSpan > estimatedTime)
-            status = "over";
-        else if (timeSpan < estimatedTime)
-            status = "under";
-        else
-            status = "within";
-
-        // Creamos el texto descriptivo
-        string resultTxt = GetTimeStatusText(status);
-
-        // Devolvemos el objeto con su icono y texto
-        StatusItem st = new StatusItem(GetItemIcon(status), resultTxt);
-        return st;
+        return new StatusItem(GetItemIcon(status), GetTimeStatusText(status));
     }
-    
+
+    private static string FormatTimeNew(TimeSpan time) => $"{(int)time.TotalHours}h {time.Minutes:00}m";
+
+    private List<(string Nombre, TimeSpan Tiempo, bool EsActual)> GetTiemposPorEtapa(ActivityResponseDto activity)
+    {
+        Etapas actual = (Etapas)activity.Requeriment.EtapaActual!;
+
+        (Etapas Etapa, TimeSpan Tiempo)[] etapas =
+        {
+            (Etapas.Alta, activity.WorkedTimeAlta),
+            (Etapas.Aprobacion, activity.WorkedTimeAprobacion),
+            (Etapas.Evaluacion, activity.WorkedTimeEvaluacion),
+            (Etapas.Ejecucion, activity.WorkedTimeEjecucion),
+            (Etapas.Prueba, activity.WorkedTimePrueba),
+            (Etapas.Implementacion, activity.WorkedTimeImplementacion),
+            (Etapas.Validacion, activity.WorkedTimeValidacion)
+        };
+
+        return etapas
+            .Where(e => e.Tiempo > TimeSpan.Zero || e.Etapa == actual)
+            .OrderByDescending(e => e.Etapa)
+            .Select(e => (e.Etapa.ToString(), e.Tiempo, e.Etapa == actual))
+            .ToList();
+    }    
+
     private static RenderFragment GetItemIcon(string status) => builder =>
     {
         switch (status)

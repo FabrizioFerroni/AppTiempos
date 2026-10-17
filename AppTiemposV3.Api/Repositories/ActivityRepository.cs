@@ -32,6 +32,7 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
     private readonly IAuditHelperService _auditHelperService;
     private readonly IEntityIdProvider _entityIdProvider;
     private Guid _userId => _userContext.GetUserId();
+    private sealed record IntervaloActividad(Etapas Etapa, TimeOnly StartTime, TimeOnly? EndTime);
 
     public ActivityRepository(AppDbContext dbCxt, IMapper iMapper, UserManager<UserEntity> userManager, IUserContract userContext, IGenericContract genericContract, IAuditHelperService auditHelperService, IEntityIdProvider entityIdProvider)
     {
@@ -129,6 +130,39 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
         return new DataResponse<ActivityResponseDto> (true, actReq, HttpStatusCode.OK);
     }
 
+    private static TimeSpan CalcularDuracion(IntervaloActividad intervalo)
+    {
+        TimeSpan start = intervalo.StartTime.ToTimeSpan();
+        TimeSpan end = intervalo.EndTime?.ToTimeSpan() ?? start;
+        return end - start;
+    }
+
+    private async Task SetWorkedTimesAsync(ActivitiesEntity act)
+    {
+        List<IntervaloActividad> intervalos = await _dbCxt.Activities
+            .Where(a => !a.IsDeleted && a.RequerimentId == act.RequerimentId)
+            .Select(a => new IntervaloActividad(a.Etapa, a.StartTime, a.EndTime))
+            .ToListAsync();
+
+        // Una sola pasada: tiempo acumulado por etapa
+        Dictionary<Etapas, TimeSpan> porEtapa = intervalos
+            .GroupBy(i => i.Etapa)
+            .ToDictionary(
+                g => g.Key,
+                g => TimeSpan.FromTicks(g.Sum(i => CalcularDuracion(i).Ticks)));
+
+        act.WorkedTimeAlta = porEtapa.GetValueOrDefault(Etapas.Alta);
+        act.WorkedTimeAprobacion = porEtapa.GetValueOrDefault(Etapas.Aprobacion);
+        act.WorkedTimeEvaluacion = porEtapa.GetValueOrDefault(Etapas.Evaluacion);
+        act.WorkedTimeEjecucion = porEtapa.GetValueOrDefault(Etapas.Ejecucion);
+        act.WorkedTimePrueba = porEtapa.GetValueOrDefault(Etapas.Prueba);
+        act.WorkedTimeImplementacion = porEtapa.GetValueOrDefault(Etapas.Implementacion);
+        act.WorkedTimeValidacion = porEtapa.GetValueOrDefault(Etapas.Validacion);
+
+        // General: todas las etapas
+        act.WorkedTime = TimeSpan.FromTicks(porEtapa.Values.Sum(t => t.Ticks));
+    }
+
     public async Task<DataResponse<ActivityResponseDto>> GetActivityByUrl(string url)
     {
         UserEntity? user = await GetUserByIdAsync(_userId);
@@ -141,22 +175,9 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
         
         if(act == null)
             throw new NotFoundException("No activities found");
-       
-        double totalWorked = _dbCxt.Activities
-            .Where(a => !a.IsDeleted)
-            .Where(a => a.RequerimentId == act.RequerimentId)
-            .AsEnumerable() 
-            .Sum(a =>
-                {
-                    TimeSpan start = a.StartTime.ToTimeSpan();
-                    TimeSpan end = a.EndTime?.ToTimeSpan() ?? start;
-                    return (end - start).TotalSeconds;
-                }
-            );
 
-        TimeSpan totalTime = TimeSpan.FromSeconds(totalWorked);
-        act.WorkedTime = totalTime;
-        
+        await SetWorkedTimesAsync(act);
+
         ActivityResponseDto actReq = _iMapper.Map<ActivityResponseDto>(act);
 
         return new DataResponse<ActivityResponseDto> (true, actReq, HttpStatusCode.OK);
