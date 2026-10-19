@@ -13,7 +13,7 @@ namespace AppTiemposV3.SharedClases.Contracts
         Task<Pageable<List<T>>> GetAllRequerimentsPag(PaginationDto pagination, string buscarPor);
 
         Task<DataResponse<T>> GetRequerimentporId(Guid id);
-        
+
         Task<DataResponse<T>> GetRequerimentporReqId(string reqId);
 
         Task<GeneralResponse> CreateRequeriment(CreateRequerimentDto dto);
@@ -21,9 +21,11 @@ namespace AppTiemposV3.SharedClases.Contracts
         Task<GeneralResponse> UpdateRequeriment(Guid id, UpdateRequerimentDto dto);
 
         Task<GeneralResponse> DeleteRequeriment(Guid id);
-        
+
         Task<GeneralResponse> RestoreRequeriment(Guid id);
-        
+
         Task<DataResponse<Guid>> GetIdByReqId(string reqId);
+
+        Task<DataResponse<Guid?>> FindIdByReqId(string reqId);
     }
 }

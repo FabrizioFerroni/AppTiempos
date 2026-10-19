@@ -71,12 +71,12 @@ namespace AppTiemposV3.Api.Repositories
 
             RequerimentsEntity req = _iMapper.Map<RequerimentsEntity>(dto);
             req.UserId = _userId;
-            
-            List<Guid> allowedCategoryGuids  = await _dbCxt.Categories
-                .Where(c => _allowedCategoryNames.Contains(c.Name)) 
+
+            List<Guid> allowedCategoryGuids = await _dbCxt.Categories
+                .Where(c => _allowedCategoryNames.Contains(c.Name))
                 .Select(c => c.Id)
                 .ToListAsync();
-            
+
             if (allowedCategoryGuids.Contains(dto.CategoryId))
             {
                 req.FolderId = await FolderIdIdentity(user.Id);
@@ -85,11 +85,11 @@ namespace AppTiemposV3.Api.Repositories
             {
                 req.FolderId = null;
             }
-            
+
             req.Estado = Estados.Pendiente;
-            req.EtapaActual = Etapas.Alta;
+            req.EtapaActual = (Etapas)dto.EtapaActual!;
             req.ConjuntoCambios = null;
-            
+
             await _dbCxt.Requeriments.AddAsync(req);
 
             await EnsureSavedAsync("Hubo un error al crear el requerimiento", _dbCxt);
@@ -129,8 +129,8 @@ namespace AppTiemposV3.Api.Repositories
 
             req.IsDeleted = true;
             req.DeletedAt = DateTime.Now;
-            
-            
+
+
             _dbCxt.Entry(req).State = EntityState.Modified;
 
             await EnsureSavedAsync("Hubo problemas para eliminar el registro", _dbCxt);
@@ -153,7 +153,7 @@ namespace AppTiemposV3.Api.Repositories
 
             return new GeneralResponse(true, "Requerimiento eliminado con éxito");
         }
-        
+
         /// <summary>
         /// Restaura un requerimiento previamente marcado como eliminado para un usuario específico.
         /// </summary>
@@ -192,23 +192,30 @@ namespace AppTiemposV3.Api.Repositories
             return new GeneralResponse(true, "Requerimiento restaurado con éxito");
         }
 
+        private static string NormalizarReqId(string reqId) => reqId.StartsWith("ReqID") ? reqId["ReqID".Length..] : reqId;
+
+        public async Task<DataResponse<Guid?>> FindIdByReqId(string reqId)
+        {
+            string normalizado = NormalizarReqId(reqId);
+
+            Guid? id = await _dbCxt.Requeriments
+                .AsNoTracking()
+                .Where(r => r.ReqID == normalizado && r.UserId == _userId)
+                .Select(r => (Guid?)r.Id)
+                .FirstOrDefaultAsync();
+
+            return new DataResponse<Guid?>(true, id, HttpStatusCode.OK);
+        }
+
         public async Task<DataResponse<Guid>> GetIdByReqId(string reqId)
         {
-            if (reqId.StartsWith("ReqID"))
-            {
-                reqId =  reqId.Replace("ReqID", "");
-            }
-        
-            RequerimentsEntity? req = await _dbCxt.Requeriments
-                .FirstOrDefaultAsync(r => r.ReqID == reqId && r.UserId == _userId);
-        
-            if (req == null)
+
+            DataResponse<Guid?> res = await FindIdByReqId(reqId);
+
+            if (res.Data is not Guid id)
                 throw new NotFoundException("No requeriment found");
 
-
-            RequerimentResponseDto resCat = _iMapper.Map<RequerimentResponseDto>(req);
-
-            return new DataResponse<Guid> (true, resCat.Id, HttpStatusCode.OK);
+            return new DataResponse<Guid>(true, id, HttpStatusCode.OK);
         }
 
         /// <summary>
@@ -250,10 +257,10 @@ namespace AppTiemposV3.Api.Repositories
                 }
                 else
                 {
-                   pagination.Search = category!.Id.ToString();
+                    pagination.Search = category!.Id.ToString();
                 }
             }
-            
+
             return await _genericContract.GetAllPaginatedAsync<RequerimentsEntity, RequerimentResponseDto>(pagination,
                 buscarPor, _userId);
         }
@@ -269,11 +276,11 @@ namespace AppTiemposV3.Api.Repositories
             UserEntity user = await GetUserByIdAsync(_userId);
 
             RequerimentsEntity req = await GetRequerimentByIdAsync(id, user.Id);
-            
+
             double totalWorked = _dbCxt.Activities
                 .Where(a => !a.IsDeleted)
                 .Where(a => a.RequerimentId == req.Id)
-                .AsEnumerable() 
+                .AsEnumerable()
                 .Sum(a =>
                     {
                         TimeSpan start = a.StartTime.ToTimeSpan();
@@ -291,7 +298,7 @@ namespace AppTiemposV3.Api.Repositories
             resReq.Etapa = await GetEtapaActivity(req.Id);
             resReq.TotalRejections = await GetRejections(req.Id, user.Id);
 
-            return new DataResponse<RequerimentResponseDto> (true, resReq, HttpStatusCode.OK);
+            return new DataResponse<RequerimentResponseDto>(true, resReq, HttpStatusCode.OK);
         }
 
         /// <summary>
@@ -307,7 +314,7 @@ namespace AppTiemposV3.Api.Repositories
             RequerimentsEntity? req = await _dbCxt.Requeriments.FirstOrDefaultAsync(r => r.ReqID == reqId && r.UserId == user.Id);
 
 
-            if(req is null)
+            if (req is null)
                 throw new NotFoundException("Requerimiento no encontrado");
 
             RequerimentResponseDto? resReq = _iMapper.Map<RequerimentResponseDto>(req);
@@ -338,13 +345,13 @@ namespace AppTiemposV3.Api.Repositories
             {
                 throw new BadRequestException("No se puede finalizar el requerimiento sin antes tener un estado de validación.");
             }
-            
+
             _iMapper.Map(dto, req);
-            
+
             req.Id = id;
             req.UserId = user.Id;
             req.ModifiedAt = DateTime.Now;
-            
+
             _dbCxt.Entry(req).State = EntityState.Modified;
 
             await EnsureSavedAsync("Hubo un error al actualizar el req. Intente mas tarde", _dbCxt);
@@ -368,7 +375,7 @@ namespace AppTiemposV3.Api.Repositories
 
             return new GeneralResponse(true, "Se actualizo con exito el req");
         }
-        
+
         /// <summary>
         /// Verifica si existe un requerimiento con un ReqID específico para un usuario, 
         /// opcionalmente excluyendo un requerimiento por su Id.
@@ -436,7 +443,7 @@ namespace AppTiemposV3.Api.Repositories
 
             return ultimaActividad.Etapa;
         }
-        
+
         /// <summary>
         /// Calcula el siguiente FolderId disponible para un usuario específico.
         /// </summary>
@@ -447,7 +454,7 @@ namespace AppTiemposV3.Api.Repositories
             int maxFolderId = await _dbCxt.Requeriments
                 .Where(r => r.UserId == userId && r.FolderId != null)
                 .MaxAsync(r => (int?)r.FolderId) ?? 0;
-            
+
             return maxFolderId + 1;
         }
 
@@ -456,19 +463,19 @@ namespace AppTiemposV3.Api.Repositories
             int totalRejections = 0;
 
             StringBuilder? sb = new StringBuilder();
-            
+
             sb.AppendLine("SELECT");
             sb.AppendLine("  IFNULL(R.TotalRejections, 0) AS TotalRejections");
             sb.AppendLine("FROM rechazos AS R");
             sb.AppendLine("WHERE R.RequerimentId = @RequerimentId");
             sb.AppendLine("  AND R.UserId = @UserId");
             sb.AppendLine("  AND R.IsDeleted = 0");
-            
+
             string sql = sb.ToString();
-        
+
             MySqlParameter requerimentFiltro = new MySqlParameter("@RequerimentId", requerimentId);
             MySqlParameter userFiltro = new MySqlParameter("@UserId", userId);
-        
+
             List<Dictionary<string, object?>> sqlResponse = await QueryRawAsync(_dbCxt, sql, requerimentFiltro, userFiltro);
 
             foreach (Dictionary<string, object?> row in sqlResponse)
@@ -478,7 +485,7 @@ namespace AppTiemposV3.Api.Repositories
 
             return totalRejections;
         }
-        
+
         private static List<AuditChangeDto> BuildChanges(
             RequerimentsEntity newReq,
             RequerimentsEntity? oldReq = null,
@@ -493,7 +500,7 @@ namespace AppTiemposV3.Api.Repositories
                 AddCreate(nameof(newReq.Cliente), newReq.Cliente);
                 AddCreate(nameof(newReq.Url), newReq.Url);
                 string[]? newCambios = newReq.ConjuntoCambios;
-                if(newCambios is { Length: > 0 })
+                if (newCambios is { Length: > 0 })
                 {
                     AddCreate(nameof(newReq.ConjuntoCambios), string.Join(", ", newCambios));
                 }
@@ -511,19 +518,19 @@ namespace AppTiemposV3.Api.Repositories
                 if (!string.IsNullOrWhiteSpace(dto.Titulo) &&
                     dto.Titulo != oldReq.Titulo)
                     AddUpdate(nameof(newReq.Titulo), oldReq.Titulo, newReq.Titulo);
-                
+
                 if (!string.IsNullOrWhiteSpace(dto.StoryPoint) &&
                     dto.StoryPoint != oldReq.StoryPoint)
                     AddUpdate(nameof(newReq.StoryPoint), oldReq.StoryPoint, newReq.StoryPoint);
-                
+
                 if (!string.IsNullOrWhiteSpace(dto.Url) &&
                     dto.Url != oldReq.Url)
                     AddUpdate(nameof(newReq.Url), oldReq.Url, newReq.Url);
-                
+
                 if (dto.CategoryId != Guid.Empty &&
                     dto.CategoryId != oldReq.CategoryId)
                     AddUpdate(nameof(newReq.CategoryId), oldReq.CategoryId, newReq.CategoryId);
-                
+
                 if (!string.IsNullOrWhiteSpace(dto.Descripcion) &&
                     dto.Descripcion != oldReq.Descripcion)
                     AddUpdate(nameof(newReq.Descripcion), oldReq.Descripcion, newReq.Descripcion);
@@ -548,9 +555,9 @@ namespace AppTiemposV3.Api.Repositories
                 }
                 else
                 {
-                    AddCreate(nameof(newReq.ConjuntoCambios), NormalizeValue(newReq.ConjuntoCambios));  
+                    AddCreate(nameof(newReq.ConjuntoCambios), NormalizeValue(newReq.ConjuntoCambios));
                 }
-                
+
                 if (dto.Estado.HasValue &&
                     dto.Estado.Value != oldReq.Estado)
                     AddUpdate(nameof(newReq.Estado), oldReq.Estado, newReq.Estado);
@@ -570,12 +577,12 @@ namespace AppTiemposV3.Api.Repositories
                     NewValue = NormalizeValue(value?.ToString())
                 });
             }
-            
+
             void AddUpdate(string field, object? oldValue, object? newValue)
             {
                 string? oldVal = oldValue?.ToString();
                 string? newVal = newValue?.ToString();
-                
+
                 if (oldVal != newVal)
                 {
                     changes.Add(new AuditChangeDto
@@ -587,7 +594,7 @@ namespace AppTiemposV3.Api.Repositories
                 }
             }
         }
-        
+
         private static bool AreDifferent(string[]? oldValue, string[]? newValue)
         {
             if (oldValue == null && newValue == null)

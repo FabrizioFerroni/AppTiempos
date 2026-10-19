@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using AppTiemposV3.SharedClases.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace AppTiemposV3.SharedClases.DTOs.Requeriments
 {
@@ -49,6 +50,8 @@ namespace AppTiemposV3.SharedClases.DTOs.Requeriments
                 .Where(x => x != value)
                 .ToArray();
         }
+
+        public Etapas? EtapaActual { get; set; }
 
     }
 }

@@ -1,11 +1,11 @@
-using System.Net;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using AppTiemposV3.SharedClases.Annotations;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static AppTiemposV3.SharedClases.GenericModels.Generics;
 
@@ -24,16 +24,16 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
     //
     public RequerimentsService(HttpClient httpClient)
     {
-         _httpClient = httpClient;
+        _httpClient = httpClient;
     }
 
     public async Task<DataAResponse<RequerimentResponseDto>> GetAllRequeriments()
     {
         DataAResponse<RequerimentResponseDto>? requeriments = await _httpClient.GetFromJsonAsync<DataAResponse<RequerimentResponseDto>>($"{BaseUrl}/requeriments/todos", options);
-        
-        if (requeriments is null) 
+
+        if (requeriments is null)
             return new DataAResponse<RequerimentResponseDto>(true, [], HttpStatusCode.OK);
-        
+
         return requeriments;
     }
 
@@ -48,33 +48,33 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
         {
             buscarPor = "conjuntocambios";
         }
-        
+
         if (buscarPor == "categoria")
         {
             buscarPor = "categoryid";
         }
-        
-        if(pagination.Ordenar == "")
+
+        if (pagination.Ordenar == "")
         {
             pagination.Ordenar = "ReqID";
         }
-        
-        if(pagination.Ordenar == "Conjunto de Cambios")
+
+        if (pagination.Ordenar == "Conjunto de Cambios")
         {
             pagination.Ordenar = "ConjuntoCambios";
         }
-        
-        if(pagination.Ordenar == "Categoria")
+
+        if (pagination.Ordenar == "Categoria")
         {
             pagination.Ordenar = "categoryid";
         }
-        
+
         string url = $"{BaseUrl}/requeriments?pagina={pagination.Pagina}" +
                      $"&registrosPorPagina={pagination.RegistrosPorPagina}" +
                      $"&buscarPor={buscarPor}" +
                      $"&ascending={pagination.Ascending}" +
                      $"&ordenar={pagination.Ordenar}";
-        
+
         //if (!string.IsNullOrWhiteSpace(pagination.Search))
         if (!string.IsNullOrWhiteSpace(pagination.Search))
             url += $"&search={pagination.Search}";
@@ -86,10 +86,10 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
     public async Task<DataResponse<RequerimentResponseDto>> GetRequerimentporId(Guid id)
     {
         DataResponse<RequerimentResponseDto>? requeriment = await _httpClient.GetFromJsonAsync<DataResponse<RequerimentResponseDto>>($"{BaseUrl}/requeriments/{id}", options);
-        
-        if (requeriment is null) 
+
+        if (requeriment is null)
             return new DataResponse<RequerimentResponseDto>(true, null!, HttpStatusCode.OK);
-        
+
         return requeriment;
     }
 
@@ -97,42 +97,42 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
     {
         if (reqId.StartsWith("ReqID"))
         {
-            reqId =  reqId.Replace("ReqID", "");
+            reqId = reqId.Replace("ReqID", "");
         }
-        
+
         DataResponse<RequerimentResponseDto>? requeriment = await _httpClient.GetFromJsonAsync<DataResponse<RequerimentResponseDto>>($"{BaseUrl}/requeriments/req/{reqId}", options);
-        
-        if (requeriment is null) 
+
+        if (requeriment is null)
             return new DataResponse<RequerimentResponseDto>(true, null!, HttpStatusCode.OK);
-        
+
         return requeriment;
     }
 
     public async Task<GeneralResponse> CreateRequeriment(CreateRequerimentDto dto)
     {
         HttpResponseMessage? response = await _httpClient.PostAsync($"{BaseUrl}/requeriments", GenerateStringContent(SerializeObj(dto)));
-        
+
         string apiResponse = await response.Content.ReadAsStringAsync();
-        
+
         ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
-        
-        if(!response.IsSuccessStatusCode)
+
+        if (!response.IsSuccessStatusCode)
             return new GeneralResponse(false, resultError?.Message!);
-        
+
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
     public async Task<GeneralResponse> UpdateRequeriment(Guid id, UpdateRequerimentDto dto)
     {
         HttpResponseMessage? response = await _httpClient.PutAsync($"{BaseUrl}/requeriments/{id}", GenerateStringContent(SerializeObj(dto)));
-        
+
         string apiResponse = await response.Content.ReadAsStringAsync();
-        
+
         ErrorResponse? resultError = DeserializeJsonString<ErrorResponse>(apiResponse);
-        
-        if(!response.IsSuccessStatusCode)
+
+        if (!response.IsSuccessStatusCode)
             return new GeneralResponse(false, resultError?.Message!);
-        
+
         return DeserializeJsonString<GeneralResponse>(apiResponse);
     }
 
@@ -145,7 +145,7 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
             return new GeneralResponse(false, "Error al eliminar el requerimiento.");
         }
 
-        return await response.Content.ReadFromJsonAsync<GeneralResponse>() ??  new GeneralResponse(false, "Hubo un error."); 
+        return await response.Content.ReadFromJsonAsync<GeneralResponse>() ?? new GeneralResponse(false, "Hubo un error.");
     }
 
     public Task<GeneralResponse> RestoreRequeriment(Guid id)
@@ -157,14 +157,22 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
     {
         if (reqId.StartsWith("ReqID"))
         {
-            reqId =  reqId.Replace("ReqID", "");
+            reqId = reqId.Replace("ReqID", "");
         }
-        
+
         DataResponse<Guid>? requerimentId = await _httpClient.GetFromJsonAsync<DataResponse<Guid>>($"{BaseUrl}/requeriments/rid/{reqId}", options);
-        
-        if (requerimentId is null) 
+
+        if (requerimentId is null)
             return new DataResponse<Guid>(true, Guid.Empty, HttpStatusCode.OK);
-        
+
         return requerimentId;
+    }
+
+    public async Task<DataResponse<Guid?>> FindIdByReqId(string reqId)
+    {
+        DataResponse<Guid?>? res = await _httpClient.GetFromJsonAsync<DataResponse<Guid?>>(
+            $"api/requeriments/exists-by-reqid/{Uri.EscapeDataString(reqId)}", options);
+
+        return res ?? new DataResponse<Guid?>(false, null, HttpStatusCode.InternalServerError);
     }
 }

@@ -1,3 +1,4 @@
+using AppTiemposV3.SharedClases.Constants;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Categories;
@@ -5,25 +6,31 @@ using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.Web.Services;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using static AppTiemposV3.SharedClases.Policies.EtapaPolicy;
 using static NanoidDotNet.Nanoid;
 using static NanoidDotNet.Nanoid.Alphabets;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
-using static AppTiemposV3.Web.Utils.Helpers;
 
 namespace AppTiemposV3.Web.Pages.Requeriments.Modals;
 
 public partial class EditRequeriment : ComponentBase
 {
-    public Guid Id { get; set; }
+    //#region Inyeccion de dependencias
     [Inject] private IJSRuntime? JS { get; set; }
     [Inject] private IRequerimentContract<RequerimentResponseDto> RequerimentsService { get; set; } = null!;
     [Inject] private ICategoryContract<CategoryResponseDto> CategoriesService { get; set; } = null!;
     [Inject] private ColorService ColorService { get; set; } = null!;
-    
-    [Parameter] public EventCallback<SavedEventArgs> OnSaved { get; set; }
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+    //#endregion
 
+    //#region parametros configurables
+    [Parameter] public Guid Id { get; set; }
+    [Parameter] public EventCallback<SavedEventArgs> OnSaved { get; set; }
+    //#endregion
+
+    //#region Variables
     private bool isSuccess = false;
     private string IdModalStr = Generate(LowercaseLettersAndDigits, 10);
     private bool isErrorNReq = false;
@@ -34,7 +41,7 @@ public partial class EditRequeriment : ComponentBase
     private bool IsLoading = false;
     private string _cssConjuntosCambios = "flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-[hsl(var(--base))] ring-offset-[hsl(var(--background))] file:border-0 file:bg-[hsl(var(--transparent))] file:text-sm file:font-medium file:text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400";
     private Dictionary<string, (string Mensaje, bool EsExitoso)> mensajes = new();
-    
+
     private UpdateRequerimentDto requerimentUpDto = new()
     {
         Id = Guid.Empty,
@@ -43,50 +50,107 @@ public partial class EditRequeriment : ComponentBase
         Cliente = null,
         CategoryId = default
     };
-    
+
     private ElementReference showModalRef;
     private ElementReference closeModalRef;
-    
+
+    private Areas _areaUsuario = Areas.None;
+
+    private static readonly HashSet<string> SlugsIncidente = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "incidente-no-critico",
+        "incidente-externo",
+        "incidente-critico",
+        "incidente-de-usuario",
+        "incidente-de-implementacion",
+        "incidente-interno",
+        "incidente-de-configuracion",
+    };
+
+    private List<CategoryResponseDto> _categories = new();
+    private string? _slugCategoriaSeleccionada;
+
+    private readonly List<Etapas> OptionsEtapas = Enum.GetValues<Etapas>()
+    .Where(e => e != Etapas.None)
+    .ToList();
+    private Etapas EtapaSeleccionada { get; set; }
+    private bool _etapaEditadaManualmente;
+    private const string StoryPointEvaluacion = "0.00";
+
+    private bool EsEvaluacion => EtapaSeleccionada == Etapas.Evaluacion;
+    private bool EsIncidente =>
+    _slugCategoriaSeleccionada is not null && SlugsIncidente.Contains(_slugCategoriaSeleccionada);
+
+    private bool IsCategoryIdSelected = false;
+    private List<string> OptionsCategories = new() { };
+    private Guid IdModalCategory = Guid.NewGuid();
+
+    private static readonly HashSet<string> SlugsNuevo = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "nuevo"
+    };
+
+    private bool EsNuevo => _slugCategoriaSeleccionada is not null && SlugsNuevo.Contains(_slugCategoriaSeleccionada);
+
+    private string? CategoriaSeleccionada = "";
+
+    //#endregion
+
+    //#region Inicializacion
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState state = await AuthStateProvider.GetAuthenticationStateAsync();
+        string? claim = state.User.FindFirst(CustomClaimTypes.Area)?.Value;
+
+        if (Enum.TryParse(claim, ignoreCase: true, out Areas area) && Enum.IsDefined(area))
+            _areaUsuario = area;
+
+        AplicarReglaDeEtapa();
+    }
+    //#endregion
+
     private List<Estados> OptionsEstados = Enum.GetValues(typeof(Estados))
-        .Cast<Estados>()
-        .Where(e => e != Estados.None)
-        .ToList();
-    
+            .Cast<Estados>()
+            .Where(e => e != Estados.None)
+            .ToList();
+
     private Estados? EstadoSeleccionadaNullable = null;
-    
+
     private Estados EstadoSeleccionada
     {
         get => EstadoSeleccionadaNullable ?? default; // default es el primer valor del enum
         set => EstadoSeleccionadaNullable = value;
     }
-        
+
     private Task OnEstadoSelectedChanged(Estados value)
     {
         EstadoSeleccionada = value;
         requerimentUpDto!.Estado = value;
         return Task.CompletedTask;
     }
-    
-    private List<Etapas> OptionsEtapas = Enum.GetValues(typeof(Etapas))
-        .Cast<Etapas>()
-        .Where(e => e != Etapas.None)
-        .ToList();
-    
-    private Etapas? EtapaSeleccionadaNullable = Etapas.Alta;
-    
-    private Etapas EtapaSeleccionada
+
+    private void AplicarReglaDeEtapa()
     {
-        get => EtapaSeleccionadaNullable ?? default; // default es el primer valor del enum
-        set => EtapaSeleccionadaNullable = value;
+        if (!_etapaEditadaManualmente)
+        {
+            Etapas sugerida = ObtenerDefault(_areaUsuario, EsIncidente);
+            EtapaSeleccionada = sugerida;
+            requerimentUpDto.EtapaActual = sugerida;
+            _etapaEditadaManualmente = false;
+        }
+
+        SincronizarStoryPoint();
     }
-        
+
     private Task OnEtapaSelectedChanged(Etapas value)
     {
+        _etapaEditadaManualmente = true;
         EtapaSeleccionada = value;
         requerimentUpDto!.EtapaActual = value;
+        SincronizarStoryPoint();
         return Task.CompletedTask;
     }
-    
+
     public async Task ShowAsync(Guid id)
     {
         Id = id;
@@ -96,7 +160,7 @@ public partial class EditRequeriment : ComponentBase
         await GetAllCategories();
         await LoadDataReq(id);
     }
-    
+
     private async Task LoadDataReq(Guid id, bool loadingData = true)
     {
         IsLoadingData = loadingData;
@@ -117,10 +181,15 @@ public partial class EditRequeriment : ComponentBase
             requerimentUpDto.CategoryId = requeriment!.Data.Category.Id;
             requerimentUpDto.ConjuntoCambios = requeriment?.Data.ConjuntoCambios;
 
-            await OnCategorySelectedChanged(requeriment!.Data.Category.Name);
-            await OnEstadoSelectedChanged(requeriment!.Data.Estado);
-            await OnEtapaSelectedChanged(requeriment!.Data.EtapaActual);
-            
+            SeleccionarCategoria(requeriment!.Data.Category.Name, aplicarRegla: false);
+            await OnEstadoSelectedChanged(requeriment.Data.Estado);
+
+            EtapaSeleccionada = requeriment.Data.EtapaActual;
+            requerimentUpDto.EtapaActual = requeriment.Data.EtapaActual;
+            _etapaEditadaManualmente = false;
+            SincronizarStoryPoint();
+
+
             StateHasChanged();
 
         }
@@ -141,14 +210,15 @@ public partial class EditRequeriment : ComponentBase
         IsLoading = true;
         isErrorNReq = false;
         StateHasChanged();
-        
-        try {
+
+        try
+        {
             GeneralResponse? response = await RequerimentsService!.UpdateRequeriment(requerimentUpDto.Id, requerimentUpDto);
-                
+
             if (response?.Flag == true)
             {
                 IsLoading = false;
-                
+
                 await JS!.InvokeVoidAsync("modalHelpers.clickElement", closeModalRef);
 
                 SavedEventArgs? args = new SavedEventArgs
@@ -176,8 +246,8 @@ public partial class EditRequeriment : ComponentBase
             StateHasChanged();
         }
     }
-    
-    
+
+
     private async Task SafeRunAsync(Func<Task> action)
     {
         try
@@ -189,39 +259,28 @@ public partial class EditRequeriment : ComponentBase
             Console.Error.WriteLine($"Error en fire & forget: {ex}");
         }
     }
-    
-    
+
+
     private async Task OnResetEditReq(Guid id)
     {
         await LoadDataReq(id, false);
     }
-    
-    
-    //Category seccion
-    private bool IsCategoryIdSelected = false;
-    private List<string> OptionsCategories = new() {};
-    private Guid IdModalCategory = Guid.NewGuid();
-    private readonly Guid[] IdsCategoriasCC = new Guid[]
-    {
-        Guid.Parse("9746cc10-b1ea-4a23-a984-3e7b04d762c1"),
-    };
-    private string? CategoriaSeleccionada = "";
-    
+
     private async Task HandleCategorySaved()
     {
         await GetAllCategories(); // refrescar categorías
     }
-    
+
     private void HandleCategorySelected(string categoryName)
     {
         OnCategorySelectedChanged(categoryName);
     }
-    
+
     private async Task HandleCategorySuccess(MarkupString msg)
     {
         await ShowSuccess(msg);
     }
-    
+
     private async Task ShowSuccess(MarkupString message)
     {
         messageSuccess = message;
@@ -232,16 +291,29 @@ public partial class EditRequeriment : ComponentBase
 
         messageSuccess = null;
         StateHasChanged();
-        
+
         isSuccess = false;
     }
-    
+
+    private void SincronizarStoryPoint()
+    {
+        if (EsEvaluacion)
+        {
+            requerimentUpDto.StoryPoint = StoryPointEvaluacion;
+        }
+        else if (requerimentUpDto.StoryPoint == StoryPointEvaluacion)
+        {
+            requerimentUpDto.StoryPoint = null!;
+        }
+    }
+
     public async Task GetAllCategories()
     {
         try
         {
             DataAResponse<CategoryResponseDto> categories = await CategoriesService.GetAllCategories();
             OptionsCategories = categories.Data.Select(x => x.Name).ToList()!;
+            _categories = categories.Data.ToList()!;
         }
         catch (Exception e)
         {
@@ -249,11 +321,21 @@ public partial class EditRequeriment : ComponentBase
             throw;
         }
     }
-    
+
     private Task OnCategorySelectedChanged(string value)
     {
+        SeleccionarCategoria(value, aplicarRegla: true);
+        return Task.CompletedTask;
+    }
+
+    private void SeleccionarCategoria(string value, bool aplicarRegla)
+    {
         CategoriaSeleccionada = value;
-        
+        _slugCategoriaSeleccionada = _categories.FirstOrDefault(c => c.Name == value)?.Slug;
+
+        if (aplicarRegla)
+            AplicarReglaDeEtapa();
+
         _ = SafeRunAsync(async () =>
         {
             DataResponse<Guid> categoryId = await CategoriesService.GetCategoryIdPorNombre(value);
@@ -261,11 +343,9 @@ public partial class EditRequeriment : ComponentBase
             IsCategoryIdSelected = true;
             StateHasChanged();
         });
-
-        return Task.CompletedTask;
     }
-    
-    
+
+
     private void HandleInput(ChangeEventArgs e)
     {
         string value = e.Value?.ToString() ?? string.Empty;

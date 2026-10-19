@@ -1,5 +1,7 @@
 @using AppTiemposV3.SharedClases.Constants
+@using AppTiemposV3.SharedClases.Enums
 @using Microsoft.AspNetCore.Components.Authorization
+
 <Modal IdElement="@Id"
        Id=@($"dialog-modal-{IdModalStr}")>
     <div class="px-6 my-4">
@@ -7,15 +9,13 @@
             <span class="text-gray-700 dark:text-gray-300 text-md">
                 Crear nuevo requerimiento
             </span>
-            <Button
-                Variant="ghost"
-                Size="sm"
-                Command="close"
-                CommandFor=@($"modal-{Id}")
-                Class="text-xs cursor-pointer"
-                OnClick="() => { OnResetNewReq(); }"
-            >
-                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+            <Button Variant="ghost"
+                    Size="sm"
+                    Command="close"
+                    CommandFor=@($"modal-{Id}")
+                    Class="text-xs cursor-pointer"
+                    OnClick="() => { OnResetNewReq(); }">
+                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4" />
             </Button>
         </div>
 
@@ -36,24 +36,22 @@
             </div>
         }
 
-        <EditForm Enhance Model=@requerimentDto class="space-y-4 mt-2" novalidate OnValidSubmit=@SendNewRequeriment  FormName="NewRequerimentForm">
-            <DataAnnotationsValidator/>
+        <EditForm Enhance Model=@requerimentDto class="space-y-4 mt-2" novalidate OnValidSubmit=@SendNewRequeriment FormName="NewRequerimentForm">
+            <DataAnnotationsValidator />
 
             <div class="space-y-2">
                 <Label For="url" Id="urllabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
                     Link de requerimiento
                 </Label>
                 <div class="relative">
-                    <UrlInputRequeriment
-                        @bind-Value="requerimentDto.Url"
-                        Name="url"
-                        Id="urlReq"
-                        Placeholder="URL del requerimiento"
-                        Autofocus
-                        ReqIdChanged="OnReqIdChanged"
-                    />
+                    <UrlInputRequeriment @bind-Value="requerimentDto.Url"
+                                         Name="url"
+                                         Id="urlReq"
+                                         Placeholder="URL del requerimiento"
+                                         Autofocus
+                                         ReqIdChanged="OnReqIdChanged" />
                 </div>
-                <ValidationMessage For="() => requerimentDto.Url" class="text-xs text-red-600"/>
+                <ValidationMessage For="() => requerimentDto.Url" class="text-xs text-red-600" />
             </div>
 
             <div class="space-y-2">
@@ -61,24 +59,21 @@
                     ReqID
                 </Label>
                 <div class="relative">
-                    <Input
-                        Type="text"
-                        @bind-Value="requerimentDto.ReqID"
-                        Pattern="[0-9\.]*"
-                        InputMode="numeric"
-                        DigitsOnly="true"
-                        Id="reqid"
-                        Name="reqid"
-                        Placeholder="Número de requerimiento"
-                        Autocomplete="off"
-                        MaxLength="6"
-                        Required
-
-                        Readonly=@(!string.IsNullOrWhiteSpace(requerimentDto.Url))
-                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                    />
+                    <Input Type="text"
+                           @bind-Value="requerimentDto.ReqID"
+                           Pattern="[0-9\.]*"
+                           InputMode="numeric"
+                           DigitsOnly="true"
+                           Id="reqid"
+                           Name="reqid"
+                           Placeholder="Número de requerimiento"
+                           Autocomplete="off"
+                           MaxLength="6"
+                           Required
+                           Disabled
+                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
                 </div>
-                <ValidationMessage For="() => requerimentDto.ReqID" class="text-xs text-red-600"/>
+                <ValidationMessage For="() => requerimentDto.ReqID" class="text-xs text-red-600" />
             </div>
 
             <div class="space-y-2">
@@ -86,18 +81,16 @@
                     Titulo
                 </Label>
                 <div class="relative">
-                    <Input
-                        Type="text"
-                        @bind-Value="requerimentDto.Titulo"
-                        Id="titulo"
-                        Name="titulo"
-                        Placeholder="Crear nuevo plugin"
-                        Autocomplete="off"
-                        Required
-                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                    />
+                    <Input Type="text"
+                           @bind-Value="requerimentDto.Titulo"
+                           Id="titulo"
+                           Name="titulo"
+                           Placeholder="Crear nuevo plugin"
+                           Autocomplete="off"
+                           Required
+                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
                 </div>
-                <ValidationMessage For="() => requerimentDto.Titulo" class="text-xs text-red-600"/>
+                <ValidationMessage For="() => requerimentDto.Titulo" class="text-xs text-red-600" />
             </div>
 
 
@@ -106,18 +99,16 @@
                     Cliente
                 </Label>
                 <div class="relative">
-                    <Input
-                        Type="text"
-                        @bind-Value="requerimentDto.Cliente"
-                        Id="cliente"
-                        Name="cliente"
-                        Placeholder="Cliente"
-                        Autocomplete="off"
-                        Required
-                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                    />
+                    <Input Type="text"
+                           @bind-Value="requerimentDto.Cliente"
+                           Id="cliente"
+                           Name="cliente"
+                           Placeholder="Cliente"
+                           Autocomplete="off"
+                           Required
+                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
                 </div>
-                <ValidationMessage For="() => requerimentDto.Cliente" class="text-xs text-red-600"/>
+                <ValidationMessage For="() => requerimentDto.Cliente" class="text-xs text-red-600" />
             </div>
 
             <div class="space-y-2">
@@ -125,23 +116,22 @@
                     Puntos de función
                 </Label>
                 <div class="relative">
-                    <Input
-                        Type="text"
-                        @bind-Value="requerimentDto.StoryPoint"
-                        Pattern="[0-9\.]*"
-                        InputMode="numeric"
-                        DigitsOnly="true"
-                        Id="storypoint"
-                        Name="storypoint"
-                        Placeholder="Puntos de función (Ej: 2.46)"
-                        Autocomplete="off"
-                        MinLength="4"
-                        MaxLength="6"
-                        Required
-                        Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                    />
+                    <Input Type="text"
+                           @bind-Value="requerimentDto.StoryPoint"
+                           Pattern="[0-9\.]*"
+                           InputMode="numeric"
+                           DigitsOnly="true"
+                           Id="storypoint"
+                           Name="storypoint"
+                           Placeholder="Puntos de función (Ej: 2.46)"
+                           Autocomplete="off"
+                           Readonly=@EsEvaluacion
+                           MinLength="4"
+                           MaxLength="6"
+                           Required
+                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
                 </div>
-                <ValidationMessage For="() => requerimentDto.StoryPoint" class="text-xs text-red-600"/>
+                <ValidationMessage For="() => requerimentDto.StoryPoint" class="text-xs text-red-600" />
             </div>
 
             <div class="space-y-2">
@@ -163,18 +153,16 @@
                                 ClassButton=@($"{(isAdmin ? "" : "w-full")} font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
                                 ClassOption=@($"{(isAdmin ? "" : "w-full")} font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 dark:hover:bg-gray-500")
                                 EnableSearch="true"
-                                HeightClass="max-h-[120px]"
-                        >
+                                HeightClass="max-h-[120px]">
                         </Select>
                         @if (isAdmin)
                         {
                             <div>
-                                <Button
-                                    Variant="outline"
-                                    Class="cursor-pointer text-xs"
-                                    Command="show-modal"
-                                    CommandFor=@($"modal-{IdModalCategory}")>
-                                    <Plus Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+                                <Button Variant="outline"
+                                        Class="cursor-pointer text-xs"
+                                        Command="show-modal"
+                                        CommandFor=@($"modal-{IdModalCategory}")>
+                                    <Plus Class="dark:text-gray-300 text-gray-600 h-4 w-4" />
                                 </Button>
                             </div>
                         }
@@ -186,75 +174,41 @@
                         @messageSuccessCat
                     </span>
                 }
-                <ValidationMessage For="() => requerimentDto.CategoryId" class="text-xs text-red-600"/>
+                <ValidationMessage For="() => requerimentDto.CategoryId" class="text-xs text-red-600" />
             </div>
 
-            @if (IdsCategoriasCC.Contains(requerimentDto.CategoryId))
-            {
-                <div class="space-y-2">
-                    <Label For="conjuntocambios" Id="conjuntocambiosLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
-                        Conjunto de cambios
-                    </Label>
-                    @*<div class="relative">
-                        <Input
-                            Type="text"
-                            @bind-Value="requerimentDto.ConjuntoCambios"
-                            Pattern="[0-9\.]*"
-                            InputMode="numeric"
-                            DigitsOnly="true"
-                            Id="conjuntocambios"
-                            Name="conjuntocambios"
-                            Placeholder="Conjunto de cambios (Ej: 25300)"
-                            Autocomplete="off"
-                            MinLength="4"
-                            MaxLength="6"
-                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                        />
-                    </div>
-                    <ValidationMessage For="() => requerimentDto.ConjuntoCambios" class="text-xs text-red-600"/>*@
-                    <div class="relative">
-                        <input id="conjuntoCambiosInput"
-                               type="text"
-                               value="@requerimentDto.CambioInput"
-                               @oninput="HandleInput"
-                               class=@_cssConjuntosCambios
-                               inputmode="numeric"
-                               pattern="[0-9]*"
-                               placeholder="Conjunto de cambios (Ej: 25300) (Utiliza la coma (,) para agregar nuevos conjunto de cambios)" />
-                    </div>
-                    <div class="flex flex-wrap gap-2 @($"{(requerimentDto.ConjuntoCambios is not null && requerimentDto.ConjuntoCambios.Length > 0 ? "mt-4" : "")}")">
-                        @foreach (string cambio in requerimentDto.ConjuntoCambios ?? [])
-                        {
-                            <div class="cursor-default flex items-center justify-start gap-2 px-2 py-1 @ColorService.GetCurrentColor().Gradient text-white rounded text-sm">
-                                <span>
-                                    @cambio
-                                </span>
-                                <Button Variant="outline"
-                                        Size=""
-                                        Class=@($"cursor-pointer bg-red-500 hover:bg-red-600 dark:bg-red-700 dark:hover:bg-red-800 border-0 hover:bg-transparent p-1")
-                                        OnClick="() => requerimentDto.RemoveCambio(cambio)">
-                                    <Close Class="h-4 w-4" />
-                                </Button>
-                            </div>
-                        }
-                    </div>
-                    <ValidationMessage For="() => requerimentDto.ConjuntoCambios" class="text-xs text-red-600" />
+            <div class="space-y-2">
+                <Label For="etapareq" Id="etapaReqLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Etapa del requerimiento
+                </Label>
+                <div class="relative">
+                    <Select TItem="Etapas"
+                            Items="@OptionsEtapas"
+                            Id="etapareq"
+                            Value="EtapaSeleccionada"
+                            ValueChanged="OnEtapaSelectedChanged"
+                            Placeholder="Selecciona la etapa del requerimiento"
+                            ItemTextSelector="x => x.ToString()"
+                            ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                            ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                            EnableSearch="false"
+                            HeightClass="max-h-[120px]">
+                    </Select>
                 </div>
-            }
+            </div>
 
             <div class="space-y-2">
                 <Label For="descripcion" Id="descripcionlabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
                     Descripción
                 </Label>
                 <div class="relative">
-                    <TextArea
-                                    @bind-Value="requerimentDto.Descripcion"
-                                    Id="descripcion"
-                                    Name="descripcion"
-                                    Placeholder="Descripción del requerimiento"
-                                    Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"></TextArea>
+                    <TextArea @bind-Value="requerimentDto.Descripcion"
+                              Id="descripcion"
+                              Name="descripcion"
+                              Placeholder="Descripción del requerimiento"
+                              Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"></TextArea>
                 </div>
-                <ValidationMessage For="() => requerimentDto.Descripcion" class="text-xs text-red-600"/>
+                <ValidationMessage For="() => requerimentDto.Descripcion" class="text-xs text-red-600" />
             </div>
 
             <div class="flex items-center justify-end">
@@ -281,11 +235,10 @@
     </div>
 </Modal>
 
-<NewCategory 
-    Id="@IdModalCategory"
-    OnSaved="HandleCategorySaved"
-    OnCategorySelectedChanged="HandleCategorySelected"
-    OnShowSuccess="HandleCategorySuccess"/>
-    
-<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNew-{Id}") command="show-modal" commandfor=@($"modal-{Id}")></button>      
+<NewCategory Id="@IdModalCategory"
+             OnSaved="HandleCategorySaved"
+             OnCategorySelectedChanged="HandleCategorySelected"
+             OnShowSuccess="HandleCategorySuccess" />
+
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNew-{Id}") command="show-modal" commandfor=@($"modal-{Id}")></button>
 <button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalNew-{Id}") command="close" commandfor="@($"modal-{Id}")"></button>   
