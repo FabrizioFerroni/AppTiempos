@@ -9,5 +9,6 @@ public enum Areas
     SoporteTecnico = 4,
     RecursosHumanos = 5,
     Gerencia = 6,
-    Externos = 7
+    Externos = 7,
+    Testing = 8
 }

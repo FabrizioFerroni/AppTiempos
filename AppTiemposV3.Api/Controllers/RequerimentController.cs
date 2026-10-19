@@ -21,16 +21,16 @@ public class RequerimentController : ControllerBase
     {
         _requerimentContract = requerimentContract;
     }
-    
+
     [HttpGet]
     [ProducesResponseType(200)]
     [ProducesResponseType(500)]
-    public async Task<IActionResult> GetAllRequerimentPaginados([FromQuery] PaginationDto pagination, [FromQuery]  string buscarPor = "ReqID")
+    public async Task<IActionResult> GetAllRequerimentPaginados([FromQuery] PaginationDto pagination, [FromQuery] string buscarPor = "ReqID")
     {
         Pageable<List<RequerimentResponseDto>> response = await _requerimentContract.GetAllRequerimentsPag(pagination, buscarPor);
         return Ok(response);
     }
-    
+
     [HttpGet("todos")]
     [ProducesResponseType(200)]
     [ProducesResponseType(500)]
@@ -49,7 +49,7 @@ public class RequerimentController : ControllerBase
         DataResponse<RequerimentResponseDto> response = await _requerimentContract.GetRequerimentporId(id);
         return Ok(response);
     }
-    
+
     [HttpGet("req/{reqId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
@@ -59,15 +59,26 @@ public class RequerimentController : ControllerBase
         DataResponse<RequerimentResponseDto> response = await _requerimentContract.GetRequerimentporReqId(reqId);
         return Ok(response);
     }
-    
+
     [HttpGet("rid/{reqId}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(500)]
     public async Task<IActionResult> GetByReqIdId(string reqId)
     {
+
         DataResponse<Guid> response = await _requerimentContract.GetIdByReqId(reqId);
         return Ok(response);
+    }
+
+    [HttpGet("exists-by-reqid/{reqId}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    public async Task<ActionResult<DataResponse<Guid?>>> FindIdByReqId(string reqId)
+    {
+        DataResponse<Guid?> res = await _requerimentContract.FindIdByReqId(reqId);
+        return Ok(res);
     }
 
     [HttpPost]
@@ -76,7 +87,7 @@ public class RequerimentController : ControllerBase
     [ProducesResponseType(500)]
     public async Task<IActionResult> CreateRequeriment([FromBody] CreateRequerimentDto dto)
     {
-        GeneralResponse  response = await _requerimentContract.CreateRequeriment(dto);
+        GeneralResponse response = await _requerimentContract.CreateRequeriment(dto);
         return StatusCode(201, response);
     }
 
@@ -100,7 +111,7 @@ public class RequerimentController : ControllerBase
         GeneralResponse response = await _requerimentContract.DeleteRequeriment(id);
         return Ok(response);
     }
-    
+
     [HttpPost("{id}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
