@@ -206,7 +206,7 @@ public partial class RegisterInvite : ComponentBase, IDisposable
         {
             CustomAuthenticationProvider? customAuthStateProvider =
                          (CustomAuthenticationProvider)AuthStateProvider!;
-            await customAuthStateProvider.UpdateAuthenticationState(AccessToken, false);
+            await customAuthStateProvider.UpdateAuthenticationState(AccessToken);
             Nav!.NavigateTo("/setup");
         }
     }

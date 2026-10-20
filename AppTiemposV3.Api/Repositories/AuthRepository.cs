@@ -150,8 +150,7 @@ public class AuthRepository : IAuthContract
             LoginDto loginDto = new LoginDto()
             {
                 Email = email,
-                Password = dto.Password,
-                RememberMe = false
+                Password = dto.Password
             };
 
             LoginResponse? login = await Login(loginDto, origin!);
@@ -189,8 +188,7 @@ public class AuthRepository : IAuthContract
             LoginDto loginDto = new LoginDto()
             {
                 Email = email,
-                Password = dto.Password,
-                RememberMe = false
+                Password = dto.Password
             };
 
             LoginResponse? login = await Login(loginDto, origin!);

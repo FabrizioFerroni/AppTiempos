@@ -46,7 +46,7 @@ public class CustomAuthenticationProvider : AuthenticationStateProvider
         }
     }
 
-    public async Task UpdateAuthenticationState(string? token = null, bool rememberMe = false)
+    public async Task UpdateAuthenticationState(string? token = null)
     {
         ClaimsPrincipal? claimsPrincipal = new();
 
@@ -56,23 +56,12 @@ public class CustomAuthenticationProvider : AuthenticationStateProvider
             
             claimsPrincipal = SetClaimPrincipal(claims);
 
-            if (rememberMe)
-            {
-                await _localStorageService.SetItemAsStringAsync(key, token);
-                await _sessionStorageService.RemoveItemAsync(key);
-            }
-            else
-            {
-                await _sessionStorageService.SetItemAsStringAsync(key, token);
-                await _localStorageService.RemoveItemAsync(key);
-            }
+            await _sessionStorageService.SetItemAsStringAsync(key, token);
+            
         }
         else
         {
             claimsPrincipal = anonymus;
-            if (await _localStorageService.ContainKeyAsync(key))
-                await _localStorageService.RemoveItemAsync(key);
-
             if (await _sessionStorageService.ContainKeyAsync(key))
                 await _sessionStorageService.RemoveItemAsync(key);
         }
