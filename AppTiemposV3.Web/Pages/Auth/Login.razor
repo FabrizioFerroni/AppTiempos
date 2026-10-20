@@ -71,15 +71,6 @@
 				<ValidationMessage For="() => login.Password" class="text-xs text-red-600"/>
 			</div>
 			<div class="flex items-center justify-between">
-				<div class="flex items-center space-x-2">
-					<Checkbox Id="remember"
-								@bind-Value="login.RememberMe"
-								Name="remember"
-								Class="cursor-pointer"
-								Label="Recordarme"
-								StyleSpan="top: 55% !important;"
-								Style=@($"--radio-checked-color: {GetHexColorGradient(ColorService.GetCurrentColor().Gradient)};") />
-				</div>
 				<Enlace
 					Href="olvide-contrasena"
 					Class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline">

@@ -58,7 +58,6 @@ public partial class Login : ComponentBase
 
             LoginResponse? response = await AuthService!.Login(login, "");
 
-            bool rememberMe = login.RememberMe;
             if (response?.Flag == true && response.TwoFa == false && response?.Token != null)
             {
                 TokenDto? token = response.Token;
@@ -67,7 +66,7 @@ public partial class Login : ComponentBase
 
                 CustomAuthenticationProvider? customAuthStateProvider =
                     (CustomAuthenticationProvider)AuthStateProvider!;
-                await customAuthStateProvider.UpdateAuthenticationState(tokenLogin, rememberMe);
+                await customAuthStateProvider.UpdateAuthenticationState(tokenLogin);
 
                 if (response.IsAccountConfigurated)
                 {
@@ -81,7 +80,6 @@ public partial class Login : ComponentBase
             else if (response?.Flag == true && response.TwoFa == true)
             {
                 await _sessionStorageService.SetItemAsync(key, login.Email);
-                await _sessionStorageService.SetItemAsync("remember", rememberMe);
                 Router!.NavigateTo("/2fa");
             }
             else

@@ -69,10 +69,9 @@ public partial class TwoFactor : ComponentBase
             {
                 TokenDto? token = response.Token;
                 string tokenLogin = token.AccessToken;
-                bool rememberMe = await _sessionStorageService.GetItemAsync<bool>("remember");
                 CustomAuthenticationProvider? customAuthStateProvider =
                     (CustomAuthenticationProvider)AuthStateProvider!;
-                await customAuthStateProvider.UpdateAuthenticationState(tokenLogin, rememberMe);
+                await customAuthStateProvider.UpdateAuthenticationState(tokenLogin);
                 Router!.NavigateTo("/app/dashboard");
             }
             else
