@@ -6,7 +6,8 @@
   "scripts": {
     "tailwind:init": "npx @tailwindcss/cli init",
     "tailwind:build": "postcss wwwroot/css/app.css -o wwwroot/css/app.min.css",
-    "tailwind:watch": "npx @tailwindcss/cli -i ./wwwroot/css/app.css -o ./wwwroot/css/output.css --watch"
+    "tailwind:watch": "npx @tailwindcss/cli -i ./wwwroot/css/app.css -o ./wwwroot/css/output.css --watch",
+    "tailwind:compile": "npx @tailwindcss/cli -i ./wwwroot/css/app.css -o ./wwwroot/css/output.css"
   },
   "keywords": [],
   "author": "",

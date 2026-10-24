@@ -31,6 +31,7 @@ RUN dos2unix Program.cs wwwroot/index.html && \
 
 RUN npm install
 
+RUN npm run tailwind:compile
 RUN npm run tailwind:build
 
 RUN dotnet publish "AppTiemposV3.Web.csproj" -c Release -o /app/publish
