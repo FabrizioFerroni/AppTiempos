@@ -43,6 +43,7 @@
 </ItemGroup>
 
 	<Target Name="EjecutarNpm" BeforeTargets="Build">
+		<Exec Command="npm run tailwind:compile" />
 		<Exec Command="npm run tailwind:build" />
 	</Target>
 </Project>
