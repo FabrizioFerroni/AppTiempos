@@ -130,9 +130,8 @@
                 
                 @if (isError && modalStep == "selected-req")
                 {
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mt-3 rounded relative" role="alert">
-                        @* <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i> *@
-                        <AlertTriangle Class="flex-shrink-0 me-2"/>
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mt-3 rounded relative mb-3" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
                         <div class="block sm:inline">
                             @messageError
                         </div>
@@ -199,15 +198,6 @@
                         />
                         <ValidationMessage For="() => updateTrainingDto.EndTime" class="text-xs text-red-600"/>
                     </div>
-                    @*@if (IsPastDateEndTimeTime)
-                    {
-                        <Alert Variant="destructive" Class="mt-2 mb-4 border-gray-300 dark:border-gray-600">
-                            <AlertTriangle Class="h-4 w-4" Style="color: red !important;" />
-                            <AlertDescription>
-                                La fecha y hora seleccionadas son anteriores a la actual. No puede ser menor a Hora de inicio.
-                            </AlertDescription>
-                        </Alert>
-                    }*@
 
                     <div>
                         <Label For="trainer" Id="trainerLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
