@@ -68,7 +68,7 @@ public partial class NewTrainingModal : ComponentBase
     
     public async Task ShowAsync(Guid id)
     {
-        Limpiar();  
+        await Limpiar();  
         Id = id;
         await JS!.InvokeVoidAsync("modalHelpers.clickElement", showModalRef);
         IsLoadingData = true;
@@ -98,7 +98,7 @@ public partial class NewTrainingModal : ComponentBase
         
     }
 
-    private void GoToReq() => Limpiar();
+    private async Task GoToReq(bool closeModal) => await Limpiar(closeModal);
     
     private void SetModalStep(string step) => modalStep = step;
     
@@ -200,12 +200,10 @@ public partial class NewTrainingModal : ComponentBase
 
             if (response?.Flag == true)
             {
-                await JS!.InvokeVoidAsync("modalHelpers.clickElement", closeModalRef);
-                IsLoadingNew = false;
                 args.Success = true;
                 args.Message = response.Message;
                 args.StartDate = StartDate;
-                Limpiar();
+                await Limpiar();
                 await OnSaved.InvokeAsync(args);
             }
             else
@@ -228,8 +226,14 @@ public partial class NewTrainingModal : ComponentBase
         }
     }
 
-    private void Limpiar()
+    private async Task Limpiar(bool closeModal = true)
     {
+        if (closeModal)
+        {
+            await JS!.InvokeVoidAsync("modalHelpers.clickElement", closeModalRef);
+            await Task.Delay(250);
+        }
+
         SetModalStep("select-req");
         RequerimientoSeleccionado = "";
         DescripcionRequerimientoSeleccionado = "";
@@ -239,6 +243,8 @@ public partial class NewTrainingModal : ComponentBase
             RequerimentId = default
         };
         IsLoadingNew = false;
+        isError = false;
+        messageError = new MarkupString("");
     }
     
     

@@ -8,16 +8,18 @@ using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
 using AppTiemposV3.SharedClases.Utilidades.Interfaces;
-using static AppTiemposV3.Api.Helpers.DatabaseHelper;
-using static AppTiemposV3.Api.Helpers.Helpers;
-using static AppTiemposV3.Api.Helpers.MetadataHelper;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using AutoMapper;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
 using System.Net;
 using System.Text;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using static AppTiemposV3.Api.Helpers.Helpers;
+using static AppTiemposV3.Api.Helpers.MetadataHelper;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
 namespace AppTiemposV3.Api.Repositories;
 
@@ -160,9 +162,11 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
 
     public async Task<GeneralResponse> CreateTraining(CreateTrainingDto dto)
     {
-        if (await TrainingExists(dto.RequerimentId, _userId, null))
+        if (await TrainingExists(dto.RequerimentId, dto.Capacitator, _userId, null))
+        {
             throw new BadRequestException("Hay una capacitación pendiente de poner hora de fin para ese requerimiento");
-        
+        }
+
         TrainingEntity training = _iMapper.Map<TrainingEntity>(dto);
         
         training.UserId = _userId;
@@ -203,7 +207,7 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
         TrainingEntity training = await GetTrainingByIdAsync(id, user.Id);
         TrainingEntity oldtTraining = await GetTrainingByIdAsync(id, user.Id);
         
-        if (await TrainingExists(dto.RequerimentId!, _userId, training.Id))
+        if (await TrainingExists(dto.RequerimentId!, dto.Capacitator!, _userId, training.Id))
             throw new BadRequestException("Hay una capacitación pendiente de poner hora de fin para ese requerimiento");
         
         _iMapper.Map(dto, training);
@@ -312,13 +316,14 @@ public class TrainingRepository : ITrainingContract<TrainingResponseDto>
     /// <param name="userId">El Id del usuario propietario del capacitacion.</param>
     /// <param name="excludeId">Id de un capacitacion a excluir de la búsqueda (opcional).</param>
     /// <returns>Retorna <c>true</c> si existe una capacitacion que cumpla las condiciones; de lo contrario, <c>false</c>.</returns>
-    private async Task<bool> TrainingExists(Guid? reqId, Guid userId, Guid? excludeId = null)
+    private async Task<bool> TrainingExists(Guid? reqId, string capacitator, Guid userId, Guid? excludeId = null)
     {
         return await _dbCxt.Trainings.AnyAsync(r =>
             r.RequerimentId == reqId &&
             r.UserId == userId &&
+            r.Capacitator.Contains(capacitator) &&
             (excludeId == null || r.Id != excludeId) &&
-            (!r.IsLoaded || r.EndTime == null)
+            (r.EndTime == null)
             );
     }
     

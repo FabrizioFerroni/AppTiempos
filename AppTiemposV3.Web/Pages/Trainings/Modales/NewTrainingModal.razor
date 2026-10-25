@@ -29,7 +29,7 @@
         }
         else
         {
-            @if (isError)
+            @if (isError && modalStep == "select-req")
             {
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mb-3 rounded relative mt-2" role="alert">
                     <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
@@ -121,15 +121,15 @@
                         Variant="ghost"
                         Size="sm"
                         Class="ml-auto text-blue-600 hover:text-gray-800 dark:hover:text-gray-300 cursor-pointer"
-                        OnClick="() => GoToReq()"
+                        OnClick="() => GoToReq(false)"
                     >
                         Cambiar
                     </Button>
                 </div>
                 
-                @if (isError)
+                @if (isError && modalStep == "selected-req")
                 {
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mt-3 rounded relative mt-2" role="alert">
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mt-3 rounded relative mb-2" role="alert">
                         <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
                         <div class="block sm:inline">
                             @messageError
@@ -243,7 +243,7 @@
                     </div>
                    
                     <div class="flex justify-between gap-2 pt-4">
-                        <Button Type="button" Variant="outline" OnClick="() => GoToReq()" Class="text-gray-700 dark:text-gray-300 cursor-pointer">
+                        <Button Type="button" Variant="outline" OnClick="() => GoToReq(false)" Class="text-gray-700 dark:text-gray-300 cursor-pointer">
                             <ChevronLeft Class="w-4 h-4 mr-2" />
                             Atrás
                         </Button>

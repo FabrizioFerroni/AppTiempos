@@ -442,23 +442,13 @@ public partial class EditTrainingModal : ComponentBase
         }
     }
     
-    /*private void Limpiar()
-    {
-        SetModalStep("selected-req");
-        /*RequerimientoSeleccionado = "";
-        DescripcionRequerimientoSeleccionado = "";*
-        IsNotRequerimentIdSelectedF = false;
-        updateTrainingDto = new()
-        {
-            RequerimentId = default
-        };
-        IsLoadingEdit = false;
-    }*/
-    
     private async Task Limpiar()
     {
         IsLoadingData = true;
         StateHasChanged();
+
+        isError = false;
+        messageError = new MarkupString("");
 
         // Restaurar la copia original sin hacer request
         if (OriginalTrainingData != null)
@@ -472,7 +462,7 @@ public partial class EditTrainingModal : ComponentBase
             DescripcionRequerimientoSeleccionado = resp!.Requeriment.Titulo;
         }
 
-        await Task.Delay(100); // opcional, para un efecto visual de carga
+        await Task.Delay(250); // opcional, para un efecto visual de carga
 
         IsLoadingData = false;
         SetModalStep("selected-req");
