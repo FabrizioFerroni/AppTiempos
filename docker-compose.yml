@@ -56,8 +56,8 @@ services:
     ports:
       - "80:80"
     restart: always
-    # volumes:
-    #   - app_web_wwwroot:/src/wwwroot
+    volumes:
+      - app_web_wwwroot:/src/wwwroot
     networks:
       - apptiempos
     depends_on:
