@@ -384,7 +384,7 @@
                                                 }
                                             </Button>
 
-                                            <div class="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                                            <div class="flex-1 grid grid-cols-1 md:grid-cols-8 gap-4 items-center">
                                                 <div>
                                                     <p class="text-sm text-gray-500 dark:text-gray-400">REQ ID</p>
                                                     <p class="font-medium text-blue-600 dark:text-blue-400">
@@ -438,12 +438,56 @@
                                                     </div>
                                                 </div>
 
+                                                <div>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Responsable de probarlo</p>
+                                                    <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                        @if (string.IsNullOrWhiteSpace(rejection.Tester?.Nombre))
+                                                        {
+                                                            <span>No hay tester asignado</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>@rejection.Tester?.Nombre</span>
+                                                        }
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Pasado a implementación</p>
+                                                    <div class="flex items-center gap-2">
+                                                        @if (rejection.IsResolveTesting)
+                                                        {
+                                                            <CheckCircle Class="w-4 h-4 text-green-500" />
+                                                            <span class="text-sm text-green-600 dark:text-green-400">Sí</span>
+                                                            @if (rejection.ResolvedDateTesting.HasValue)
+                                                            {
+                                                                <span class="text-xs text-gray-500">
+                                                                    (@FormatDateOnly(rejection.ResolvedDateTesting))
+                                                                </span>
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            <XCircle Class="w-4 h-4 text-red-500" />
+                                                            <span class="text-sm text-red-600 dark:text-red-400">No</span>
+                                                        }
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">Estado Testing</p>
+                                                    <span class="@($"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {GetStatusColor(rejection.StatusTesting!)}")">
+                                                        @GetStatusNameR(rejection.StatusTesting!)
+                                                    </span>
+                                                </div>
+
                                                 <div class="flex gap-2 justify-end">
                                                     @* TODO: ver de poner deshabilitado el boton mas si hay detalles de rechazos sin completar, ya que en teoria no tendria que haber otro rechazo sin haber corregido el anterior *@
                                                     <Button
                                                         Variant="outline"
                                                         Size="sm"
-                                                        OnClick="() => NewDetailModal(rejection.Id, rejection.Requeriment.ReqID)"
+                                                        OnClick="() => NewDetailModal(rejection.Id, rejection.Requeriment.ReqID, rejection.Tester?.Id.ToString())"
+                                                        Disabled="@(rejection.IsResolveTesting)"
                                                         Class="text-gray-400  dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-green-800/20 dark:hover:border-green-900/50 cursor-pointer">
                                                         <Plus Class="w-4 h-4"/>
                                                     </Button>
@@ -459,6 +503,7 @@
                                                         Size="sm"
                                                         Class="text-gray-400 dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-blue-800/20 dark:hover:border-blue-900/50 cursor-pointer"
                                                         OnClick="() => EditModal(rejection.Id, rejection.Requeriment.ReqID)"
+                                                        Disabled="@(rejection.IsResolveTesting)"
                                                         Id=@($"edit-btn-{rejection.Id}")>
                                                         <Edit Class="w-4 h-4"/>
                                                     </Button>
@@ -466,6 +511,7 @@
                                                         Variant="outline"
                                                         Size="sm"
                                                         OnClick="@(() => DeleteModal(rejection.Id, rejection.Requeriment.ReqID))"
+                                                        Disabled="@(rejection.IsResolveTesting)"
                                                         Class="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-gray-500 dark:hover:border-red-900/50 dark:bg-gray-600  cursor-pointer">
                                                         <Trash2 Class="w-4 h-4"/>
                                                     </Button>
@@ -483,7 +529,7 @@
 
                                                         <Button Variant="outline" Size="sm"
                                                                 Class="@($"{@ColorService.GetButtonClassess()} mt-2")"
-                                                                OnClick="() => NewDetailModal(rejection.Id, rejection.Requeriment.ReqID)">
+                                                                OnClick="() => NewDetailModal(rejection.Id, rejection.Requeriment.ReqID, rejection.Tester?.Id.ToString())">
                                                             <Plus class="w-4 h-4 mr-2" />
                                                             Agregar primer rechazo
                                                         </Button>
@@ -502,7 +548,7 @@
                                                                     </span>
                                                                 </div>
 
-                                                                <div class="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                                                                <div class="flex-1 grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
 
                                                                     <div>
                                                                         <p class="text-sm text-gray-500 dark:text-gray-400">Fecha</p>
@@ -516,6 +562,36 @@
                                                                         <p class="font-medium text-gray-800 dark:text-gray-100 truncate">
                                                                             @detail.RejectionReason
                                                                         </p>
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <p class="text-sm text-gray-500 dark:text-gray-400">Responsable de probarlo</p>
+                                                                        <p class="font-medium text-gray-800 dark:text-gray-100">
+                                                                            @if (string.IsNullOrWhiteSpace(detail.Tester?.Nombre))
+                                                                            {
+                                                                                <span>No hay tester asignado</span>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <span>@detail.Tester?.Nombre</span>
+                                                                            }
+                                                                        </p>
+                                                                    </div>
+
+                                                                    <div>
+                                                                        <p class="text-sm text-gray-500 dark:text-gray-400">Mal rechazado</p>
+                                                                        <div class="flex items-center gap-2">
+                                                                            @if (detail.BadRejected)
+                                                                            {
+                                                                                <CheckCircle Class="w-4 h-4 text-green-500" />
+                                                                                <span class="text-sm text-green-600 dark:text-green-400">Sí</span>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <XCircle Class="w-4 h-4 text-red-500" />
+                                                                                <span class="text-sm text-red-600 dark:text-red-400">No</span>
+                                                                            }
+                                                                        </div>
                                                                     </div>
 
                                                                     @if (detail.SolutionDate is not null)
@@ -545,7 +621,8 @@
 
                                                                     <Button Variant="outline" Size="sm"
                                                                             Class="text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
-                                                                            OnClick="@(() => DeleteDetailModal(detail.Id, rejection.Requeriment.ReqID))">
+                                                                            OnClick="@(() => DeleteDetailModal(detail.Id, rejection.Requeriment.ReqID))"
+                                                                            Disabled="@(detail.Status == "completed")">
                                                                         <Trash2 class="w-4 h-4" />
                                                                     </Button>
                                                                 </div>

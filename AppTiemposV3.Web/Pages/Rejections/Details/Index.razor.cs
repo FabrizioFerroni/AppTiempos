@@ -164,9 +164,9 @@ public partial class Index : ComponentBase, IDisposable
         await showModalRef!.ShowAsync(id);
     }
     
-    private async Task NewDetailModal(Guid rejectionId, string reqId)
+    private async Task NewDetailModal(Guid rejectionId, string reqId, string? tester)
     {
-        await newDetailModalRef!.ShowAsync(IdModalNew, rejectionId, reqId);
+        await newDetailModalRef!.ShowAsync(IdModalNew, rejectionId, reqId, tester);
     }
 
     private async Task EditDetailModal(Guid idDetail, string reqId, int rejectionNumber)

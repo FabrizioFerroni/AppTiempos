@@ -570,8 +570,8 @@ namespace AppTiemposV3.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<TimeSpan?>("ActualFixTime")
-                        .HasColumnType("time");
+                    b.Property<bool>("BadRejected")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -581,14 +581,14 @@ namespace AppTiemposV3.Api.Migrations
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<TimeSpan?>("EstimatedFixTime")
-                        .HasColumnType("time");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ReasonBadRequest")
+                        .HasColumnType("longtext");
 
                     b.Property<int>("RechazoNro")
                         .ValueGeneratedOnAdd()
@@ -600,27 +600,27 @@ namespace AppTiemposV3.Api.Migrations
 
                     b.Property<string>("RejectionDetails")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("longtext");
 
                     b.Property<Guid>("RejectionId")
                         .HasColumnType("char(36)");
 
                     b.Property<string>("RejectionReason")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("longtext");
 
                     b.Property<DateOnly?>("SolutionDate")
                         .HasColumnType("date");
 
                     b.Property<string>("SolutionDetails")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<Guid?>("TesterId")
+                        .HasColumnType("char(36)");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("char(36)");
@@ -628,6 +628,8 @@ namespace AppTiemposV3.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("RejectionId");
+
+                    b.HasIndex("TesterId");
 
                     b.HasIndex("UserId");
 
@@ -656,6 +658,9 @@ namespace AppTiemposV3.Api.Migrations
                     b.Property<bool>("IsResolve")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("IsResolveTesting")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime(6)");
 
@@ -665,9 +670,18 @@ namespace AppTiemposV3.Api.Migrations
                     b.Property<DateTime?>("ResolvedDate")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime?>("ResolvedDateTesting")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<string>("StatusTesting")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("TesterId")
+                        .HasColumnType("char(36)");
 
                     b.Property<int>("TotalRejections")
                         .HasColumnType("int");
@@ -682,6 +696,8 @@ namespace AppTiemposV3.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("RequerimentId");
+
+                    b.HasIndex("TesterId");
 
                     b.HasIndex("UserId");
 
@@ -912,7 +928,6 @@ namespace AppTiemposV3.Api.Migrations
                         .HasDatabaseName("IX_Requeriments_UserId");
 
                     b.HasIndex("UserId", "FolderId")
-                        .IsUnique()
                         .HasDatabaseName("IX_Requeriments_UserId_FolderId");
 
                     b.HasIndex("UserId", "ReqID")
@@ -920,6 +935,43 @@ namespace AppTiemposV3.Api.Migrations
                         .HasDatabaseName("IX_Requeriments_UserId_ReqID");
 
                     b.ToTable("requeriments", (string)null);
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.TesterEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("testers", (string)null);
                 });
 
             modelBuilder.Entity("AppTiemposV3.Api.Entities.TrainingEntity", b =>
@@ -1321,6 +1373,11 @@ namespace AppTiemposV3.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("AppTiemposV3.Api.Entities.TesterEntity", "Tester")
+                        .WithMany("RejectionDetails")
+                        .HasForeignKey("TesterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AppTiemposV3.Api.Entities.UserEntity", "User")
                         .WithMany("RejectionsDetails")
                         .HasForeignKey("UserId")
@@ -1328,6 +1385,8 @@ namespace AppTiemposV3.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Rejection");
+
+                    b.Navigation("Tester");
 
                     b.Navigation("User");
                 });
@@ -1340,6 +1399,11 @@ namespace AppTiemposV3.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("AppTiemposV3.Api.Entities.TesterEntity", "Tester")
+                        .WithMany("Rejections")
+                        .HasForeignKey("TesterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AppTiemposV3.Api.Entities.UserEntity", "User")
                         .WithMany("Rejections")
                         .HasForeignKey("UserId")
@@ -1347,6 +1411,8 @@ namespace AppTiemposV3.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Requeriment");
+
+                    b.Navigation("Tester");
 
                     b.Navigation("User");
                 });
@@ -1498,6 +1564,13 @@ namespace AppTiemposV3.Api.Migrations
                     b.Navigation("RequerimentsAttachments");
 
                     b.Navigation("Trainings");
+                });
+
+            modelBuilder.Entity("AppTiemposV3.Api.Entities.TesterEntity", b =>
+                {
+                    b.Navigation("RejectionDetails");
+
+                    b.Navigation("Rejections");
                 });
 
             modelBuilder.Entity("AppTiemposV3.Api.Entities.UserEntity", b =>

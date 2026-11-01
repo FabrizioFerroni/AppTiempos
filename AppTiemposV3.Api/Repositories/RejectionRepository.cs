@@ -12,13 +12,14 @@ using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
+using Org.BouncyCastle.Asn1.Cmp;
 using System.Net;
 using System.Text;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 using static AppTiemposV3.Api.Helpers.Helpers;
 using static AppTiemposV3.Api.Helpers.MetadataHelper;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
-using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 using static NanoidDotNet.Nanoid;
 using static NanoidDotNet.Nanoid.Alphabets;
 
@@ -105,7 +106,10 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
 
     public async Task<Pageable<List<RejectionResponseDto>>> GetAllRejections(PaginationDtoAdvanced pagination)
     {
-        Pageable<List<RejectionResponseDto>> response =  await _genericContract.GetAllPaginatedFaAsync<RejectionEntity, RejectionResponseDto>(pagination, _userId);
+        Pageable<List<RejectionResponseDto>> response =  await _genericContract.GetAllPaginatedThenIncludeAsync<RejectionEntity, RejectionResponseDto>(pagination, _userId,
+        "Requeriment",
+        "Tester",
+        "RejectionsDetails.Tester");
        
         return response;
     }
@@ -127,7 +131,9 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         
         RejectionEntity? rejection = await _dbCxt.Rejections
             .Include(r => r.Requeriment)
+            .Include(rd => rd.Tester)
             .Include(r => r.RejectionsDetails)
+                .ThenInclude(rd => rd.Tester)
             .Where(r => r.UrlIndetificator == url && r.UserId == user.Id)
             .OrderByDescending(r =>
                 r.RejectionsDetails.Any()
@@ -155,19 +161,50 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         
         if (await RejectionExists(dto.RequerimentId, _userId, null))
             throw new BadRequestException("Ese requerimiento ya tiene un rechazo para tu usuario");
-        
+
+        if (dto.TesterId == Guid.Empty)
+            throw new BadRequestException("Debes seleccionar el tester que probó la tarea");
+
+
         RejectionEntity rej = _iMapper.Map<RejectionEntity>(dto);
         rej.UserId = user.Id;
         rej.UrlIndetificator  = await GenerateAsync(LowercaseLettersAndDigits, 10);
+        rej.Status = "in-progress";
+        rej.StatusTesting = "in-progress";
+        rej.IsResolveTesting = false;
+        rej.TesterId = dto.TesterId;
+        rej.ResolvedDateTesting = null;
             
         await _dbCxt.Rejections.AddAsync(rej);
 
         await EnsureSavedAsync("Hubo un error al crear el rechazo", _dbCxt);
 
+        try
+        {
+            //TODO: Actualizar requerimiento a etapa prueba
+            RequerimentsEntity? requerimiento = await _dbCxt.Requeriments.FindAsync(req.Id);
+
+            if (requerimiento != null)
+            {
+                requerimiento.EtapaActual = Etapas.Prueba;
+
+                _dbCxt.Entry(requerimiento).State = EntityState.Modified;
+
+                await EnsureSavedAsync("Hubo problemas para actualizar el registro del requerimiento", _dbCxt);
+            }
+            
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
+
         CreateRejectionResponseDto data = new CreateRejectionResponseDto
         {
             Id = rej.Id,
             ReqId = await GetReqIdByRequerimentId(dto.RequerimentId, _userId),
+            TesterId = dto.TesterId,
             Message = "Rechazo creado correctamente"
         };
 
@@ -202,17 +239,71 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         RejectionEntity oldRej = await GetRejectionByIdAsync(id, user.Id);
 
         if (await RejectionExists(dto.RequerimentId!, user.Id, id))
-            throw new BadRequestException("El rechazo con ese Id de requerimiento ya existe para tu usuario"); //TODO: ver esto
+            throw new BadRequestException("El rechazo con ese Id de requerimiento ya existe para tu usuario");
+
+        if (dto.ResolvedDate.HasValue && dto.ResolvedDate.Value.Date < rej.CreatedAt.Date)
+            throw new BadRequestException("La fecha no puede ser menor a cuando se creó el rechazo");
+
+        DateTime? dateToCompare = rej.ResolvedDate ?? dto.ResolvedDate;
+
+        if (dto.ResolvedDateTesting.HasValue &&  dto.ResolvedDateTesting?.Date < dateToCompare?.Date)
+            throw new BadRequestException("La fecha de que paso a implementación no puede ser menor a la fecha de resolución");
+
+        bool quiereResolver = dto.IsResolve || dto.IsResolveTesting; 
+
+        if (quiereResolver)
+        {
+            bool detailsPending = await _dbCxt.RejectionDetails
+                .AnyAsync(rd => rd.RejectionId == rej.Id && rd.UserId == user.Id && rd.Status != "completed");
+
+            if (detailsPending)
+                throw new BadRequestException("No puedes completar/resolver el rechazo porque tienes detalles de rechazo pendientes de completar");
+        }
+
+        if (dto.TesterId == Guid.Empty)
+            throw new BadRequestException("Debes seleccionar el tester que probó la tarea");
 
         _iMapper.Map(dto, rej);
         
         rej.Id = id;
         rej.UserId = user.Id;
         rej.ModifiedAt = DateTime.Now;
-        
+        rej.TesterId = dto.TesterId;
+        rej.IsResolveTesting = dto.IsResolveTesting;
+        rej.ResolvedDateTesting = dto.ResolvedDateTesting;
+        rej.StatusTesting = dto.StatusTesting;
+
+        if (!dto.IsResolve)
+        {
+            rej.ResolvedDate = null;
+        }
+
+
         _dbCxt.Entry(rej).State = EntityState.Modified;
 
         await EnsureSavedAsync("Hubo problemas para actualizar el registro", _dbCxt);
+
+        try
+        {
+            if(rej.IsResolveTesting)
+            {
+                //TODO: Actualizar requerimiento a etapa implementación 
+                RequerimentsEntity? requerimiento = await _dbCxt.Requeriments.FindAsync(rej.RequerimentId);
+
+                if (requerimiento != null)
+                {
+                    requerimiento.EtapaActual = Etapas.Implementacion;
+
+                    _dbCxt.Entry(requerimiento).State = EntityState.Modified;
+
+                    await EnsureSavedAsync("Hubo problemas para actualizar el registro del requerimiento", _dbCxt);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
 
         try
         {
@@ -348,7 +439,9 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         IQueryable<RejectionEntity> query = _dbCxt.Rejections
             .Include(r => r.Requeriment)
             .Include(u => u.User)
-            .Include(rd => rd.RejectionsDetails);
+            .Include(rd => rd.Tester)
+            .Include(rd => rd.RejectionsDetails)
+                .ThenInclude(rd => rd.Tester);
 
         // Si quiero incluir los eliminados, ignoro los filtros globales
         if (includeDeleted)

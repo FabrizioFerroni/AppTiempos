@@ -1,14 +1,15 @@
-using System.Globalization;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
+using AppTiemposV3.SharedClases.DTOs.Testers;
 using AppTiemposV3.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using static NanoidDotNet.Nanoid;
-using static NanoidDotNet.Nanoid.Alphabets;
+using System.Globalization;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static AppTiemposV3.Web.Utils.Helpers;
+using static NanoidDotNet.Nanoid;
+using static NanoidDotNet.Nanoid.Alphabets;
 using static System.Globalization.CultureInfo;
 
 namespace AppTiemposV3.Web.Pages.Rejections.ModalRejectionDetails;
@@ -22,6 +23,7 @@ public partial class NewRejectionDetailModal : ComponentBase
     [Inject] private NavigationManager? Router { get; set; }
     [Inject] private NotificationService Toltip { get; set; } = default!;
     [Inject] private IRejectionDetailContract<RejectionDetailResponseDto> RejectionDService { get; set; } = null!;
+    [Inject] private ITesterContract<TesterResponseDto> TesterService { get; set; } = null!;
     [Inject] private ColorService ColorService { get; set; } = null!;
     private Guid RejectionId { get; set; }
     
@@ -40,8 +42,11 @@ public partial class NewRejectionDetailModal : ComponentBase
     private bool isSuccessReq;
     private MarkupString? messageSuccessReq = new("");
     private bool IsPastDateTime { get; set; } = false;
-    
-    private CreateRejectionDetailDto createDto = new();
+
+    private CreateRejectionDetailDto createDto = new()
+    {
+        TesterId = default
+    };
     private bool IsLoadingNew = false;
     [Parameter] public EventCallback<SavedEventArgs> OnSaved { get; set; }
     private string ReqId {get; set;} = string.Empty;
@@ -50,8 +55,32 @@ public partial class NewRejectionDetailModal : ComponentBase
     private int weekNumberSelected = 45;
     private DateTime currentDate = DateTime.Today;
     private bool IsSelectClosed = true;
+
+    private bool IsSelectClosedTester = true;
+
+    private bool IsTestersNotLoaded { get; set; } = true;
+    private Dictionary<Guid, string> testersByIdDict = new();
+    private Dictionary<string, Guid> testersDict = new();
+    private List<string> OptionsTesters = new() { };
+    List<TesterResponseDto> Testers = new();
+
+    private string PlaceholderTesterText
+    {
+        get
+        {
+            return IsTestersNotLoaded
+                ? "Cargando testers..."
+                : "Selecciona un tester";
+        }
+    }
+
+    private string? TesterSeleccionado;
+
+    private bool IsTesterIdSelected = false;
+    private bool IsNotTesterIdSelectedF = true;
+    private string? testerAnterior = string.Empty;
     #endregion
-    
+
     #region Inicializacion
     protected override void OnInitialized()
     {
@@ -60,30 +89,82 @@ public partial class NewRejectionDetailModal : ComponentBase
     }
     #endregion
     
-    public async Task ShowAsync(Guid id, Guid rejectionId, string reqId)
+    
+    public async Task ShowAsync(Guid id, Guid rejectionId, string reqId, string tester)
     {
-        Limpiar();  
+        await Limpiar();
+
         Id = id;
         ReqId = reqId;
         RejectionId = rejectionId;
-        await JS!.InvokeVoidAsync("modalHelpers.clickElement", showModalRef);
+        testerAnterior = tester;
+
+        createDto = new() { RejectionId = rejectionId, TesterId = default };
+        isError = false;
+        messageError = new("");
+        isSuccessReq = false;
+        messageSuccessReq = new("");
+        TesterSeleccionado = null;
+
         IsLoadingData = true;
-        StateHasChanged();
+        StateHasChanged(); 
+        await JS!.InvokeVoidAsync("modalHelpers.clickElement", showModalRef);
+
+        await SafeRunAsync(async () =>
+        {
+            await GetAllTesters();
+
+            TesterSeleccionado = ObtenerTesterPorId(tester);
+
+            if (!string.IsNullOrEmpty(TesterSeleccionado))
+            {
+                await OnTesterSelectedChanged(TesterSeleccionado);
+            }
+
+            IsLoadingData = false;
+            StateHasChanged();
+        });
     }
-    
-    private void Limpiar()
+
+    private async Task Limpiar()
     {
+        await JS!.InvokeVoidAsync("modalHelpers.clickElement", closeModalRef);
+
         createDto = new()
         {
-            RejectionId = default
+            RejectionId = default,
+            TesterId = default
         };
+
         IsLoadingNew = false;
+        isError = false;
+        messageError = new MarkupString("");
+        isSuccessReq = false;
+        messageSuccessReq = new MarkupString("");
+
+        if (!string.IsNullOrWhiteSpace(testerAnterior) && Guid.TryParse(testerAnterior, out _))
+        {
+            TesterSeleccionado = ObtenerTesterPorId(testerAnterior);
+            if (!string.IsNullOrEmpty(TesterSeleccionado))
+            {
+                await OnTesterSelectedChanged(TesterSeleccionado);
+            }
+        }
+        else
+        {
+            TesterSeleccionado = null;
+        }
     }
-    
-    
+
+
+    private void HandleDropdownStatusTester(bool closed)
+    {
+        IsSelectClosedTester = closed;
+    }
+
     private string RejectionDateString
     {
-        get => createDto.RejectionDate.ToString("yyyy-MM-dd"); // formato ISO compatible con <input type="date">
+        get => createDto.RejectionDate.ToString("yyyy-MM-dd");
         set
         {
             if (DateOnly.TryParse(value, out DateOnly parsed))
@@ -165,7 +246,7 @@ public partial class NewRejectionDetailModal : ComponentBase
                 IsLoadingNew = false;
                 args.Success = true;
                 args.Message = response.Message;
-                Limpiar();
+                await Limpiar();
                 await OnSaved.InvokeAsync(args);
             }
             else
@@ -186,6 +267,66 @@ public partial class NewRejectionDetailModal : ComponentBase
             IsLoadingNew = false;
             StateHasChanged();
         }
+    }
+
+    private async Task GetAllTesters()
+    {
+        IsTestersNotLoaded = true;
+        StateHasChanged();
+
+        try
+        {
+            DataAResponse<TesterResponseDto> response = await TesterService.GetAllTesters();
+            Testers = response.Data;
+            testersDict = Testers.ToDictionary(t => t.Nombre, t => t.Id);
+            testersByIdDict = Testers.ToDictionary(t => t.Id, t => t.Nombre);
+            OptionsTesters = response.Data.Select(t => t.Nombre).ToList()!;
+
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
+        IsTestersNotLoaded = false;
+        StateHasChanged();
+    }
+
+    private Task OnTesterSelectedChanged(string value)
+    {
+        TesterSeleccionado = value;
+
+        if (!string.IsNullOrEmpty(value) && testersDict.TryGetValue(value, out Guid testerId))
+        {
+            createDto.TesterId = testerId;
+            IsTesterIdSelected = true;
+            IsNotTesterIdSelectedF = false;
+        }
+        else
+        {
+            createDto.TesterId = default;
+            IsTesterIdSelected = false;
+            IsNotTesterIdSelectedF = true;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private string ObtenerTesterPorId(string id)
+    {
+        if (Guid.TryParse(id, out Guid testerGuid))
+        {
+            if (testersByIdDict.TryGetValue(testerGuid, out string? nombre))
+            {
+                return nombre;
+            }
+        }
+        else if (!string.IsNullOrEmpty(id) && testersDict.ContainsKey(id))
+        {
+            return id;
+        }
+
+        return string.Empty;
     }
 
 }

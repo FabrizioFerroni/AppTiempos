@@ -15,6 +15,15 @@ public class RejectionEntity : BaseEntity
 
     public DateTime? ResolvedDate { get; set; } = null;
 
+    public Guid? TesterId { get; set; }
+    public TesterEntity? Tester { get; set; }
+
+    public bool IsResolveTesting { get; set; } = false;
+
+    public DateTime? ResolvedDateTesting { get; set; } = null;
+
+    public string? StatusTesting { get; set; } = "pending";
+
     [Required] public required Guid RequerimentId { get; set; } 
 
     public RequerimentsEntity Requeriment { get; set; } = null!;
@@ -23,6 +32,6 @@ public class RejectionEntity : BaseEntity
 
     public UserEntity User { get; set; } = null!;
 
-    public ICollection<RejectionDetailEntity>? RejectionsDetails { get; set; }
+    public ICollection<RejectionDetailEntity> RejectionsDetails { get; set; } = new List<RejectionDetailEntity>();
 
 }

@@ -8,6 +8,7 @@ using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.DTOs.RequerimentsAttachments;
+using AppTiemposV3.SharedClases.DTOs.Testers;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.DTOs.Users;
 using AppTiemposV3.SharedClases.Utilidades;
@@ -75,6 +76,7 @@ services.AddScoped<IRequerimentAttachmentContract<RequerimentsAttachmentsDto>, R
 services.AddScoped<IReportContract, ReportService>();
 services.AddScoped<IConfigurationContract, ConfigurationService>();
 services.AddScoped<IUserCContract<UserResponseDto>, UserService>();
+services.AddScoped<ITesterContract<TesterResponseDto>, TesterService>();
 services.AddScoped<LayoutState>();
 services.AddScoped<ColorService>();
 services.AddSingleton<NotificationService>();

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
+using AppTiemposV3.SharedClases.DTOs.Testers;
 using AppTiemposV3.SharedClases.Enums;
 using static AppTiemposV3.SharedClases.Utilidades.SanitizeText;
 
@@ -16,11 +17,18 @@ public class RejectionResponseDto
     public int TotalRejections { get; set; } = 0;
 
     public string Status { get; set; } = "pending";
+    public string? StatusTesting { get; set; } = "pending";
 
     public bool IsResolve { get; set; } = false;
 
     public DateTime? ResolvedDate { get; set; } = null;
-    
+
+    public TesterResponseDto? Tester { get; set; }
+
+    public bool IsResolveTesting { get; set; } = false;
+
+    public DateTime? ResolvedDateTesting { get; set; } = null;
+
     public RequerimentDtoRej Requeriment { get; set; } = new RequerimentDtoRej();
     
     public UserDtoARej Usuario { get; set; } = new UserDtoARej();

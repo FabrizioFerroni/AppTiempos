@@ -1,29 +1,35 @@
-using System.Globalization;
-using System.Text.Json;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
+using AppTiemposV3.SharedClases.DTOs.Testers;
+using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using static NanoidDotNet.Nanoid;
-using static NanoidDotNet.Nanoid.Alphabets;
+using System.ComponentModel;
+using System.Diagnostics.Metrics;
+using System.Globalization;
+using System.Text.Json;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static AppTiemposV3.Web.Utils.Helpers;
+using static NanoidDotNet.Nanoid;
+using static NanoidDotNet.Nanoid.Alphabets;
 using static System.Globalization.CultureInfo;
 
 namespace AppTiemposV3.Web.Pages.Rejections.ModalRejections;
 
 public partial class EditRejectionModal : ComponentBase
 {
-        #region "Variables" 
+    #region "Variables" 
     public Guid Id { get; set; }
     [Inject] private IJSRuntime? JS { get; set; }
     
     [Inject] private NavigationManager? Router { get; set; }
     [Inject] private NotificationService Toltip { get; set; } = default!;
     [Inject] private IRejectionContract<RejectionResponseDto> RejectionService { get; set; } = null!;
+
+    [Inject] private ITesterContract<TesterResponseDto> TesterService { get; set; } = null!;
     [Inject] private ColorService ColorService { get; set; } = null!;
     
     private Dictionary<string, (string Mensaje, bool EsExitoso)> mensajes = new();
@@ -56,14 +62,43 @@ public partial class EditRejectionModal : ComponentBase
     private List<string> OptionsEstados = new() {"Pendiente", "En Progreso", "Completado"};
     
     private string? EstadoSeleccionado = "";
+    private string? EstadoTestingSeleccionado = "";
     [Parameter] public EventCallback<SavedEventArgs> OnSaved { get; set; }
     private TimeOnly modalOpenedTime;
     
     private int weekNumberSelected = 45;
     private DateTime currentDate = DateTime.Today;
     private bool IsSelectClosed = true;
+    private bool IsSelectDateResolvedClosed = true;
     private bool IsSelectClosedStatus = true;
-    
+    private bool IsSelectTestingClosedStatus = true;
+
+    private bool IsSelectClosedTester = true;
+    private bool IsTestersNotLoaded { get; set; } = true;
+    private Dictionary<Guid, string> testersByIdDict = new();
+    private Dictionary<string, Guid> testersDict = new();
+    private List<string> OptionsTesters = new() { };
+    List<TesterResponseDto> Testers = new();
+
+    private string PlaceholderTesterText
+    {
+        get
+        {
+            return IsTestersNotLoaded
+                ? "Cargando testers..."
+                : "Selecciona un tester";
+        }
+    }
+
+    private string? TesterSeleccionado;
+
+    private string? DescripcionTesterSeleccionado;
+
+    private bool IsTesterIdSelected = false;
+    private bool IsNotTesterIdSelectedF = true;
+    private string? testerAnterior = string.Empty;
+    private string estadoOriginal = "in-progress";
+
     #region Requeriments
     private List<string> OptionsRequeriments = new() {};
     private bool IsRequerimentsNotLoaded { get; set; } = true;
@@ -111,7 +146,12 @@ public partial class EditRejectionModal : ComponentBase
 
         return Task.CompletedTask;
     }
-    
+
+    private void HandleDropdownStatusTester(bool closed)
+    {
+        IsSelectClosedTester = closed;
+    }
+
     int GetWeekNumber()
     {
         CultureInfo ci = CurrentCulture;
@@ -126,10 +166,31 @@ public partial class EditRejectionModal : ComponentBase
     
     private void DateChangedFrom(DateTime? date)
     {
+        if(date != null)
+        {
+            PrintAsJson(date!);
+        }
+
+        updateDto.ResolvedDate = date;
+
+        if (updateDto.IsResolve && date.HasValue)
+        {
+            if (updateDto.Status != "completed")
+            {
+                estadoOriginal = updateDto.Status ?? "in-progress";
+            }
+
+            _ = OnEstadoSelectedChanged("completed");
+        }
+
+        StateHasChanged();
+    }
+
+    private void DateChangedResolvedFrom(DateTime? date)
+    {
         if (date != null)
         {
-            PrintAsJson(date);
-            updateDto.ResolvedDate = date;
+            updateDto.ResolvedDateTesting = date;
         }
     }
     
@@ -145,21 +206,70 @@ public partial class EditRejectionModal : ComponentBase
                 updateDto.ResolvedDate = null;
         }
     }
-    
+
+    private DateTime? ResolvedDateTestingForInput
+    {
+        get => updateDto.ResolvedDateTesting;
+        set
+        {
+            if (value.HasValue)
+                updateDto.ResolvedDateTesting = value.Value;
+            else
+                updateDto.ResolvedDateTesting = null;
+        }
+    }
+
+
     private void HandleDropdownState(bool closed)
     {
         IsSelectClosed = closed;
+    }
+
+    private void HandleDropdownDateResolved(bool closed)
+    {
+        IsSelectDateResolvedClosed = closed;
     }
 
     private void HandleDropdownStatusState(bool closed)
     {
         IsSelectClosedStatus = closed;
     }
-    
-    
+
+    private void HandleTestingDropdownStatusState(bool closed)
+    {
+        IsSelectTestingClosedStatus = closed;
+    }
+
+
     private void HandleResolveCheck(bool check)
     {
+        if (!check)
+        {
+            updateDto.ResolvedDate = null;
+            DateChangedFrom(null);
+
+            OnEstadoSelectedChanged(estadoOriginal);
+        }
+        else
+        {
+            if (updateDto.ResolvedDate.HasValue)
+            {
+                if (updateDto.Status != "completed")
+                {
+                    estadoOriginal = updateDto.Status ?? "in-progress";
+                }
+
+                OnEstadoSelectedChanged("completed");
+            }
+        }
+
         updateDto.IsResolve = check;
+        StateHasChanged();
+    }
+
+    private void HandleResolveTestingCheck(bool check)
+    {
+        updateDto.IsResolveTesting = check;
         StateHasChanged();
     }
     
@@ -173,14 +283,37 @@ public partial class EditRejectionModal : ComponentBase
 
         IsLoadingData = true;
         StateHasChanged();
-        IsLoadingData = false;
-        await LoadDataAct(id, true);
-        StateHasChanged();
-
         await GetAllRequeriments();
+        await GetAllTesters();
+        await LoadDataAct(id, true);
+        //IsLoadingData = false;
+        
         StateHasChanged();
     }
-    
+
+    private async Task GetAllTesters()
+    {
+        IsTestersNotLoaded = true;
+        StateHasChanged();
+
+        try
+        {
+            DataAResponse<TesterResponseDto> response = await TesterService.GetAllTesters();
+            Testers = response.Data;
+            testersDict = Testers.ToDictionary(t => t.Nombre, t => t.Id);
+            testersByIdDict = Testers.ToDictionary(t => t.Id, t => t.Nombre);
+            OptionsTesters = response.Data.Select(t => t.Nombre).ToList()!;
+
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
+        IsTestersNotLoaded = false;
+        StateHasChanged();
+    }
+
     private async Task LoadDataAct(Guid id, bool saveOriginal)
     {
         try
@@ -224,14 +357,37 @@ public partial class EditRejectionModal : ComponentBase
         updateDto.Id = rejection.Id;
         updateDto.ResolvedDate = rejection.ResolvedDate;
         updateDto.IsResolve = rejection.IsResolve;
-        
+
+        estadoOriginal = rejection.Status ?? "pending";
+
+
         updateDto.RequerimentId = rejection.Requeriment.Id;
-        _ = OnEstadoSelectedChangedBD(rejection!.Status);
+        _ = OnEstadoSelectedChangedBD(rejection!.Status!);
+        _ = OnEstadoTestingSelectedChangedBD(rejection!.StatusTesting!);
         updateDto.Status = rejection!.Status;
+        updateDto.StatusTesting = rejection!.StatusTesting;
         await OnRequerimentSelectedChanged(rejection!.Requeriment.ReqID);
         updateDto.RequerimentId = rejection!.Requeriment.Id;
         updateDto.TotalRejections = rejection!.TotalRejections;
-        
+        updateDto.IsResolveTesting = rejection.IsResolveTesting;
+        updateDto.ResolvedDateTesting = rejection.ResolvedDateTesting;
+
+        await SafeRunAsync(async () =>
+        {
+
+            TesterSeleccionado = ObtenerTesterPorId(rejection.Tester?.Id.ToString()!);
+
+            if (!string.IsNullOrEmpty(TesterSeleccionado))
+            {
+                await OnTesterSelectedChanged(TesterSeleccionado);
+            }
+
+            IsLoadingData = false;
+            StateHasChanged();
+        });
+
+        testerAnterior = rejection.Tester?.Id.ToString();
+
         StateHasChanged();
     }
     
@@ -267,15 +423,37 @@ public partial class EditRejectionModal : ComponentBase
         return GetStatusNameR(estado);
         
     }
-    
+
+    private string OnEstadoTestingSelectedChangedBD(string estado)
+    {
+        EstadoTestingSeleccionado = GetStatusNameR(estado);
+        return GetStatusNameR(estado);
+
+    }
+
     private Task OnEstadoSelectedChanged(string estado)
     {
-        EstadoSeleccionado = OnEstadoSelectedChangedBD(estado);
         updateDto.Status = GetStatusName(estado);
+        EstadoSeleccionado = OnEstadoSelectedChangedBD(estado);
+
+        if (estado != "completed" || (!updateDto.IsResolve || !updateDto.ResolvedDate.HasValue))
+        {
+            estadoOriginal = estado;
+        }
+
+        StateHasChanged();
         return Task.CompletedTask;
-        
+
     }
-    
+
+    private Task OnEstadoTestingSelectedChanged(string estado)
+    {
+        EstadoTestingSeleccionado = OnEstadoTestingSelectedChangedBD(estado);
+        updateDto.StatusTesting = GetStatusName(estado);
+        return Task.CompletedTask;
+
+    }
+
     private string GetStatusName(string status)
     {
         switch (status) {
@@ -308,6 +486,10 @@ public partial class EditRejectionModal : ComponentBase
     private async Task Limpiar()
     {
         IsLoadingData = true;
+
+        isError = false;
+        messageError = new MarkupString("");
+
         StateHasChanged();
 
         // Restaurar la copia original sin hacer request
@@ -320,9 +502,23 @@ public partial class EditRejectionModal : ComponentBase
             await FillDataCamps(resp!);
         }
 
-        await Task.Delay(100); 
+        await Task.Delay(250); 
 
         IsLoadingData = false;
+
+
+        if (!string.IsNullOrWhiteSpace(testerAnterior) && Guid.TryParse(testerAnterior, out _))
+        {
+            TesterSeleccionado = ObtenerTesterPorId(testerAnterior);
+            if (!string.IsNullOrEmpty(TesterSeleccionado))
+            {
+                await OnTesterSelectedChanged(TesterSeleccionado);
+            }
+        }
+        else
+        {
+            TesterSeleccionado = null;
+        }
         StateHasChanged();
     }
     
@@ -374,9 +570,10 @@ public partial class EditRejectionModal : ComponentBase
     
     private async Task GetAllRequeriments()
     {
-        IsLoadingData = true;
+        //IsLoadingData = true;
         IsRequerimentsNotLoaded = true;
-        StateHasChanged(); // asegura render previo
+        StateHasChanged();
+
         try
         {
             DataAResponse<RequerimentResponseDto> response = await RequerimentsService.GetAllRequeriments();
@@ -388,13 +585,50 @@ public partial class EditRejectionModal : ComponentBase
             Console.WriteLine(e);
         }
     
-        IsLoadingData = false;
+        //IsLoadingData = false;
         IsRequerimentsNotLoaded = false;
         StateHasChanged();
         
     }
-    
-    
+
+    private Task OnTesterSelectedChanged(string value)
+    {
+        TesterSeleccionado = value;
+
+        if (!string.IsNullOrEmpty(value) && testersDict.TryGetValue(value, out Guid testerId))
+        {
+            updateDto.TesterId = testerId;
+            IsTesterIdSelected = true;
+            IsNotTesterIdSelectedF = false;
+        }
+        else
+        {
+            updateDto.TesterId = default;
+            IsTesterIdSelected = false;
+            IsNotTesterIdSelectedF = true;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private string ObtenerTesterPorId(string id)
+    {
+        if (Guid.TryParse(id, out Guid testerGuid))
+        {
+            if (testersByIdDict.TryGetValue(testerGuid, out string? nombre))
+            {
+                return nombre;
+            }
+        }
+        else if (!string.IsNullOrEmpty(id) && testersDict.ContainsKey(id))
+        {
+            return id;
+        }
+
+        return string.Empty;
+    }
+
+
     #region Scripts
     private async Task SafeRunAsync(Func<Task> action)
     {

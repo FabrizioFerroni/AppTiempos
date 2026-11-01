@@ -13,7 +13,6 @@ using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
-using static AppTiemposV3.Web.Utils.Helpers;
 
 namespace AppTiemposV3.Web.Pages.Rejections;
 
@@ -271,9 +270,11 @@ public partial class Index : ComponentBase, IDisposable
         StateHasChanged();
         if (args.Success)
         {
-            if (args.IdResponse.HasValue && args.Obs is not null)
+            if (args.IdResponse.HasValue && args.Obs is not null && args.ExtraData is not null)
             {
-                await NewDetailModal(args.IdResponse.Value, args.Obs);
+                string? testerAsignado = args.ExtraData as string;
+
+                await NewDetailModal(args.IdResponse.Value, args.Obs, testerAsignado);
             }
             else
             {
@@ -483,9 +484,9 @@ public partial class Index : ComponentBase, IDisposable
         await showModalRef!.ShowAsync(id);
     }
     
-    private async Task NewDetailModal(Guid rejectionId, string reqId)
+    private async Task NewDetailModal(Guid rejectionId, string reqId, string? tester)
     {
-        await newDetailModalRef!.ShowAsync(IdModalNew, rejectionId, reqId);
+        await newDetailModalRef!.ShowAsync(IdModalNew, rejectionId, reqId, tester);
     }
     private async Task DeleteModal(Guid id, string reqId)
     {

@@ -50,6 +50,7 @@ using Microsoft.AspNetCore.DataProtection;
 using static Serilog.Events.LogEventLevel;
 using Serilog.Events;
 using static Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders;
+using AppTiemposV3.SharedClases.DTOs.Testers;
 
 WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
 
@@ -187,8 +188,8 @@ services.AddSwaggerGen(opt =>
 });
 
 // Starting
-string connectBdMySql = builder.Configuration.GetConnectionString("MySQL") ?? 
-                        throw new InvalidOperationException("Falta especificar la cadena de conexion a la base de datos");
+string connectBdMySql = builder.Configuration.GetConnectionString("MySQL") ?? throw new InvalidOperationException("Falta especificar la cadena de conexion a la base de datos");
+
 MySqlServerVersion? serverVersion = new MySqlServerVersion(new Version(8, 0, 45));
 
 services.AddDbContext<AppDbContext>(opt =>
@@ -207,8 +208,6 @@ services.AddDbContext<AppDbContext>(opt =>
         opt.EnableDetailedErrors(); 
     }
     opt.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-    
-    
 });
 
 // Add Identity & JWT Authentication
@@ -260,7 +259,7 @@ services.AddAuthentication(opt =>
             ValidateLifetime = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!))    ,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)),
             ClockSkew = TimeSpan.Zero,
             ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 }
         };
@@ -285,6 +284,7 @@ services.AddScoped<IInvitationContract<InvitationResponseDto>, InvitationReposit
 services.AddScoped<IRequerimentAttachmentContract<RequerimentsAttachmentsDto>, RequerimentAttachmentRepository>();
 services.AddScoped<IReportContract, ReportRepository>();
 services.AddScoped<IConfigurationContract, ConfigurationRepository>();
+services.AddScoped<ITesterContract<TesterResponseDto>, TesterRepository>();
 services.AddScoped<IBackupContract, BackupRepository>();
 services.AddScoped<IReportScheduledContract, ReportScheduledRepository>();
 services.AddScoped<IUserCContract<UserResponseDto>, UserRepository>();
@@ -357,9 +357,6 @@ services.AddQuartz(q =>
 
 services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
-
-
-// En Program.cs
 try
 {
     WebApplication? app = builder.Build();
@@ -373,23 +370,29 @@ try
 
         try
         {
-           AppDbContext? context = servicesProv.GetRequiredService<AppDbContext>();
-           context.Database.Migrate(); 
+            AppDbContext? context = servicesProv.GetRequiredService<AppDbContext>();
+            context.Database.Migrate(); 
 
-           DbSeederDto? response = await SeedData(servicesProv, config);
+            DbSeederDto? adminResponse = await SeedData(servicesProv, config);
 
-           if (response.Status)
-           {
-                if(response.Result == 1)
-                {
-                    logger.LogInformation("✅ Migraciones aplicadas correctamente.");
-                } 
-                else if(response.Result == 2)
-                {
-                   logger.LogInformation("✅ No se realiza migraciones, ya que ya el user admin ya fue creado.");
-                }
-           }
-      }
+            if (adminResponse.Status)
+            {
+                if (adminResponse.Result == 1)
+                    logger.LogInformation("✅ Admin creado correctamente.");
+                else if (adminResponse.Result == 2)
+                    logger.LogInformation("✅ No se crea admin, ya que el user admin ya fue creado.");
+            }
+
+            DbSeederDto? testersResponse = await SeedTestersAsync(servicesProv, config);
+
+            if (testersResponse.Status)
+            {
+                if (testersResponse.Result == 1)
+                    logger.LogInformation($"✅ {testersResponse.Response}");
+                else if (testersResponse.Result == 2)
+                    logger.LogInformation($"✅ {testersResponse.Response}");
+            }
+        }
       catch (Exception ex)
       {            
           logger.LogError(ex, "Ocurrió un error al migrar o sembrar la base de datos.");
@@ -401,7 +404,6 @@ try
         app.Environment.WebRootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
     }
 
-    // Asegurarnos de que la carpeta física exista para que no explote al guardar
     if (!Directory.Exists(app.Environment.WebRootPath))
     {
         Directory.CreateDirectory(app.Environment.WebRootPath);
