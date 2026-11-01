@@ -123,6 +123,7 @@ public class RejectionService: IRejectionContract<RejectionResponseDto>
             {
                 Id = Guid.Empty,
                 Message = resultError?.Message!,
+                TesterId = Guid.Empty
             };
             
             return new DataResponse<CreateRejectionResponseDto>(false, respFailed, HttpStatusCode.OK);

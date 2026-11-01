@@ -9,24 +9,15 @@ public class RejectionDetailEntity : BaseEntity
     public DateOnly RejectionDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     
     [Required]
-    [StringLength(255)]
     public string RejectionReason { get; set; } = string.Empty;
     
     [Required]
-    [StringLength(255)]
     public string RejectionDetails { get; set; } = string.Empty;
     
     [DataType(DataType.Date)]
     public DateOnly? SolutionDate { get; set; }
     
-    [StringLength(255)]
     public string? SolutionDetails { get; set; }
-    
-    [DataType(DataType.Time)]
-    public TimeOnly? EstimatedFixTime { get; set; }
-    
-    [DataType(DataType.Time)]
-    public TimeOnly? ActualFixTime { get; set; } = null;
     
     public string Status { get; set; } = "in-progress";
     
@@ -40,4 +31,11 @@ public class RejectionDetailEntity : BaseEntity
     public UserEntity User { get; set; } = null!;
 
     public int RechazoNro { get; set; } = 0;
+
+    public Guid? TesterId { get; set; }
+    public TesterEntity? Tester { get; set; }
+
+    public bool BadRejected { get; set; } = false;
+
+    public string? ReasonBadRequest { get; set; } = string.Empty;
 }

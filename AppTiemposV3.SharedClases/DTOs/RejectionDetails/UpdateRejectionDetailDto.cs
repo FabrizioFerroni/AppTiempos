@@ -9,10 +9,8 @@ public class UpdateRejectionDetailDto
     [DataType(DataType.Date)]
     public DateOnly RejectionDate { get; set; }  = DateOnly.FromDateTime(DateTime.Today);
     
-    [StringLength(255)]
     public string? RejectionReason { get; set; }
     
-    [StringLength(255)]
     public string? RejectionDetails { get; set; }
     
     [DataType(DataType.Date)]
@@ -21,13 +19,13 @@ public class UpdateRejectionDetailDto
     [StringLength(255)]
     public string? SolutionDetails { get; set; }
     
-    [DataType(DataType.Time)]
-    public TimeOnly? EstimatedFixTime { get; set; }
-    
-    [DataType(DataType.Time)]
-    public TimeOnly? ActualFixTime { get; set; }
-    
     public string? Status { get; set; }
     
     public Guid RejectionId { get; set; }
+
+    public Guid TesterId { get; set; } = Guid.Empty;
+
+    public bool BadRejected { get; set; } = false;
+
+    public string? ReasonBadRequest { get; set; } = string.Empty;
 }

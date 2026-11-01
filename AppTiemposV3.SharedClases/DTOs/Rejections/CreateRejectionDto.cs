@@ -6,4 +6,6 @@ public class CreateRejectionDto
 {
     [Required]
     public required Guid RequerimentId { get; set; } = Guid.Empty;
+    [Required]
+    public required Guid TesterId { get; set; } = Guid.Empty;
 }

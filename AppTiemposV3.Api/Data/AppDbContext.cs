@@ -33,6 +33,7 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
     public DbSet<WorkingSaturdayEntity> WorkingSaturdays { get; set; }
     public DbSet<BackupLogsEntity> BackupLogs { get; set; }
     public DbSet<RequerimentAttachmentEntity> RequerimentAttachments { get; set; } = null!;
+    public DbSet<TesterEntity> Testers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -76,6 +77,7 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
         builder.Entity<NotificationConfigEntity>(e => e.ToTable(name: "configuraciones_notificaciones"));
         builder.Entity<BackupLogsEntity>(e => e.ToTable(name: "configuraciones_backups_logs"));
         builder.Entity<RequerimentAttachmentEntity>(e => e.ToTable(name: "requeriments_attachments"));
+        builder.Entity<TesterEntity>(e => e.ToTable(name: "testers"));
 
         Type[]? excludedTypes = new[] { typeof(CategoriesEntity) };
 
@@ -352,6 +354,11 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
                 .WithOne(d => d.Rejection)
                 .HasForeignKey(d => d.RejectionId);
 
+            r.HasOne(re => re.Tester)
+            .WithMany(t => t.Rejections)
+            .HasForeignKey(re => re.TesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
             r.Property(c => c.CreatedAt)
                 .HasColumnType("timestamp")
@@ -374,6 +381,11 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
                 .HasForeignKey(re => re.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            rd.HasOne(re => re.Tester)
+            .WithMany(t => t.RejectionDetails)
+            .HasForeignKey(re => re.TesterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
             rd.Property(c => c.CreatedAt)
                 .HasColumnType("timestamp")
@@ -384,26 +396,6 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
                     c => c.ToDateTime(TimeOnly.MinValue),
                     c => DateOnly.FromDateTime(c))
                 .HasColumnType("date");
-
-            rd.Property(e => e.EstimatedFixTime)
-                .HasColumnType("time");
-
-            rd.Property(e => e.ActualFixTime)
-                .HasColumnType("time");
-
-            rd.Property(ab => ab.EstimatedFixTime)
-                .HasConversion(
-                    c => c.HasValue ? TimeSpan.FromTicks(c.Value.Ticks) : (TimeSpan?)null,
-                    c => c.HasValue ? TimeOnly.FromTimeSpan(c.Value) : (TimeOnly?)null
-                )
-                .HasColumnType("time");
-
-            rd.Property(ab => ab.ActualFixTime)
-                .HasConversion(
-                    c => c.HasValue ? TimeSpan.FromTicks(c.Value.Ticks) : (TimeSpan?)null,
-                    c => c.HasValue ? TimeOnly.FromTimeSpan(c.Value) : (TimeOnly?)null
-                )
-                .HasColumnType("time");
 
             rd.Property(rn => rn.RechazoNro)
                 .HasDefaultValueSql("0");
@@ -583,6 +575,19 @@ public class AppDbContext : IdentityDbContext<UserEntity, IdentityRole<Guid>, Gu
             e.Property(et => et.Etapa)
                 .HasConversion<int>()
                 .HasDefaultValueSql("1");
+        });
+
+        builder.Entity<TesterEntity>(te =>
+        {
+            te.Property(c => c.CreatedAt)
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            te.Property(id => id.IsDeleted)
+            .HasDefaultValue(false);
+
+            te.HasIndex(t => t.Nombre)
+            .IsUnique();
         });
     }
 }   

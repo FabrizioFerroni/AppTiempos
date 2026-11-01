@@ -1,18 +1,15 @@
-@using AppTiemposV3.SharedClases.Enums
 <Modal Method="newRejection" IdElement="Id" Id=@($"dialog-modal-new-training-{IdModalStr}") Class="select-none">
     <div class="px-6 my-4">
         <div class="flex justify-between items-center gap-3 mt-[-0.5rem]">
             <span class="text-gray-700 dark:text-gray-300 text-md">
                 Cargar un nuevo rechazo
             </span>
-            <Button
-                Variant="ghost"
-                Size="sm"
-                Command="close"
-                CommandFor=@($"newRejection-{Id}")
-                Class="text-xs cursor-pointer"
-            >
-                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4"/>
+            <Button Variant="ghost"
+                    Size="sm"
+                    Command="close"
+                    CommandFor=@($"newRejection-{Id}")
+                    Class="text-xs cursor-pointer">
+                <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4" />
             </Button>
         </div>
 
@@ -24,13 +21,13 @@
                     @messageError
                 </div>
                 <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" @onclick="() => { isError = false; StateHasChanged(); }">
-                    <Close Class="h-6 w-6 text-red-500"/>
+                    <Close Class="h-6 w-6 text-red-500" />
                 </button>
             </div>
         }
-        
+
         <EditForm Enhance Model=@createDto class="space-y-4 mt-4" novalidate OnValidSubmit=@SendCreateReject FormName="CreateRejectForm">
-            <DataAnnotationsValidator/>
+            <DataAnnotationsValidator />
 
             <div>
                 <Label For="requerimiento" Id="reqIdLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
@@ -49,22 +46,43 @@
                         EnableSearch="true"
                         OnDropdownStateChanged="HandleDropdownStatusRequeriment"
                         HeightClass="max-h-[120px]"
-                        HeightClassPrin=@($"{(IsSelectClosedRequeriment ? "": "h-[130px]")}")
-                >
+                        HeightClassPrin=@($"{(IsSelectClosedRequeriment ? "": "h-[130px]")}")>
                 </Select>
+            </div>
+
+            <div>
+                <Label For="tester" Id="testerLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Tester Asignado
+                </Label>
+                <div class="relative">
+                    <Select TItem="string"
+                            Items="@OptionsTesters"
+                            Id="tester"
+                            Value="TesterSeleccionado"
+                            ValueChanged="OnTesterSelectedChanged"
+                            Placeholder=@PlaceholderTesterText
+                            ItemTextSelector="x => x"
+                            ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            EnableSearch="true"
+                            Disabled="@(!IsRequerimentIdSelected || IsTestersNotLoaded)"
+                            OnDropdownStateChanged="HandleDropdownStatusTester"
+                            HeightClass="max-h-[120px]"
+                            HeightClassPrin=@($"{(IsSelectClosedTester ? "": "h-[130px]")}")>
+                    </Select>
+                </div>
+                <ValidationMessage For="() => createDto.TesterId" class="text-xs text-red-600" />
             </div>
 
             
 
             <div class="flex justify-end gap-2 pt-4">
                 <div class="flex gap-2">
-                    <Button
-                        Type="button"
-                        Variant="outline"
-                        Class="text-gray-700 dark:text-gray-300 cursor-pointer"
-                        Command="close"
-                        CommandFor="@($"newRejection-{Id}")"
-                    >
+                    <Button Type="button"
+                            Variant="outline"
+                            Class="text-gray-700 dark:text-gray-300 cursor-pointer"
+                            Command="close"
+                            CommandFor="@($"newRejection-{Id}")">
                         <Close Class="w-4 h-4 mr-2" />
                         Cancelar
                     </Button>
@@ -87,9 +105,9 @@
                 </div>
             </div>
         </EditForm>
-        
+
     </div>
 </Modal>
 
-<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNew-{Id}") command="show-modal" commandfor=@($"newRejection-{Id}")></button>      
+<button type="button" @ref="showModalRef" class="hidden" id=@($"showModalNew-{Id}") command="show-modal" commandfor=@($"newRejection-{Id}")></button>
 <button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalNew-{Id}") command="close" commandfor="@($"newRejection-{Id}")"></button> 

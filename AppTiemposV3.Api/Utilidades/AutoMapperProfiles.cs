@@ -8,6 +8,7 @@ using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Reports;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
+using AppTiemposV3.SharedClases.DTOs.Testers;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.DTOs.Users;
 using AppTiemposV3.SharedClases.Enums;
@@ -26,6 +27,7 @@ namespace AppTiemposV3.Api.Utilidades
             MappingInvitations();
             MappingRejections();
             MappingRejectionDetails();
+            MappingTesters();
             MappingUsers();
             MappingInvitation();
             MappingAudits();
@@ -129,6 +131,7 @@ namespace AppTiemposV3.Api.Utilidades
             CreateMap<RequerimentsEntity, RequerimentDtoRej>();
             CreateMap<UserEntity, UserDtoARej>();
             CreateMap<CategoriesEntity, CategoryDtoResRej>();
+            CreateMap<TesterEntity, TesterResponseDto>();
         }
 
         public void MappingRejectionDetails()
@@ -136,9 +139,18 @@ namespace AppTiemposV3.Api.Utilidades
             CreateMap<CreateRejectionDetailDto, RejectionDetailEntity>();
             CreateMap<UpdateRejectionDetailDto, RejectionDetailEntity>();
 
-            CreateMap<RejectionDetailEntity, RejectionDetailResponseDto>();
+            CreateMap<RejectionDetailEntity, RejectionDetailResponseDto>()
+                .ForMember(dest => dest.Tester, opt => opt.MapFrom(src => src.Tester)); ;
             
             CreateMap<RequerimentsEntity, RequerimentDtoRej>();
+            CreateMap<TesterEntity, TesterResponseDto>();
+        }
+
+        public void MappingTesters()
+        {
+            CreateMap<CreateTesterDto, TesterEntity>();
+            CreateMap<UpdateTesterDto, TesterEntity>();
+            CreateMap<TesterEntity, TesterResponseDto>();
         }
 
         public void MappingUsers()

@@ -1,15 +1,19 @@
-using System.Globalization;
-using System.Text.Json;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
+using AppTiemposV3.SharedClases.DTOs.Testers;
+using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using static NanoidDotNet.Nanoid;
-using static NanoidDotNet.Nanoid.Alphabets;
+using System.ComponentModel;
+using System.Diagnostics.Metrics;
+using System.Globalization;
+using System.Text.Json;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static AppTiemposV3.Web.Utils.Helpers;
+using static NanoidDotNet.Nanoid;
+using static NanoidDotNet.Nanoid.Alphabets;
 using static System.Globalization.CultureInfo;
 
 namespace AppTiemposV3.Web.Pages.Rejections.ModalRejectionDetails;
@@ -24,6 +28,7 @@ public partial class EditRejectionDetailModal : ComponentBase
     [Inject] private NavigationManager? Router { get; set; }
     [Inject] private NotificationService Toltip { get; set; } = default!;
     [Inject] private IRejectionDetailContract<RejectionDetailResponseDto> RejectionDService { get; set; } = null!;
+    [Inject] private ITesterContract<TesterResponseDto> TesterService { get; set; } = null!;
     [Inject] private ColorService ColorService { get; set; } = null!;
     
     private Dictionary<string, (string Mensaje, bool EsExitoso)> mensajes = new();
@@ -62,8 +67,33 @@ public partial class EditRejectionDetailModal : ComponentBase
     private int weekNumberSelected = 45;
     private DateTime currentDate = DateTime.Today;
     private bool IsSelectClosed = true;
+
+    private bool IsSelectClosedTester = true;
+    private bool IsTestersNotLoaded { get; set; } = true;
+    private Dictionary<Guid, string> testersByIdDict = new();
+    private Dictionary<string, Guid> testersDict = new();
+    private List<string> OptionsTesters = new() { };
+    List<TesterResponseDto> Testers = new();
+
+    private string PlaceholderTesterText
+    {
+        get
+        {
+            return IsTestersNotLoaded
+                ? "Cargando testers..."
+                : "Selecciona un tester";
+        }
+    }
+
+    private string? TesterSeleccionado;
+
+    private string? DescripcionTesterSeleccionado;
+
+    private bool IsTesterIdSelected = false;
+    private bool IsNotTesterIdSelectedF = true;
+    private string? testerAnterior = string.Empty;
     #endregion
-    
+
     #region Inicializacion
     protected override void OnInitialized()
     {
@@ -110,7 +140,12 @@ public partial class EditRejectionDetailModal : ComponentBase
     {
         IsSelectClosed = closed;
     }
-    
+
+    private void HandleDropdownStatusTester(bool closed)
+    {
+        IsSelectClosedTester = closed;
+    }
+
     public async Task ShowAsync(Guid id, string reqID, int rejectionNumber)
     {
         await Limpiar();  
@@ -122,13 +157,39 @@ public partial class EditRejectionDetailModal : ComponentBase
 
         IsLoadingData = true;
         StateHasChanged();
-        IsLoadingData = false;
-        await LoadDataAct(id, true);
-        StateHasChanged();
+      
 
+
+        await GetAllTesters();
+        
+        await LoadDataAct(id, true);
+        
         StateHasChanged();
     }
-    
+
+    private async Task GetAllTesters()
+    {
+        IsTestersNotLoaded = true;
+        StateHasChanged();
+
+        try
+        {
+            DataAResponse<TesterResponseDto> response = await TesterService.GetAllTesters();
+            Testers = response.Data;
+            testersDict = Testers.ToDictionary(t => t.Nombre, t => t.Id);
+            testersByIdDict = Testers.ToDictionary(t => t.Id, t => t.Nombre);
+            OptionsTesters = response.Data.Select(t => t.Nombre).ToList()!;
+
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+
+        IsTestersNotLoaded = false;
+        StateHasChanged();
+    }
+
     private async Task LoadDataAct(Guid id, bool saveOriginal)
     {
         try
@@ -176,53 +237,28 @@ public partial class EditRejectionDetailModal : ComponentBase
         updateDto.SolutionDate = rejectionDetail!.SolutionDate;
         updateDto.SolutionDetails = rejectionDetail!.SolutionDetails;
         
-        if (TimeOnly.TryParse(rejectionDetail!.EstimatedFixTime, out TimeOnly extimatedTime))
-        {
-            TimeOnly extimatedTimeR = extimatedTime;
-
-            // Redondea al minuto más cercano (sin segundos ni milisegundos)
-            if (extimatedTimeR.Second >= 30)
-            {
-                extimatedTimeR = extimatedTimeR.AddMinutes(1);
-            }
-
-            extimatedTimeR = new TimeOnly(extimatedTimeR.Hour, extimatedTimeR.Minute);
-
-            // Asignalo al modelo
-            updateDto.EstimatedFixTime = extimatedTimeR;
-            CheckIfPastEndTime();
-
-        }
-        else
-        {
-            updateDto.EstimatedFixTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute);
-        }
-
-        if (TimeOnly.TryParse(rejectionDetail!.ActualFixTime, out TimeOnly actualTime))
-        {
-            TimeOnly actualTimeR = actualTime;
-
-            // Redondea al minuto más cercano (sin segundos ni milisegundos)
-            if (actualTimeR.Second >= 30)
-            {
-                actualTimeR = actualTimeR.AddMinutes(1);
-            }
-
-            actualTimeR = new TimeOnly(actualTimeR.Hour, actualTimeR.Minute);
-
-            // Asignalo al modelo
-            updateDto.ActualFixTime = actualTimeR;
-            CheckIfPastEndTime();
-        }
-        else
-        {
-            updateDto.ActualFixTime = new TimeOnly(DateTime.Now.Hour, DateTime.Now.Minute);
-        }
-        
         updateDto.RejectionId = rejectionDetail.RejectionId;
         _ = OnEstadoSelectedChangedBD(rejectionDetail!.Status);
         updateDto.Status = rejectionDetail!.Status;
-            
+        updateDto.BadRejected = rejectionDetail.BadRejected;
+        updateDto.ReasonBadRequest = rejectionDetail.ReasonBadRequest;
+
+        await SafeRunAsync(async () =>
+        {
+
+            TesterSeleccionado = ObtenerTesterPorId(rejectionDetail.Tester?.Id.ToString()!);
+
+            if (!string.IsNullOrEmpty(TesterSeleccionado))
+            {
+                await OnTesterSelectedChanged(TesterSeleccionado);
+            }
+
+            IsLoadingData = false;
+            StateHasChanged();
+        });
+
+        testerAnterior = rejectionDetail.Tester?.Id.ToString();
+
         StateHasChanged();
     }
     
@@ -258,7 +294,13 @@ public partial class EditRejectionDetailModal : ComponentBase
         return GetStatusNameR(estado);
         
     }
-    
+
+    private void HandleBadRejectedCheck(bool check)
+    {
+        updateDto.BadRejected = check;
+        StateHasChanged();
+    }
+
     private Task OnEstadoSelectedChanged(string estado)
     {
         EstadoSeleccionado = OnEstadoSelectedChangedBD(estado);
@@ -311,9 +353,22 @@ public partial class EditRejectionDetailModal : ComponentBase
             await FillDataCamps(resp!);
         }
 
-        await Task.Delay(100); 
+        await Task.Delay(250); 
 
         IsLoadingData = false;
+
+        if (!string.IsNullOrWhiteSpace(testerAnterior) && Guid.TryParse(testerAnterior, out _))
+        {
+            TesterSeleccionado = ObtenerTesterPorId(testerAnterior);
+            if (!string.IsNullOrEmpty(TesterSeleccionado))
+            {
+                await OnTesterSelectedChanged(TesterSeleccionado);
+            }
+        }
+        else
+        {
+            TesterSeleccionado = null;
+        }
         StateHasChanged();
     }
     
@@ -366,7 +421,7 @@ public partial class EditRejectionDetailModal : ComponentBase
     
     private string RejectionDateString
     {
-        get => updateDto.RejectionDate.ToString("yyyy-MM-dd"); // formato ISO compatible con <input type="date">
+        get => updateDto.RejectionDate.ToString("yyyy-MM-dd");
         set
         {
             if (DateOnly.TryParse(value, out DateOnly parsed))
@@ -379,7 +434,7 @@ public partial class EditRejectionDetailModal : ComponentBase
     
     private string? SolutionDateString
     {
-        get => updateDto.SolutionDate.ToString(); // formato ISO compatible con <input type="date">
+        get => updateDto.SolutionDate.ToString();
         set
         {
             if (DateOnly.TryParse(value, out DateOnly parsed))
@@ -389,30 +444,41 @@ public partial class EditRejectionDetailModal : ComponentBase
             }
         }
     }
-    
-    private string? EstimatedFixTimeString
+
+    private Task OnTesterSelectedChanged(string value)
     {
-        get => updateDto.EstimatedFixTime.ToString(); // formato 24h válido para <input type="time">
-        set
+        TesterSeleccionado = value;
+
+        if (!string.IsNullOrEmpty(value) && testersDict.TryGetValue(value, out Guid testerId))
         {
-            if (TimeOnly.TryParse(value, out TimeOnly parsed))
-            {
-                updateDto.EstimatedFixTime = parsed;
-                CheckIfPast();
-            }
+            updateDto.TesterId = testerId;
+            IsTesterIdSelected = true;
+            IsNotTesterIdSelectedF = false;
         }
+        else
+        {
+            updateDto.TesterId = default;
+            IsTesterIdSelected = false;
+            IsNotTesterIdSelectedF = true;
+        }
+
+        return Task.CompletedTask;
     }
-    
-    private string? ActualFixTimeString
+
+    private string ObtenerTesterPorId(string id)
     {
-        get => updateDto.ActualFixTime.ToString(); // formato 24h válido para <input type="time">
-        set
+        if (Guid.TryParse(id, out Guid testerGuid))
         {
-            if (TimeOnly.TryParse(value, out TimeOnly parsed))
+            if (testersByIdDict.TryGetValue(testerGuid, out string? nombre))
             {
-                updateDto.ActualFixTime = parsed;
-                CheckIfPast();
+                return nombre;
             }
         }
+        else if (!string.IsNullOrEmpty(id) && testersDict.ContainsKey(id))
+        {
+            return id;
+        }
+
+        return string.Empty;
     }
 }

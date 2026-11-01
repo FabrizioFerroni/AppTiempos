@@ -10,6 +10,7 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
 using System.Reflection;
 using static AppTiemposV3.Api.Helpers.EntityNavigationHelper;
@@ -484,6 +485,162 @@ public class GenericRepository : IGenericContract
         );
     }
 
+
+    public async Task<Pageable<List<TDto>>> GetAllPaginatedThenIncludeAsync<TEntity, TDto>(PaginationDtoAdvanced pagination, Guid? userId, params string[] includes) where TEntity : class
+    {
+        IQueryable<TEntity> queryable = _dbContext.Set<TEntity>().AsQueryable();
+
+        // Filtro por UserId si aplica
+        if (userId is not null && userId != Guid.Empty)
+        {
+            UserEntity? user = await GetUserByIdAsync(userId);
+
+            PropertyInfo? userIdProperty = typeof(TEntity).GetProperty("UserId");
+            if (userIdProperty != null)
+            {
+                ParameterExpression paramUser = Expression.Parameter(typeof(TEntity), "e");
+                MemberExpression userIdProp = Expression.Property(paramUser, "UserId");
+                ConstantExpression userIdValue = Expression.Constant(user.Id);
+                BinaryExpression equalUser = Expression.Equal(userIdProp, userIdValue);
+                Expression<Func<TEntity, bool>> userFilter = Expression.Lambda<Func<TEntity, bool>>(equalUser, paramUser);
+                queryable = queryable.Where(userFilter);
+            }
+        }
+
+
+        // Aplicar filtros avanzados dinámicamente
+        if (pagination.Filters is not null && pagination.Filters.Any())
+        {
+            ParameterExpression param = Expression.Parameter(typeof(TEntity), "e");
+            Expression? combined = null;
+
+            foreach (AdvancedFilters filter in pagination.Filters)
+            {
+                if (string.IsNullOrWhiteSpace(filter.Key) || string.IsNullOrWhiteSpace(filter.Value))
+                    continue;
+
+                PropertyInfo? prop = typeof(TEntity).GetProperty(filter.Key);
+                if (prop == null) continue;
+
+                MemberExpression property = Expression.Property(param, prop);
+                ConstantExpression valueConst;
+
+                Expression condition;
+
+                if (prop.PropertyType == typeof(string))
+                {
+                    MethodInfo containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) })!;
+                    valueConst = Expression.Constant(filter.Value);
+                    condition = Expression.Call(property, containsMethod, valueConst);
+                }
+                else if (prop.PropertyType == typeof(Guid))
+                {
+                    if (Guid.TryParse(filter.Value, out Guid guidValue))
+                    {
+                        valueConst = Expression.Constant(guidValue);
+                        condition = Expression.Equal(property, valueConst);
+                    }
+                    else continue;
+                }
+                else if (IsNumericType(prop.PropertyType))
+                {
+                    if (decimal.TryParse(filter.Value, out decimal numValue))
+                    {
+                        valueConst = Expression.Constant(Convert.ChangeType(numValue, prop.PropertyType));
+                        condition = Expression.Equal(property, valueConst);
+                    }
+                    else continue;
+                }
+                else if (prop.PropertyType == typeof(bool))
+                {
+                    if (bool.TryParse(filter.Value, out bool boolVal))
+                    {
+                        valueConst = Expression.Constant(boolVal);
+                        condition = Expression.Equal(property, valueConst);
+                    }
+                    else continue;
+                }
+                else
+                {
+                    // fallback: ToString().Contains()
+                    MethodInfo toStringMethod = prop.PropertyType.GetMethod("ToString", Type.EmptyTypes)!;
+                    MethodCallExpression toStringCall = Expression.Call(property, toStringMethod);
+                    MethodInfo containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) })!;
+                    valueConst = Expression.Constant(filter.Value);
+                    condition = Expression.Call(toStringCall, containsMethod, valueConst);
+                }
+
+                combined = combined == null ? condition : Expression.AndAlso(combined, condition);
+            }
+
+            if (combined != null)
+            {
+                Expression<Func<TEntity, bool>> lambda = Expression.Lambda<Func<TEntity, bool>>(combined, param);
+                queryable = queryable.Where(lambda);
+            }
+        }
+        else
+        {
+            List<AdvancedFilters> filtersNull = new List<AdvancedFilters>();
+            pagination.Filters = filtersNull.ToArray();
+        }
+
+        int totalElements = await queryable.CountAsync();
+
+        // Ordenamiento
+        if (!string.IsNullOrEmpty(pagination.Ordenar))
+        {
+            queryable = pagination.Ascending
+                ? queryable.OrderBy(e => EF.Property<object>(e, pagination.Ordenar))
+                : queryable.OrderByDescending(e => EF.Property<object>(e, pagination.Ordenar));
+        }
+        else
+        {
+            queryable = pagination.Ascending
+                ? queryable.OrderBy(e => EF.Property<DateTime>(e, "CreatedAt"))
+                : queryable.OrderByDescending(e => EF.Property<DateTime>(e, "CreatedAt"));
+        }
+
+        bool hasNavigations = HasNavigations<TEntity>();
+
+        List<TDto> resDto;
+
+        if (includes != null && includes.Length > 0)
+        {
+            foreach (string? include in includes)
+            {
+                queryable = queryable.Include(include);
+            }
+        }
+        else if (hasNavigations)
+        {
+            queryable = queryable.IncludeAllNavigations<TEntity>();
+        }
+
+        if (hasNavigations || (includes != null && includes.Length > 0))
+        {
+            List<TEntity>? list = await queryable
+                .PaginarAdvanced(pagination)
+                .ToListAsync();
+
+            resDto = _mapper.Map<List<TDto>>(list);
+        }
+        else
+        {
+            resDto = await queryable
+                .PaginarAdvanced(pagination)
+                .ProjectTo<TDto>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+        }
+
+        return PageableResponse.CreatePageableResponse(
+            resDto,
+            pagination.Pagina,
+            pagination.RegistrosPorPagina,
+            totalElements
+        );
+    }
+
     public async Task<Pageable<List<TDto>>> GetAllPaginatedAuditAsync<TEntity, TDto>(PaginationDtoAdvanced pagination) where TEntity : class
     {
         IQueryable<TEntity> queryable = _dbContext.Set<TEntity>().AsQueryable();
@@ -664,20 +821,6 @@ public class GenericRepository : IGenericContract
                type == typeof(long) || type == typeof(ulong) ||
                type == typeof(float) || type == typeof(double) ||
                type == typeof(decimal);
-    }
-
-    private IQueryable<TEntity> ApplyIncludes<TEntity>(IQueryable<TEntity> query)
-    where TEntity : class
-    {
-        var entityType = _dbContext.Model.FindEntityType(typeof(TEntity));
-        if (entityType == null) return query;
-
-        foreach (var navigation in entityType.GetNavigations())
-        {
-            query = query.Include(navigation.Name);
-        }
-
-        return query;
     }
 
     public async Task<Pageable<List<TEntity>>> GetAllPaginatedReportedAsync<TEntity>(PaginationDto pagination, Guid? userId) where TEntity : class

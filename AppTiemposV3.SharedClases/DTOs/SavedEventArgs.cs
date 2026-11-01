@@ -7,4 +7,5 @@ public class SavedEventArgs
     public DateOnly? StartDate { get; set; }
     public Guid? IdResponse { get; set; }
     public string? Obs { get; set; }
+    public string? ExtraData { get; set; }
 }

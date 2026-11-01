@@ -72,7 +72,7 @@
                     <Label Id="isLoadedLabelDesc" Class="text-gray-700 dark:text-gray-300 mb-3 block">
                         ¿Resuelto por mí?
                     </Label>
-                    <Switch Id="loaded" Checked=@updateDto.IsResolve CheckedChanged="HandleResolveCheck" Disabled="@(updateDto.Status == "completed")" />
+                    <Switch Id="loaded" Checked=@updateDto.IsResolve CheckedChanged="HandleResolveCheck" />
 
                     <ValidationMessage For="() => updateDto.IsResolve" class="text-xs text-red-600"/>
                 </div>
@@ -92,7 +92,6 @@
                             OnDropdownStateChanged="HandleDropdownState"
                             SelectedStart="ResolvedDateForInput"
                             ClassDiv="w-full"
-                            Disabled="@(updateDto.Status == "completed")"
                             With="w-full"
                             ClassHeight=@($"{(IsSelectClosed ? "": "h-[300px]")}")
                             ClassButton="w-full font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 h-10  px-3 py-2"
@@ -101,16 +100,16 @@
                     </div>
                 }
 
-
                 <div>
                     <Label For="statusRechazo" Id="statusRechazoLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
-                        Estado del rechazo
+                        Estado del rechazo (Desarrollo)
                     </Label>
                     <div class="relative">
                         <Select TItem="string"
                                 Items="@OptionsEstados"
                                 Id="statusRechazo"
                                 Value="EstadoSeleccionado"
+                                Disabled=@(updateDto.IsResolve && updateDto.ResolvedDate.HasValue)
                                 ValueChanged="OnEstadoSelectedChanged!"
                                 Placeholder="Selecciona el estado del rechazo"
                                 ItemTextSelector="x => x.ToString()"
@@ -119,11 +118,88 @@
                                 EnableSearch="false"
                                 OnDropdownStateChanged="HandleDropdownStatusState"
                                 HeightClass="max-h-[120px]"
-                                HeightClassPrin=@($"{(IsSelectClosedStatus ? "": "h-[130px]")}")
-                        >
+                                HeightClassPrin=@($"{(IsSelectClosedStatus ? "": "h-[130px]")}")>
                         </Select>
                     </div>
-                    <ValidationMessage For="() => updateDto.Status" class="text-xs text-red-600"/>
+                    <ValidationMessage For="() => updateDto.Status" class="text-xs text-red-600" />
+                </div>
+
+                <div>
+                    <Label For="tester" Id="testerLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Tester Asignado
+                    </Label>
+                    <div class="relative">
+                        <Select TItem="string"
+                                Items="@OptionsTesters"
+                                Id="tester"
+                                Value="TesterSeleccionado"
+                                ValueChanged="OnTesterSelectedChanged"
+                                Placeholder=@PlaceholderTesterText
+                                Disabled="@(IsTestersNotLoaded)"
+                                ItemTextSelector="x => x"
+                                ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                EnableSearch="false"
+                                OnDropdownStateChanged="HandleDropdownStatusTester"
+                                HeightClass="max-h-[120px]"
+                                HeightClassPrin=@($"{(IsSelectClosedTester ? "": "h-[130px]")}")>
+                        </Select>
+                    </div>
+                    <ValidationMessage For="() => updateDto.TesterId" class="text-xs text-red-600" />
+                </div>
+
+                <div class="space-y-2">
+                    <Label Id="isLoadedLabelDesc" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        ¿Resuelto por testing?
+                    </Label>
+                    <Switch Id="loadedTesting" Checked=@updateDto.IsResolveTesting CheckedChanged="HandleResolveTestingCheck" Disabled="@(updateDto.Status != "completed")" />
+
+                    <ValidationMessage For="() => updateDto.IsResolveTesting" class="text-xs text-red-600" />
+                </div>
+
+                @if (updateDto.IsResolveTesting)
+                {
+                    <div class="space-y-2">
+                        <Label For="resolvedDate" Id="resolvedDateLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Fecha que pasó a Implementacion
+                        </Label>
+
+                        <CalendarFilterView Id="resolvedDate"
+                            weekNumber="weekNumberSelected"
+                            Mode="CalendarMode.Single"
+                            OnDateSelected="DateChangedResolvedFrom"
+                            OnDropdownStateChanged="HandleDropdownDateResolved"
+                            SelectedStart="ResolvedDateTestingForInput"
+                            ClassDiv="w-full"
+                            With="w-full"
+                            ClassHeight=@($"{(IsSelectDateResolvedClosed ? "": "h-[300px]")}")
+                            ClassButton="w-full font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 h-10  px-3 py-2" />
+                        <ValidationMessage For="() => updateDto.ResolvedDateTesting" class="text-xs text-red-600" />
+                    </div>
+                }
+
+                <div>
+                    <Label For="statusTestingRechazo" Id="statusRechazoLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Estado del rechazo (Testing)
+                    </Label>
+                    <div class="relative">
+                        <Select TItem="string"
+                                Items="@OptionsEstados"
+                                Id="statusTestingRechazo"
+                                Disabled="@(!updateDto.IsResolveTesting || updateDto.ResolvedDateTesting is null)"
+                                Value="EstadoTestingSeleccionado"
+                                ValueChanged="OnEstadoTestingSelectedChanged!"
+                                Placeholder="Selecciona el estado del rechazo"
+                                ItemTextSelector="x => x.ToString()"
+                                ClassButton=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                ClassOption=@($"font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400")
+                                EnableSearch="false"
+                                OnDropdownStateChanged="HandleTestingDropdownStatusState"
+                                HeightClass="max-h-[120px]"
+                                HeightClassPrin=@($"{(IsSelectTestingClosedStatus ? "": "h-[130px]")}")>
+                        </Select>
+                    </div>
+                    <ValidationMessage For="() => updateDto.StatusTesting" class="text-xs text-red-600" />
                 </div>
                 
                 <div class="flex justify-end gap-2 pt-4">

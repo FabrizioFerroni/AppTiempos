@@ -7,7 +7,9 @@
 @source inline("to-emerald-700");
 @source inline("bg-green-900");
 @source inline("dark:bg-green-900");
+@source inline("md:grid-cols-8");
 
+/*grid-template-columns: repeat(8, minmax(0, 1fr));*/
 @custom-variant dark (&:where(.dark, .dark *));
 
 @tailwind utilities;
@@ -16,6 +18,7 @@
     .text-balance {
         text-wrap: balance;
     }
+
     .text-md {
         @apply text-base;
     }

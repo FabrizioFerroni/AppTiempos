@@ -123,42 +123,6 @@
                     <ValidationMessage For="() => updateDto.RejectionDetails" class="text-xs text-red-600"/>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label For="extimatedTime" Id="extimatedTimeLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
-                            Tiempo Estimado de Solución
-                        </Label>
-                        <Input
-                            Type="time"
-                            @bind-Value="EstimatedFixTimeString"
-                            Id="extimatedTime"
-                            Name="hour"
-                            Placeholder="Hora de la actividad"
-                            Autocomplete="off"
-                            Required
-                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                        />
-                        <ValidationMessage For="() => updateDto.EstimatedFixTime" class="text-xs text-red-600"/>
-                    </div>
-
-                    <div>
-                        <Label For="actualFix" Id="actualFixLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
-                            Tiempo Real de Solución
-                        </Label>
-                        <Input
-                            Type="time"
-                            @bind-Value="ActualFixTimeString"
-                            Id="actualFix"
-                            Name="hour"
-                            Placeholder="Hora de la actividad"
-                            Autocomplete="off"
-                            Required
-                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                        />
-                        <ValidationMessage For="() => updateDto.ActualFixTime" class="text-xs text-red-600"/>
-                    </div>
-                </div>
-
                 <div class="space-y-2">
                     <Label For="solutionDate" Id="solutionDateLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
                         Fecha del Solución
@@ -196,7 +160,56 @@
                     <ValidationMessage For="() => updateDto.SolutionDetails" class="text-xs text-red-600"/>
                 </div>
 
-                
+                <div>
+                    <Label For="tester" Id="testerLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Tester Asignado
+                    </Label>
+                    <div class="relative">
+                        <Select TItem="string"
+                                Items="@OptionsTesters"
+                                Id="tester"
+                                Value="TesterSeleccionado"
+                                ValueChanged="OnTesterSelectedChanged"
+                                Placeholder=@PlaceholderTesterText
+                                Disabled="@(IsTestersNotLoaded)"
+                                ItemTextSelector="x => x"
+                                ClassButton="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                ClassOption="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                EnableSearch="false"
+                                OnDropdownStateChanged="HandleDropdownStatusTester"
+                                HeightClass="max-h-[120px]"
+                                HeightClassPrin=@($"{(IsSelectClosedTester ? "": "h-[130px]")}")>
+                        </Select>
+                    </div>
+                    <ValidationMessage For="() => updateDto.TesterId" class="text-xs text-red-600" />
+                </div>
+
+                <div class="space-y-2">
+                    <Label Id="BadRejectedLabelDesc" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        ¿Mal rechazado?
+                    </Label>
+                    <Switch Id="BadRejected" Checked=@updateDto.BadRejected CheckedChanged="HandleBadRejectedCheck" />
+
+                    <ValidationMessage For="() => updateDto.BadRejected" class="text-xs text-red-600" />
+                </div>
+
+                @if (updateDto.BadRejected)
+                {
+                    <div class="space-y-2">
+                        <Label Id="ReasonBadRequestLabelDesc" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                            Razon del mal rechazo
+                        </Label>
+
+                        <TextArea Id="ReasonBadRequest"
+                                  Placeholder="Describe detalladamente porque fue mal rechazado ..."
+                                  @bind-Value=@updateDto.ReasonBadRequest
+                                  Required
+                                  Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                                  Rows="3">
+                    </TextArea>
+                        <ValidationMessage For="() => updateDto.ReasonBadRequest" class="text-xs text-red-600" />
+                    </div>
+                }
 
                 <div class="flex justify-end gap-2 pt-4">
                     <div class="flex gap-2">

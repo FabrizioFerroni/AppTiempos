@@ -4,12 +4,13 @@ using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.Exceptions;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
-using static AppTiemposV3.Api.Helpers.DatabaseHelper;
-using System.Net;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Asn1.Cmp;
+using System.Net;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
 namespace AppTiemposV3.Api.Repositories;
 
@@ -56,8 +57,9 @@ public class RejectionDetailsRepository : IRejectionDetailContract<RejectionDeta
         }
         
         RejectionDetailEntity rejDetails = _iMapper.Map<RejectionDetailEntity>(dto);
-        
+
         rejDetails.UserId = user.Id;
+        rejDetails.TesterId = dto.TesterId;
         rejDetails.RechazoNro = await RechazoNroIdentity(user.Id, rejDetails.RejectionId);
             
         await _dbCxt.RejectionDetails.AddAsync(rejDetails);
@@ -79,7 +81,9 @@ public class RejectionDetailsRepository : IRejectionDetailContract<RejectionDeta
         
         rejDetail.Id = id;
         rejDetail.ModifiedAt = DateTime.Now;
-        
+        rejDetail.BadRejected = dto.BadRejected;
+        rejDetail.ReasonBadRequest = dto.ReasonBadRequest;        
+
         _dbCxt.Entry(rejDetail).State = EntityState.Modified;
 
         await EnsureSavedAsync("Hubo problemas para actualizar el registro", _dbCxt);
@@ -133,8 +137,9 @@ public class RejectionDetailsRepository : IRejectionDetailContract<RejectionDeta
     private async Task<RejectionDetailEntity> GetRejectionDetailByIdAsync(Guid id, Guid? rejectionId = null, bool includeDeleted = false)
     {
         IQueryable<RejectionDetailEntity> query = _dbCxt.RejectionDetails
-            .Include(r => r.Rejection);
-
+            .Include(r => r.Rejection)
+            .Include(t => t.Tester);
+        
         // Si quiero incluir los eliminados, ignoro los filtros globales
         if (includeDeleted)
             query = query.IgnoreQueryFilters();
