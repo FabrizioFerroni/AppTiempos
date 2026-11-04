@@ -14,7 +14,7 @@
                     Command="close"
                     CommandFor=@($"edit-{Id}")
                     Class="text-xs cursor-pointer"
-                    OnClick="() => { OnResetEditReq(Id); }">
+                    OnClick="async () => { await Limpiar(); }">
                 <Close Class="dark:text-gray-300 text-gray-600 h-4 w-4" />
             </Button>
         </div>
@@ -125,29 +125,7 @@
                                Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
                     </div>
                     <ValidationMessage For="() => requerimentUpDto.Cliente" class="text-xs text-red-600" />
-                </div>
-
-                <div class="space-y-2">
-                    <Label For="storypoint" Id="storypointLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
-                        Puntos de función
-                    </Label>
-                    <div class="relative">
-                        <Input Type="text"
-                               @bind-Value="requerimentUpDto.StoryPoint"
-                               Pattern="[0-9\.]*"
-                               InputMode="numeric"
-                               DigitsOnly="true"
-                               Id="storypoint"
-                               Name="storypoint"
-                               Placeholder="Puntos de función (Ej: 2.46)"
-                               Autocomplete="off"
-                               MinLength="4"
-                               MaxLength="6"
-                               Required
-                               Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
-                    </div>
-                    <ValidationMessage For="() => requerimentUpDto.StoryPoint" class="text-xs text-red-600" />
-                </div>
+                </div>                
 
                 <div>
                     <Label For="estado" Id="estadoLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
@@ -288,7 +266,27 @@
                     <ValidationMessage For="() => requerimentUpDto.Descripcion" class="text-xs text-red-600" />
                 </div>
 
-
+                <div class="space-y-2">
+                    <Label For="storypoint" Id="storypointLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                        Puntos de función
+                    </Label>
+                    <div class="relative">
+                        <Input Type="text"
+                               @bind-Value="requerimentUpDto.StoryPoint"
+                               Pattern="[0-9\.]*"
+                               InputMode="numeric"
+                               DigitsOnly="true"
+                               Id="storypoint"
+                               Name="storypoint"
+                               Placeholder="Puntos de función (Ej: 2.46)"
+                               Autocomplete="off"
+                               MinLength="4"
+                               MaxLength="6"
+                               Required
+                               Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
+                    </div>
+                    <ValidationMessage For="() => requerimentUpDto.StoryPoint" class="text-xs text-red-600" />
+                </div>
 
                 <div class="flex items-center justify-end">
                     <Button Type="submit"
