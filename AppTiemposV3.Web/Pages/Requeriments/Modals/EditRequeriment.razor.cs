@@ -53,6 +53,7 @@ public partial class EditRequeriment : ComponentBase
 
     private ElementReference showModalRef;
     private ElementReference closeModalRef;
+    private RequerimentResponseDto? _originalRequerimentData;
 
     private Areas _areaUsuario = Areas.None;
 
@@ -170,33 +171,82 @@ public partial class EditRequeriment : ComponentBase
             DataResponse<RequerimentResponseDto>? requeriment =
                 await RequerimentsService.GetRequerimentporId(id);
 
-            requerimentUpDto.Id = (Guid)requeriment?.Data.Id!;
-            requerimentUpDto.ReqID = requeriment?.Data.ReqID;
-            requerimentUpDto.Titulo = requeriment?.Data.Titulo;
-            Titulo = requeriment?.Data.Titulo!;
-            requerimentUpDto.Cliente = requeriment?.Data.Cliente;
-            requerimentUpDto.StoryPoint = requeriment?.Data.StoryPoint;
-            requerimentUpDto.Url = requeriment?.Data.Url;
-            requerimentUpDto.Descripcion = requeriment?.Data.Descripcion;
-            requerimentUpDto.CategoryId = requeriment!.Data.Category.Id;
-            requerimentUpDto.ConjuntoCambios = requeriment?.Data.ConjuntoCambios;
+            if (requeriment?.Data != null)
+            {
+                _originalRequerimentData = System.Text.Json.JsonSerializer.Deserialize<RequerimentResponseDto>(
+                    System.Text.Json.JsonSerializer.Serialize(requeriment.Data)
+                );
 
-            SeleccionarCategoria(requeriment!.Data.Category.Name, aplicarRegla: false);
-            await OnEstadoSelectedChanged(requeriment.Data.Estado);
+                requerimentUpDto.Id = (Guid)requeriment.Data.Id!;
+                requerimentUpDto.ReqID = requeriment.Data.ReqID;
+                requerimentUpDto.Titulo = requeriment.Data.Titulo;
+                Titulo = requeriment.Data.Titulo!;
+                requerimentUpDto.Cliente = requeriment.Data.Cliente;
+                requerimentUpDto.StoryPoint = requeriment.Data.StoryPoint;
+                requerimentUpDto.Url = requeriment.Data.Url;
+                requerimentUpDto.Descripcion = requeriment.Data.Descripcion;
+                requerimentUpDto.CategoryId = requeriment.Data.Category.Id;
+                requerimentUpDto.ConjuntoCambios = requeriment.Data.ConjuntoCambios;
 
-            EtapaSeleccionada = requeriment.Data.EtapaActual;
-            requerimentUpDto.EtapaActual = requeriment.Data.EtapaActual;
-            _etapaEditadaManualmente = false;
-            SincronizarStoryPoint();
+                SeleccionarCategoria(requeriment.Data.Category.Name, aplicarRegla: false);
+                await OnEstadoSelectedChanged(requeriment.Data.Estado);
 
+                EtapaSeleccionada = requeriment.Data.EtapaActual;
+                requerimentUpDto.EtapaActual = requeriment.Data.EtapaActual;
+                _etapaEditadaManualmente = false;
+                SincronizarStoryPoint();
+            }
 
             StateHasChanged();
-
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
             throw;
+        }
+        finally
+        {
+            IsLoadingData = false;
+            StateHasChanged();
+        }
+    }
+    private async Task Limpiar()
+    {
+        IsLoadingData = true;
+        StateHasChanged();
+
+        try
+        {
+            if (_originalRequerimentData != null)
+            {
+                requerimentUpDto.Id = _originalRequerimentData.Id;
+                requerimentUpDto.ReqID = _originalRequerimentData.ReqID;
+                requerimentUpDto.Titulo = _originalRequerimentData.Titulo;
+                Titulo = _originalRequerimentData.Titulo ?? string.Empty;
+                requerimentUpDto.Cliente = _originalRequerimentData.Cliente;
+                requerimentUpDto.StoryPoint = _originalRequerimentData.StoryPoint;
+                requerimentUpDto.Url = _originalRequerimentData.Url;
+                requerimentUpDto.Descripcion = _originalRequerimentData.Descripcion;
+                requerimentUpDto.CategoryId = _originalRequerimentData.Category.Id;
+                requerimentUpDto.ConjuntoCambios = _originalRequerimentData.ConjuntoCambios;
+
+                SeleccionarCategoria(_originalRequerimentData.Category.Name, aplicarRegla: false);
+
+                await OnEstadoSelectedChanged(_originalRequerimentData.Estado);
+
+                EtapaSeleccionada = _originalRequerimentData.EtapaActual;
+                requerimentUpDto.EtapaActual = _originalRequerimentData.EtapaActual;
+                _etapaEditadaManualmente = false;
+                SincronizarStoryPoint();
+
+                isErrorNReq = false;
+            }
+
+            await Task.Delay(250);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al limpiar formulario: {ex.Message}");
         }
         finally
         {
@@ -226,8 +276,8 @@ public partial class EditRequeriment : ComponentBase
                     Message = response.Message,
                     Success = response.Flag
                 };
+                await Limpiar();
                 await OnSaved.InvokeAsync(args);
-                await OnResetEditReq(Id);
             }
             else
             {

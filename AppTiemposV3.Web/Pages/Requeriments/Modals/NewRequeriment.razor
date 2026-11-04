@@ -109,30 +109,7 @@
                            Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
                 </div>
                 <ValidationMessage For="() => requerimentDto.Cliente" class="text-xs text-red-600" />
-            </div>
-
-            <div class="space-y-2">
-                <Label For="storypoint" Id="storypointLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
-                    Puntos de función
-                </Label>
-                <div class="relative">
-                    <Input Type="text"
-                           @bind-Value="requerimentDto.StoryPoint"
-                           Pattern="[0-9\.]*"
-                           InputMode="numeric"
-                           DigitsOnly="true"
-                           Id="storypoint"
-                           Name="storypoint"
-                           Placeholder="Puntos de función (Ej: 2.46)"
-                           Autocomplete="off"
-                           Readonly=@EsEvaluacion
-                           MinLength="4"
-                           MaxLength="6"
-                           Required
-                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
-                </div>
-                <ValidationMessage For="() => requerimentDto.StoryPoint" class="text-xs text-red-600" />
-            </div>
+            </div>            
 
             <div class="space-y-2">
                 <Label For="categoria" Id="categorialabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
@@ -211,6 +188,29 @@
                 <ValidationMessage For="() => requerimentDto.Descripcion" class="text-xs text-red-600" />
             </div>
 
+            <div class="space-y-2">
+                <Label For="storypoint" Id="storypointLabel" Class="text-gray-700 dark:text-gray-300 mb-3 block">
+                    Puntos de función
+                </Label>
+                <div class="relative">
+                    <Input Type="text"
+                           @bind-Value="requerimentDto.StoryPoint"
+                           Pattern="[0-9\.]*"
+                           InputMode="numeric"
+                           DigitsOnly="true"
+                           Id="storypoint"
+                           Name="storypoint"
+                           Placeholder="Puntos de función (Ej: 2.46)"
+                           Autocomplete="off"
+                           Readonly=@EsEvaluacion
+                           MinLength="4"
+                           MaxLength="6"
+                           Required
+                           Class="font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" />
+                </div>
+                <ValidationMessage For="() => requerimentDto.StoryPoint" class="text-xs text-red-600" />
+            </div>
+            
             <div class="flex items-center justify-end">
                 <Button Type="submit"
                         Disabled="@(IsLoadingNew || !IsCategoryIdSelected)"
