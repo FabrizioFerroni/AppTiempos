@@ -152,7 +152,7 @@
                     <Label Id="isLoadedLabelDesc" Class="text-gray-700 dark:text-gray-300 mb-3 block">
                         ¿Resuelto por testing?
                     </Label>
-                    <Switch Id="loadedTesting" Checked=@updateDto.IsResolveTesting CheckedChanged="HandleResolveTestingCheck" Disabled="@(updateDto.Status != "completed")" />
+                    <Switch Id="loadedTesting" Checked=@updateDto.IsResolveTesting CheckedChanged="HandleResolveTestingCheck" />
 
                     <ValidationMessage For="() => updateDto.IsResolveTesting" class="text-xs text-red-600" />
                 </div>
@@ -186,7 +186,7 @@
                         <Select TItem="string"
                                 Items="@OptionsEstados"
                                 Id="statusTestingRechazo"
-                                Disabled="@(!updateDto.IsResolveTesting || updateDto.ResolvedDateTesting is null)"
+                                Disabled="@((!updateDto.IsResolveTesting || updateDto.ResolvedDateTesting is null) || (updateDto.IsResolveTesting && updateDto.ResolvedDateTesting.HasValue))"
                                 Value="EstadoTestingSeleccionado"
                                 ValueChanged="OnEstadoTestingSelectedChanged!"
                                 Placeholder="Selecciona el estado del rechazo"

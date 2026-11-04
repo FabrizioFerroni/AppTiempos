@@ -98,6 +98,7 @@ public partial class EditRejectionModal : ComponentBase
     private bool IsNotTesterIdSelectedF = true;
     private string? testerAnterior = string.Empty;
     private string estadoOriginal = "in-progress";
+    private string estadoOriginalTesting = "in-progress";
 
     #region Requeriments
     private List<string> OptionsRequeriments = new() {};
@@ -177,7 +178,7 @@ public partial class EditRejectionModal : ComponentBase
         {
             if (updateDto.Status != "completed")
             {
-                estadoOriginal = updateDto.Status ?? "in-progress";
+                estadoOriginalTesting = updateDto.Status ?? "in-progress";
             }
 
             _ = OnEstadoSelectedChanged("completed");
@@ -190,8 +191,22 @@ public partial class EditRejectionModal : ComponentBase
     {
         if (date != null)
         {
-            updateDto.ResolvedDateTesting = date;
+            PrintAsJson(date!);
         }
+
+        updateDto.ResolvedDateTesting = date;
+
+        if (updateDto.IsResolveTesting && date.HasValue)
+        {
+            if (updateDto.StatusTesting != "completed")
+            {
+                estadoOriginalTesting = updateDto.StatusTesting ?? "in-progress";
+            }
+
+            _ = OnEstadoTestingSelectedChanged("completed");
+        }
+
+        StateHasChanged();
     }
     
     private DateTime? ResolvedDateForInput
@@ -248,7 +263,7 @@ public partial class EditRejectionModal : ComponentBase
             updateDto.ResolvedDate = null;
             DateChangedFrom(null);
 
-            OnEstadoSelectedChanged(estadoOriginal);
+            OnEstadoSelectedChanged(estadoOriginalTesting);
         }
         else
         {
@@ -256,7 +271,7 @@ public partial class EditRejectionModal : ComponentBase
             {
                 if (updateDto.Status != "completed")
                 {
-                    estadoOriginal = updateDto.Status ?? "in-progress";
+                    estadoOriginalTesting = updateDto.Status ?? "in-progress";
                 }
 
                 OnEstadoSelectedChanged("completed");
@@ -269,6 +284,26 @@ public partial class EditRejectionModal : ComponentBase
 
     private void HandleResolveTestingCheck(bool check)
     {
+        if (!check)
+        {
+            updateDto.ResolvedDateTesting = null;
+            DateChangedResolvedFrom(null);
+
+            OnEstadoTestingSelectedChanged(estadoOriginalTesting);
+        }
+        else
+        {
+            if (updateDto.ResolvedDateTesting.HasValue)
+            {
+                if (updateDto.StatusTesting != "completed")
+                {
+                    estadoOriginalTesting = updateDto.StatusTesting ?? "in-progress";
+                }
+
+                OnEstadoTestingSelectedChanged("completed");
+            }
+        }
+
         updateDto.IsResolveTesting = check;
         StateHasChanged();
     }
@@ -358,7 +393,7 @@ public partial class EditRejectionModal : ComponentBase
         updateDto.ResolvedDate = rejection.ResolvedDate;
         updateDto.IsResolve = rejection.IsResolve;
 
-        estadoOriginal = rejection.Status ?? "pending";
+        estadoOriginalTesting = rejection.Status ?? "pending";
 
 
         updateDto.RequerimentId = rejection.Requeriment.Id;
@@ -438,7 +473,7 @@ public partial class EditRejectionModal : ComponentBase
 
         if (estado != "completed" || (!updateDto.IsResolve || !updateDto.ResolvedDate.HasValue))
         {
-            estadoOriginal = estado;
+            estadoOriginalTesting = estado;
         }
 
         StateHasChanged();
@@ -450,6 +485,13 @@ public partial class EditRejectionModal : ComponentBase
     {
         EstadoTestingSeleccionado = OnEstadoTestingSelectedChangedBD(estado);
         updateDto.StatusTesting = GetStatusName(estado);
+
+        if (estado != "completed" || (!updateDto.IsResolveTesting || !updateDto.ResolvedDateTesting.HasValue))
+        {
+            estadoOriginalTesting = estado;
+        }
+
+        StateHasChanged();
         return Task.CompletedTask;
 
     }

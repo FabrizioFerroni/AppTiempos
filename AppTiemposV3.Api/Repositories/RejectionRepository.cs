@@ -44,13 +44,13 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         _userContext = userContext;
         _auditHelperService = auditHelper;
     }
-    
+
     public async Task<DataResponse<RejectionKpiResponse>> GetRejectionKpi()
     {
         RejectionKpiResponse resp = new RejectionKpiResponse();
-        
+
         UserEntity user = await GetUserByIdAsync(_userId);
-       
+
         StringBuilder? sb = new StringBuilder();
 
         sb.AppendLine("SELECT");
@@ -61,47 +61,71 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         sb.AppendLine("          AND r.IsDeleted = 0");
         sb.AppendLine("    ) AS TotalRejections,");
         sb.AppendLine();
+        // Pendientes (Desglose Dev / Testing)
         sb.AppendLine("    (");
         sb.AppendLine("        SELECT COUNT(r.Id)");
         sb.AppendLine("        FROM rechazos AS r");
         sb.AppendLine("        WHERE r.Status = 'pending'");
         sb.AppendLine("          AND r.UserId = @UserId");
         sb.AppendLine("          AND r.IsDeleted = 0");
-        sb.AppendLine("    ) AS PendingRejections,");
+        sb.AppendLine("    ) AS PendingDev,");
+        sb.AppendLine("    (");
+        sb.AppendLine("        SELECT COUNT(r.Id)");
+        sb.AppendLine("        FROM rechazos AS r");
+        sb.AppendLine("        WHERE r.StatusTesting = 'pending'");
+        sb.AppendLine("          AND r.UserId = @UserId");
+        sb.AppendLine("          AND r.IsDeleted = 0");
+        sb.AppendLine("    ) AS PendingTesting,");
         sb.AppendLine();
+        // En Progreso (Desglose Dev / Testing)
         sb.AppendLine("    (");
         sb.AppendLine("        SELECT COUNT(r.Id)");
         sb.AppendLine("        FROM rechazos AS r");
         sb.AppendLine("        WHERE r.Status = 'in-progress'");
         sb.AppendLine("          AND r.UserId = @UserId");
         sb.AppendLine("          AND r.IsDeleted = 0");
-        sb.AppendLine("    ) AS InProgressRejections,");
+        sb.AppendLine("    ) AS InProgressDev,");
+        sb.AppendLine("    (");
+        sb.AppendLine("        SELECT COUNT(r.Id)");
+        sb.AppendLine("        FROM rechazos AS r");
+        sb.AppendLine("        WHERE r.StatusTesting = 'in-progress'");
+        sb.AppendLine("          AND r.UserId = @UserId");
+        sb.AppendLine("          AND r.IsDeleted = 0");
+        sb.AppendLine("    ) AS InProgressTesting,");
         sb.AppendLine();
+        // Solucionados (Desglose Dev / Testing)
         sb.AppendLine("    (");
         sb.AppendLine("        SELECT COUNT(r.Id)");
         sb.AppendLine("        FROM rechazos AS r");
         sb.AppendLine("        WHERE r.IsResolve = 1");
         sb.AppendLine("          AND r.UserId = @UserId");
         sb.AppendLine("          AND r.IsDeleted = 0");
-        sb.AppendLine("    ) AS SuccessRejections");
- 
+        sb.AppendLine("    ) AS SuccessDev,");
+        sb.AppendLine("    (");
+        sb.AppendLine("        SELECT COUNT(r.Id)");
+        sb.AppendLine("        FROM rechazos AS r");
+        sb.AppendLine("        WHERE r.IsResolveTesting = 1");
+        sb.AppendLine("          AND r.UserId = @UserId");
+        sb.AppendLine("          AND r.IsDeleted = 0");
+        sb.AppendLine("          AND r.IsResolve = 1");
+        sb.AppendLine("    ) AS SuccessTesting");
+
         string sql = sb.ToString();
-        
         MySqlParameter userFiltro = new MySqlParameter("@UserId", user.Id);
-        
         List<Dictionary<string, object?>> kpiData = await QueryRawAsync(_dbCxt, sql, userFiltro);
 
         foreach (Dictionary<string, object?> row in kpiData)
         {
             resp.TotalRejections = Convert.ToInt32(row["TotalRejections"]!.ToString()!);
-            resp.PendingRejections = Convert.ToInt32(row["PendingRejections"]!.ToString()!);
-            resp.InProgressRejections = Convert.ToInt32(row["InProgressRejections"]!.ToString()!);
-            resp.SuccessRejections = Convert.ToInt32(row["SuccessRejections"]!.ToString()!);
+            resp.PendingRejections = Convert.ToInt32(row["PendingDev"]!.ToString()!);
+            resp.PendingTesting = Convert.ToInt32(row["PendingTesting"]!.ToString()!);
+            resp.InProgressRejections = Convert.ToInt32(row["InProgressDev"]!.ToString()!);
+            resp.InProgressTesting = Convert.ToInt32(row["InProgressTesting"]!.ToString()!);
+            resp.SuccessRejections = Convert.ToInt32(row["SuccessDev"]!.ToString()!);
+            resp.SuccessTesting = Convert.ToInt32(row["SuccessTesting"]!.ToString()!);
         }
-        
 
-        DataResponse<RejectionKpiResponse> respback = new DataResponse<RejectionKpiResponse>(true, resp, HttpStatusCode.OK);
-        return respback;
+        return new DataResponse<RejectionKpiResponse>(true, resp, HttpStatusCode.OK);
     }
 
     public async Task<Pageable<List<RejectionResponseDto>>> GetAllRejections(PaginationDtoAdvanced pagination)
@@ -276,6 +300,13 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         if (!dto.IsResolve)
         {
             rej.ResolvedDate = null;
+            rej.Status = "in-progress";
+        }
+
+        if (!dto.IsResolveTesting)
+        {
+            rej.ResolvedDateTesting = null;
+            rej.StatusTesting = "in-progress";
         }
 
 
@@ -292,7 +323,14 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
 
                 if (requerimiento != null)
                 {
-                    requerimiento.EtapaActual = Etapas.Implementacion;
+                    if(dto.IsResolveTesting)
+                    {
+                        requerimiento.EtapaActual = Etapas.Implementacion;
+                    }
+                    else
+                    {
+                        requerimiento.EtapaActual = Etapas.Prueba;
+                    }
 
                     _dbCxt.Entry(requerimiento).State = EntityState.Modified;
 
