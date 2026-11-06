@@ -1,0 +1,42 @@
+name: Deploy AppTiempos
+on:
+  push:
+    branches: [dev]
+
+concurrency:
+  group: deploy-apptiempos
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: /home/fabrizio/apptiempos
+    steps:
+      - name: Sincronizar con origin/dev
+        run: |
+          git fetch origin dev
+          git reset --hard origin/dev
+          git merge-base --is-ancestor ${{ github.sha }} HEAD
+
+      - name: Build
+        run: |
+          docker compose build web
+          docker compose build api
+
+      - name: Desplegar
+        run: docker compose up -d --wait --wait-timeout 120
+
+      - name: Logs de la API (solo si falla)
+        if: failure()
+        run: docker compose logs --tail=100 api
+
+      - name: Notificar
+        if: always()
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -sS -H "Content-Type: application/json" \
+            -d "{\"content\": \"Deploy AppTiempos: ${{ job.status }} (${GITHUB_SHA::7})\"}" \
+            "$WEBHOOK"
