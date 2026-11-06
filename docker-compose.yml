@@ -3,7 +3,7 @@ services:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:9.0
     container_name: aspire-dashboard
     ports:
-      - "18888:18888" 
+      - "18888:18888"
       - "18889:18889"
       - "18890:18890"
     environment:
@@ -42,6 +42,12 @@ services:
       - ./backups:/app/Backups
       - ./certs/ca.pem:/app/certs/ca.pem:ro
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - apptiempos
 
@@ -60,8 +66,15 @@ services:
       - app_web_wwwroot:/src/wwwroot
     networks:
       - apptiempos
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
 networks:
   apptiempos:
