@@ -357,6 +357,8 @@ services.AddQuartz(q =>
 
 services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
+services.AddHealthChecks();
+
 try
 {
     WebApplication? app = builder.Build();
@@ -434,6 +436,8 @@ try
     app.UseAuthorization();
 
     app.MapControllers();
+    app.MapHealthChecks("/health");
+
     app.Run();
 }
 catch (Exception ex)

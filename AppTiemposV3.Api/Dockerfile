@@ -5,6 +5,11 @@ EXPOSE 8080
 EXPOSE 8081
 
 USER root
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/*
+
 RUN mkdir -p /app/keys /app/wwwroot /app/Backups /app/certs && \
     chown -R app:app /app/keys /app/wwwroot /app/Backups /app/certs && \
     chmod -R 755 /app/keys /app/wwwroot /app/Backups /app/certs
