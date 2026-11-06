@@ -15,21 +15,31 @@ jobs:
         working-directory: /home/fabrizio/apptiempos
     steps:
       - name: Sincronizar con origin/dev
+        id: sync
         run: |
           git fetch origin dev
           git reset --hard origin/dev
           git merge-base --is-ancestor ${{ github.sha }} HEAD
 
-      - name: Build
+      - name: Build web
+        id: build_web
+        if: steps.sync.outcome == 'success'
         run: |
           docker compose build web
+
+      - name: Build api
+        id: build_api
+        if: steps.build_web.outcome == 'success'
+        run: |
           docker compose build api
 
       - name: Desplegar
+        id: deploy
+        if: steps.build_api.outcome == 'success'
         run: docker compose up -d --wait --wait-timeout 120
 
       - name: Logs de la API (solo si falla)
-        if: failure()
+        if: failure() && steps.deploy.outcome == 'failure'
         run: docker compose logs --tail=100 api
 
       - name: Notificar
