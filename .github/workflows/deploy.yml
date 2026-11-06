@@ -33,14 +33,14 @@ jobs:
         run: |
           docker compose build api
 
-      - name: Desplegar
-        id: deploy
+      - name: Desplegar Api & Web
+        id: deploy-apiweb
         if: steps.build_api.outcome == 'success'
-        run: docker compose up -d --wait --wait-timeout 120
+        run: docker compose up -d --wait --wait-timeout 120 api web
 
-      - name: Logs de la API (solo si falla)
-        if: failure() && steps.deploy.outcome == 'failure'
-        run: docker compose logs --tail=100 api
+      - name: Logs de los servicios  (solo si falló el despliegue)
+        if: failure() && steps.deploy-apiweb.outcome == 'failure'
+        run: docker compose logs --tail=50
 
       - name: Notificar
         if: always()
