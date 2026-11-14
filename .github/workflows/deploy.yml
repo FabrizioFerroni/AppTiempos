@@ -50,11 +50,47 @@ jobs:
         if: steps.deploy-apiweb.outcome == 'success'
         run: ssh -i ~/.ssh/pve_deploy -o BatchMode=yes root@192.168.0.2 down
 
-      - name: Notificar
+            - name: Notificar
         if: always()
+        continue-on-error: true
         env:
           WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          STATUS: ${{ job.status }}
+          ACTOR: ${{ github.actor }}
+          BRANCH: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
         run: |
-          curl -sS -H "Content-Type: application/json" \
-            -d "{\"content\": \"Deploy AppTiempos: ${{ job.status }} (${GITHUB_SHA::7})\"}" \
-            "$WEBHOOK"
+          case "$STATUS" in
+            success) EMOJI="✅"; TITLE="Deploy exitoso";   COLOR=5763719  ;;
+            failure) EMOJI="❌"; TITLE="Deploy fallido";   COLOR=15548997 ;;
+            *)       EMOJI="⚠️"; TITLE="Deploy cancelado"; COLOR=9807270  ;;
+          esac
+
+          MSG=$(printf '%s' "$COMMIT_MSG" | head -n1 | cut -c1-200)
+          MSG=${MSG:-"(sin mensaje)"}
+
+          jq -n \
+            --arg title "$EMOJI $TITLE — AppTiempos" \
+            --arg url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            --arg branch "$BRANCH" \
+            --arg sha "${SHA::7}" \
+            --arg commit_url "$COMMIT_URL" \
+            --arg actor "$ACTOR" \
+            --arg msg "$MSG" \
+            --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{embeds:[{
+              title: $title, url: $url, color: $color,
+              fields: [
+                {name:"Rama",    value:("`"+$branch+"`"), inline:true},
+                {name:"Commit",  value:("[`"+$sha+"`]("+$commit_url+")"), inline:true},
+                {name:"Autor",   value:$actor, inline:true},
+                {name:"Mensaje", value:$msg}
+              ],
+              footer: {text:"GitHub Actions · srv-apptiempos"},
+              timestamp: $ts
+            }]}' \
+          | curl -fsS -H "Content-Type: application/json" -d @- "$WEBHOOK"
