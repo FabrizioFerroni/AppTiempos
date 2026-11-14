@@ -50,7 +50,7 @@ jobs:
         if: steps.deploy-apiweb.outcome == 'success'
         run: ssh -i ~/.ssh/pve_deploy -o BatchMode=yes root@192.168.0.2 down
 
-            - name: Notificar
+      - name: Notificar
         if: always()
         continue-on-error: true
         env:
