@@ -1,5 +1,6 @@
 @using AppTiemposV3.SharedClases.Constants
 @using AppTiemposV3.SharedClases.Enums
+@using AppTiemposV3.Web.Pages.Requeriments.Documents
 @using Microsoft.AspNetCore.Components.Authorization
 @using static AppTiemposV3.SharedClases.Utilidades.DateHelpers
 @using static AppTiemposV3.Web.Utils.Helpers;
@@ -302,7 +303,7 @@
                             {
                                 <Files class="w-4 h-4 text-gray-600 dark:text-gray-300" />
                                 <span class="text-sm text-gray-600 dark:text-gray-300">
-                                    @($"Tiene {documentsFiles} documentos subidos")
+                                    @($"Tiene {documentsFiles} {Plural(documentsFiles, "documento subido", "documentos subidos")}")
                                 </span>
                             }
                         </div>
@@ -311,7 +312,7 @@
                                 Variant="outline"
                                 Size="sm"
                                 Id=@($"documents-{requerimentShow.Id}")
-                                OnClick="@(() => {  })"
+                                OnClick="@(() => DocumentsModal(requerimentShow.Id))"
                                 Class="text-gray-400  dark:text-gray-300 dark:border-gray-500 dark:bg-gray-600  dark:hover:bg-orange-800/20 dark:hover:border-orange-900/50 cursor-pointer">
                                 <FolderOpen Class="w-4 h-4"/>
                             </Button>
@@ -366,6 +367,8 @@
     </div>
 </Modal>
 @* Fin Modal show requeriment *@
+
+<DocumentModal @ref="docModalRef" />
 
 <button type="button" @ref="showModalRef" class="hidden" id=@($"showModalShow-{Id}") command="show-modal" commandfor=@($"show-{Id}")></button>      
 <button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalShow-{Id}") command="close" commandfor="@($"show-{Id}")"></button>      

@@ -1,14 +1,16 @@
-using System.Globalization;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs.Categories;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.Enums;
+using AppTiemposV3.Web.Components.UI;
+using AppTiemposV3.Web.Pages.Requeriments.Documents;
 using AppTiemposV3.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using System.Globalization;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using static NanoidDotNet.Nanoid;
 using static NanoidDotNet.Nanoid.Alphabets;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 namespace AppTiemposV3.Web.Pages.Requeriments.Modals;
 
 public partial class ShowRequeriment : ComponentBase
@@ -34,8 +36,12 @@ public partial class ShowRequeriment : ComponentBase
     private ElementReference closeModalRef;
     private int rechazosCount = 0; //TODO: Esto despues va a ser un contador que viene de la base de datos ...
     private int documentsFiles = 0;
+
+    #region Modales
+    private DocumentModal? docModalRef;
     #endregion
-    
+    #endregion
+
     public async Task ShowAsync(Guid id)
     {
         Id = id;
@@ -55,6 +61,7 @@ public partial class ShowRequeriment : ComponentBase
 
             requerimentShow = requeriment.Data;
             mensajes = new Dictionary<string, (string Mensaje, bool EsExitoso)>();
+            documentsFiles = requeriment.Data.RequerimentsAttachments.Count();
             StateHasChanged();
 
         }
@@ -122,4 +129,11 @@ public partial class ShowRequeriment : ComponentBase
 
         return $"{horas:00}:{minutos:00}";
     }
+
+   #region ModalesLlamadas
+    private async Task DocumentsModal(Guid id)
+    {
+        await docModalRef!.ShowAsync(id);
+    }
+    #endregion
 }

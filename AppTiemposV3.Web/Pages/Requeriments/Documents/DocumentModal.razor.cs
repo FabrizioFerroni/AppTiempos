@@ -17,7 +17,7 @@ namespace AppTiemposV3.Web.Pages.Requeriments.Documents;
 
 public partial class DocumentModal : ComponentBase
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
     public Guid IdReq { get; set; }
     [Inject] private IJSRuntime? JS { get; set; }
     [Inject] private IRequerimentAttachmentContract<RequerimentsAttachmentsDto> documentService { get; set; } = default!;
@@ -41,12 +41,10 @@ public partial class DocumentModal : ComponentBase
 
 
     #endregion
-    public async Task ShowAsync(Guid id, Guid idReq)
+    public async Task ShowAsync(Guid idReq)
     {
-        Id = id;
         IdReq = idReq;
         await JS!.InvokeVoidAsync("modalHelpers.clickElement", showModalRef);
-        StateHasChanged();
         await GetAllDocuments(idReq);
     }
 

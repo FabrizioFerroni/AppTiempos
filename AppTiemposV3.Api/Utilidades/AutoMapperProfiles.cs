@@ -8,6 +8,7 @@ using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.DTOs.Reports;
 using AppTiemposV3.SharedClases.DTOs.Requeriments;
+using AppTiemposV3.SharedClases.DTOs.RequerimentsAttachments;
 using AppTiemposV3.SharedClases.DTOs.Testers;
 using AppTiemposV3.SharedClases.DTOs.Trainings;
 using AppTiemposV3.SharedClases.DTOs.Users;
@@ -47,11 +48,13 @@ namespace AppTiemposV3.Api.Utilidades
             CreateMap<RequerimentsEntity, RequerimentResponseDto>()
                 .ForMember(d => d.Usuario, o => o.MapFrom(s => s.User))
                 .ForMember(d => d.Category, o => o.MapFrom(s => s.Category))
-                // .ForMember(dest => dest.Etapa, opt => opt.MapFrom(src => src.Etapa.HasValue ? (Estados?)src.Etapa.Value : null))
-                .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado));
+                .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado))
+                .ForMember(dest => dest.RequerimentsAttachments, opt => opt.MapFrom(src => src.RequerimentsAttachments));
          
             CreateMap<CategoriesEntity, CategoryDtoA>();
             CreateMap<UserEntity, UserDtoR>();
+
+            CreateMap<RequerimentAttachmentEntity, RequerimentsAttachmentsDto>();
         }
 
         public void MappingCategories()

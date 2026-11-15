@@ -416,6 +416,7 @@ namespace AppTiemposV3.Api.Repositories
             RequerimentsEntity? requeriment = await _dbCxt.Requeriments
                 .Include(c => c.Category)
                 .Include(a => a.Activities)
+                .Include(ra => ra.RequerimentsAttachments)
                 .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
 
             return requeriment ?? throw new NotFoundException("Requerimiento no encontrado");
