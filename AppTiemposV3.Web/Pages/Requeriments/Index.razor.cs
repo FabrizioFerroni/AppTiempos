@@ -324,7 +324,7 @@ public partial class Index : ComponentBase,  IDisposable
 
     private async Task DocumentsModal(Guid id)
     {
-        await docModalRef!.ShowAsync(IdModal, id);
+        await docModalRef!.ShowAsync(id);
     }
     
     private async Task ShowModal(Guid id)

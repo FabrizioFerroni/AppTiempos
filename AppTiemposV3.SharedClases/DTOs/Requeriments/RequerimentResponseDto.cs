@@ -1,5 +1,6 @@
 ﻿
 using System.Text.Json.Serialization;
+using AppTiemposV3.SharedClases.DTOs.RequerimentsAttachments;
 using AppTiemposV3.SharedClases.Enums;
 using static AppTiemposV3.SharedClases.Utilidades.SanitizeText;
 
@@ -53,7 +54,9 @@ namespace AppTiemposV3.SharedClases.DTOs.Requeriments
         
         public TimeSpan WorkedTime { get; set; }
         
-       public int TotalRejections { get; set; } = 0;
+        public int TotalRejections { get; set; } = 0;
+
+        public List<RequerimentsAttachmentsDto> RequerimentsAttachments { get; set; } = new List<RequerimentsAttachmentsDto>();
     }
 
     public class UserDtoR
