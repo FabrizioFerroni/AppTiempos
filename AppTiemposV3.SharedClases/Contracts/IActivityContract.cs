@@ -31,4 +31,6 @@ public interface IActivityContract<T>
     Task<GeneralResponse> DeleteActivity(Guid id);
 
     Task<GeneralResponse> RestoreActivity(Guid id);
+
+    Task<DataAResponse<T>> GetHistoryActivities(Guid requirementId, string urlExclude);
 }

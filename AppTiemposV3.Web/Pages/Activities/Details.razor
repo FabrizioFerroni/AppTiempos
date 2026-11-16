@@ -1,8 +1,10 @@
 @page "/app/actividad/{urlId}"
 @using AppTiemposV3.SharedClases.Constants
-@using AppTiemposV3.Web.Pages.Requeriments.Modals
+@using AppTiemposV3.SharedClases.DTOs.Activities
 @using AppTiemposV3.Web.Pages.Activities.Modales
+@using AppTiemposV3.Web.Pages.Requeriments.Modals
 @using Microsoft.AspNetCore.Components.Authorization
+
 
 
 <PageTitle>
@@ -329,4 +331,118 @@
           <DeleteActivity @ref="deleteModalRef" OnSaved="HandleActivityDeleted" />
         </div>
     </article>
+    @if (!IsLoadingData)
+    {
+        <article class="content px-4">
+            <div class="px-6 space-y-6 mt-6">
+                <Card Class="shadow-xl border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/90  backdrop-blur-sm mb-4">
+                    <CardHeader>
+                        <div class="flex justify-between items-center">
+                            <div class="flex flex-col items-start justify-start gap-2">
+                                <CardTitle>
+                                    Historial de actividades
+                                </CardTitle>
+                                <CardDescription>
+                                    Muestra las demás actividades cargadas a este requerimiento para tener una mejor visualización de los tiempos
+                                </CardDescription>
+                            </div>
+
+                            <Button Variant="ghost"
+                                    Size="sm"
+                                    Class="cursor-pointer"
+                                    OnClick="() => OpenHistoryActivities(isOpenHistory)">
+
+                                @if (!isOpenHistory)
+                                {
+                                    <ChevronDown Class="w-4 h-4" />
+                                }
+                                else
+                                {
+                                    <ChevronUp Class="w-4 h-4" />
+                                }
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    @if (isOpenHistory)
+                    {
+                        <CardContent>
+                            <div class="space-y-3">
+                                @if (IsLoadingHistoryActivities)
+                                {
+                                    <div class="flex flex-col items-center justify-center py-12 text-center">
+                                        <LoaderCircle Class="w-16 h-16 mb-4 animate-spin" />
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                            Cargando actividades
+                                        </h3>
+                                        <p class="text-gray-500 dark:text-gray-400 mb-4 animate-pulse">
+                                            Espere unos segundos ...
+                                        </p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    @if (HistoryActivities.Count == 0)
+                                    {
+                                        <div class="flex flex-col items-center justify-center py-12 text-center select-none">
+                                            <div class="w-16 h-16 mb-4 text-gray-400">
+                                                <Clock Class="w-full h-full" />
+                                            </div>
+                                            <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                                                No hay mas actividades registrada para este requerimiento
+                                            </h3>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @foreach (ActivityResponseDto activity in HistoryActivities)
+                                        {
+                                            <a href="/app/actividad/@activity.UrlIndetificator"
+                                               id="@activity.Id"
+                                               class="activity-item card-hover flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 transition-colors">
+
+                                                <div class="flex-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <p class="font-bold text-gray-800 dark:text-gray-100">
+                                                            @activity.Etapa
+                                                        </p>
+                                                        @if (activity.IsLoaded)
+                                                        {
+                                                            <CheckCircle Class="h-3.5 w-3.5 text-green-600" />
+                                                            <span class="text-green-600 text-xs">Subido al CRM</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <Clock Class="h-3.5 w-3.5" Style="color: #F0B100 !important;" />
+                                                            <span class="text-xs" style="color: #F0B100 !important;">
+                                                                Pendiente de subir
+                                                            </span>
+                                                        }
+                                                    </div>
+
+                                                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                                        <span class="font-medium">@activity.Description</span> •
+                                                        @ObtenerDiaSemana(activity.StartDate.ToString()) @activity.StartDate •
+                                                        @activity.StartTime a @(activity.EndTime ?? "#:##")
+                                                    </p>
+                                                </div>
+
+                                                <div class="text-right">
+                                                    <p class="font-semibold text-gray-800 dark:text-gray-100">
+                                                        @($"{(activity.TimeElapsed is not null ? $"{activity.TimeElapsed}hs" : "00:00hs")}")
+                                                    </p>
+                                                    <div class="@GetClassesStatus(activity.StatusMessage) mt-1">
+                                                        @GetStatusName(activity.StatusMessage)
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        }
+                                    }
+                                }
+                            </div>
+                        </CardContent>
+                    }
+                </Card>
+            </div>
+        </article>
+    }
 </div>
