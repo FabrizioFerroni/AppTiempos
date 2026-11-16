@@ -146,6 +146,16 @@ public class ActivityController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("history/{requerimentid}/{urlExclude}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> GetHistoryActivityByRequerimentId(Guid requerimentid, string urlExclude)
+    {
+        DataAResponse<ActivityResponseDto> response = await _activityContract.GetHistoryActivities(requerimentid, urlExclude);
+        return Ok(response);
+    }
+
     [HttpPost]
     [ProducesResponseType(201)]
     [ProducesResponseType(400)]

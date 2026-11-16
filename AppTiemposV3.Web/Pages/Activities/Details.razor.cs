@@ -6,11 +6,10 @@ using AppTiemposV3.Web.Components.Icons;
 using AppTiemposV3.Web.Pages.Activities.Modales;
 using AppTiemposV3.Web.Pages.Requeriments.Modals;
 using AppTiemposV3.Web.Services;
-using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json;
-using System.Diagnostics;
-using System.Globalization;
+using static AppTiemposV3.Web.Utils.CssHelper;
 using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
+using Microsoft.AspNetCore.Components;
+using System.Globalization;
 
 
 namespace AppTiemposV3.Web.Pages.Activities;
@@ -30,7 +29,11 @@ public partial class Details : ComponentBase, IDisposable
 
     private bool IsLoadingData { get; set; } = true;
     private ActivityResponseDto? ActivityRes { get; set; }
-    
+    private List<ActivityResponseDto> HistoryActivities { get; set; } = new List<ActivityResponseDto>();
+    private bool IsLoadingHistoryActivities { get; set; } = false;
+    private string _currentUrlId = string.Empty;
+    private bool isOpenHistory = false;
+
     private record StatusItem(RenderFragment Icon, string Result);
     #region Modales
     private Guid IdModalEdit = Guid.NewGuid();
@@ -46,8 +49,18 @@ public partial class Details : ComponentBase, IDisposable
         ColorService.OnColorChanged += HandleColorChanged;
         State.OnSidebarChanged += StateHasChanged;
         await State.InitializeAsync();
-        await GetActivity();
     }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_currentUrlId != urlId)
+        {
+            _currentUrlId = urlId;
+            isOpenHistory = false;
+            await GetActivity();
+        }
+    }
+
     #endregion
 
     #region Funciones
@@ -55,6 +68,7 @@ public partial class Details : ComponentBase, IDisposable
     {
         await InvokeAsync(StateHasChanged); 
     }
+
     private void HandleSidebarToggle()
     {
         _ = State.ToggleSidebar();
@@ -94,6 +108,11 @@ public partial class Details : ComponentBase, IDisposable
             }
             
             ActivityRes = activity.Data;
+
+            Guid RequerimentID = ActivityRes.Requeriment.Id;
+            string UrlExclude = ActivityRes.UrlIndetificator;
+
+            await GetHistoryActivities(RequerimentID, UrlExclude);
         }
         catch (Exception e)
         {
@@ -103,6 +122,29 @@ public partial class Details : ComponentBase, IDisposable
         finally
         {
             IsLoadingData = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GetHistoryActivities(Guid requerimentId, string urlExclude)
+    {
+        IsLoadingHistoryActivities = true; 
+        StateHasChanged();
+
+        try
+        {
+            DataAResponse<ActivityResponseDto> activities = await ActivityService.GetHistoryActivities(requerimentId, urlExclude);
+
+            HistoryActivities = activities.Data;
+
+        } catch(Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        finally
+        {
+            IsLoadingHistoryActivities = false;
             StateHasChanged();
         }
     }
@@ -340,8 +382,48 @@ public partial class Details : ComponentBase, IDisposable
                 return "Sin definir";
         }
     }
+
+    private string ObtenerDiaSemana(string fechaStr)
+    {
+        if (!DateTime.TryParse(fechaStr, out DateTime fecha))
+            return string.Empty;
+
+        string dia = fecha.ToString("dddd", new CultureInfo("es-ES"));
+        return char.ToUpper(dia[0]) + dia.Substring(1);
+    }
+
+    private string GetClassesStatus(string status)
+    {
+        string baseClasses =
+            $"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium";
+
+        string baseStatus = status == "completed" ? " bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200" : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200";
+
+        return Cn(baseClasses, baseStatus);
+    }
+
+    private string GetStatusName(string status)
+    {
+        switch (status)
+        {
+            case "completed":
+                return "Completado";
+            case "in-progress":
+                return "En Progreso";
+            case "pending":
+                return "Pendiente";
+            default:
+                return status;
+        }
+    }
+
+    private void OpenHistoryActivities(bool open)
+    {
+        isOpenHistory = !open;
+        StateHasChanged();
+    }
     #endregion
-    
+
     #region Limpiar
     public void Dispose()
     {

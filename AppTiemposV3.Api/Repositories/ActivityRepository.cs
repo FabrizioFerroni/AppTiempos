@@ -379,6 +379,35 @@ public class ActivityRepository : IActivityContract<ActivityResponseDto>
         return new GeneralResponse(true, "Se restauró con éxito la actividadcon");
     }
 
+    public async Task<DataAResponse<ActivityResponseDto>> GetHistoryActivities(Guid requirementId, string urlExclude)
+    {
+        UserEntity? user = await GetUserByIdAsync(_userId);
+
+        List<ActivitiesEntity> activities = await _dbCxt.Activities
+        .Include(r => r.Requeriment)
+            .ThenInclude(r => r.Category)
+        .Include(u => u.User)
+        .Where(a => a.RequerimentId == requirementId 
+            && a.UserId == _userId 
+            && (string.IsNullOrEmpty(urlExclude) || a.UrlIndetificator != urlExclude))
+        .OrderByDescending(a => a.EndTime == null)
+            .ThenByDescending(a => a.StartDate)
+            .ThenByDescending(a => a.EndTime)
+        .ToListAsync();
+
+        if (!activities.Any())
+            return new DataAResponse<ActivityResponseDto>(true, new List<ActivityResponseDto>(), HttpStatusCode.OK);
+
+        foreach (ActivitiesEntity act in activities)
+        {
+            await SetWorkedTimesAsync(act);
+        }
+
+        List<ActivityResponseDto> activitiesReq = _iMapper.Map<List<ActivityResponseDto>>(activities);
+
+        return new DataAResponse<ActivityResponseDto>(true, activitiesReq, HttpStatusCode.OK);
+    }
+
 
     private async Task<UserEntity> GetUserByIdAsync(Guid userId)
     {

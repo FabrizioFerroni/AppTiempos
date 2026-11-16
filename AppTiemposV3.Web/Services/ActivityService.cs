@@ -186,4 +186,14 @@ public class ActivityService : IActivityContract<ActivityResponseDto>
     {
         throw new NotImplementedException();
     }
+
+    public async Task<DataAResponse<ActivityResponseDto>> GetHistoryActivities(Guid requirementId, string urlExclude)
+    {
+        DataAResponse<ActivityResponseDto>? activity = await _httpClient.GetFromJsonAsync<DataAResponse<ActivityResponseDto>>($"{BaseUrl}/activities/history/{requirementId}/{urlExclude}", options);
+
+        if (activity is null)
+            return new DataAResponse<ActivityResponseDto>(true, null!, HttpStatusCode.OK);
+
+        return activity;
+    }
 }
