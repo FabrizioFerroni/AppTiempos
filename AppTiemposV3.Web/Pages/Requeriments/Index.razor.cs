@@ -87,13 +87,15 @@ public partial class Index : ComponentBase,  IDisposable
     #region Funciones
     private async Task HandleRequerimentDeleted()
     {
-        pagina = 1;
+        pagina = currentPage;
+
         await GetAllRequeriments(false);
     }
     
     private async Task HandleRequerimentSaved(SavedEventArgs args)
     {
-        pagina = 1;
+        pagina = currentPage;
+
         if (args.Success)
         {
             Toltip.Success("Éxito!", args.Message);

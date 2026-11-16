@@ -97,7 +97,7 @@ public partial class Index : ComponentBase, IDisposable
     {
         try
         {
-            pagina = 1;
+            pagina = currentPage;
             StateHasChanged();
 
             DateTime dateToUse = DateTime.Now;
@@ -138,7 +138,7 @@ public partial class Index : ComponentBase, IDisposable
 
     private async Task HandleActivitySaved(SavedEventArgs args)
     {
-        pagina = 1;
+        pagina = currentPage;
         StateHasChanged();
         DateOnly startDate = (DateOnly)args.StartDate!;
         DateChanged(DateTime.Parse(startDate.ToString("yyyy-MM-dd"), CultureInfo.InvariantCulture));
@@ -160,7 +160,7 @@ public partial class Index : ComponentBase, IDisposable
     
     private async Task HandleActivityDeleted(DateOnly startDate)
     {
-        pagina = 1;
+        pagina = currentPage;
         DateChanged(DateTime.Parse(startDate.ToString("yyyy-MM-dd"), CultureInfo.InvariantCulture));
         await GetAllActivities(true);
     }
