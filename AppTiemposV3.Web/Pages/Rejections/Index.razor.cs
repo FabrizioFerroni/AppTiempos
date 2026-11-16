@@ -260,13 +260,13 @@ public partial class Index : ComponentBase, IDisposable
     
     private async Task HandleDeleted()
     {
-        pagina = 1;
+        pagina = currentPage;
         await GetAllRejects();
     }
 
     private async Task HandleNewSaved(SavedEventArgs args)
     {
-        pagina = 1;
+        pagina = currentPage;
         StateHasChanged();
         if (args.Success)
         {
@@ -290,7 +290,7 @@ public partial class Index : ComponentBase, IDisposable
     }
     private async Task HandleSaved(SavedEventArgs args)
     {
-        pagina = 1;
+        pagina = currentPage;
         StateHasChanged();
         
         if (args.Success)

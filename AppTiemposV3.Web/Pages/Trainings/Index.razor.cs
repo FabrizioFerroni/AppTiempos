@@ -404,7 +404,7 @@ public partial class Index : ComponentBase, IDisposable
     
     private async Task HandleActivitySaved(SavedEventArgs args)
     {
-        pagina = 1;
+        pagina = currentPage;
         StateHasChanged();
         
         if (args.Success)
@@ -419,10 +419,10 @@ public partial class Index : ComponentBase, IDisposable
         await GetAllTraining();
         StateHasChanged(); 
     }
-    
+
     private async Task HandleActivityDeleted()
     {
-        pagina = 1;
+        pagina = currentPage;
         await GetAllTraining();
     }
     #endregion
