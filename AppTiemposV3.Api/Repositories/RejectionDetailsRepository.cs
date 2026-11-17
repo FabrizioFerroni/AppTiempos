@@ -3,6 +3,7 @@ using AppTiemposV3.Api.Entities;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs.RejectionDetails;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
+using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;
@@ -65,7 +66,33 @@ public class RejectionDetailsRepository : IRejectionDetailContract<RejectionDeta
         await _dbCxt.RejectionDetails.AddAsync(rejDetails);
 
         await EnsureSavedAsync("Hubo un error al crear el detalle del rechazo", _dbCxt);
-        
+
+        try
+        {
+            RejectionEntity? rejection = await _dbCxt.Rejections.FindAsync(dto.RejectionId);
+
+            if (rejection is not null)
+            {
+                RequerimentsEntity? requerimiento = await _dbCxt.Requeriments.FindAsync(rejection.RequerimentId);
+
+                if (requerimiento is not null)
+                {
+                   
+                    requerimiento.EtapaActual = Etapas.Ejecucion;
+
+                    _dbCxt.Entry(requerimiento).State = EntityState.Modified;
+
+                    await EnsureSavedAsync("Hubo problemas para actualizar el registro del requerimiento en rejection detail", _dbCxt);
+                    
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+
         await UpdateCountRejections(dto.RejectionId, "Create");
 
         return new GeneralResponse(true, "Detalle del rechazo creado correctamente");
@@ -87,6 +114,32 @@ public class RejectionDetailsRepository : IRejectionDetailContract<RejectionDeta
         _dbCxt.Entry(rejDetail).State = EntityState.Modified;
 
         await EnsureSavedAsync("Hubo problemas para actualizar el registro", _dbCxt);
+
+        try
+        {
+            RejectionEntity? rejection = await _dbCxt.Rejections.FindAsync(rejDetail.RejectionId);
+
+            if(rejection is not null)
+            {
+                RequerimentsEntity? requerimiento = await _dbCxt.Requeriments.FindAsync(rejection.RequerimentId);
+
+                if (requerimiento is not null)
+                {
+                    if(rejDetail.Status == "completed")
+                    {
+                        requerimiento.EtapaActual = Etapas.Prueba;
+
+                        _dbCxt.Entry(requerimiento).State = EntityState.Modified;
+
+                        await EnsureSavedAsync("Hubo problemas para actualizar el registro del requerimiento en rejection detail", _dbCxt);
+                    }
+                }
+            }
+
+        } catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
         
         await UpdateCountRejections(rejDetail.RejectionId, "Update");
         
