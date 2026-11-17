@@ -4,7 +4,6 @@ using AppTiemposV3.SharedClases.Annotations;
 using AppTiemposV3.SharedClases.Contracts;
 using AppTiemposV3.SharedClases.DTOs;
 using AppTiemposV3.SharedClases.DTOs.Audits;
-using AppTiemposV3.SharedClases.DTOs.Invitations;
 using AppTiemposV3.SharedClases.DTOs.Rejections;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
@@ -15,7 +14,6 @@ using MySqlConnector;
 using Org.BouncyCastle.Asn1.Cmp;
 using System.Net;
 using System.Text;
-using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 using static AppTiemposV3.Api.Helpers.DatabaseHelper;
 using static AppTiemposV3.Api.Helpers.Helpers;
 using static AppTiemposV3.Api.Helpers.MetadataHelper;
@@ -202,27 +200,6 @@ public class RejectionRepository: IRejectionContract<RejectionResponseDto>
         await _dbCxt.Rejections.AddAsync(rej);
 
         await EnsureSavedAsync("Hubo un error al crear el rechazo", _dbCxt);
-
-        try
-        {
-            //TODO: Actualizar requerimiento a etapa prueba
-            RequerimentsEntity? requerimiento = await _dbCxt.Requeriments.FindAsync(req.Id);
-
-            if (requerimiento != null)
-            {
-                requerimiento.EtapaActual = Etapas.Prueba;
-
-                _dbCxt.Entry(requerimiento).State = EntityState.Modified;
-
-                await EnsureSavedAsync("Hubo problemas para actualizar el registro del requerimiento", _dbCxt);
-            }
-            
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-
 
         CreateRejectionResponseDto data = new CreateRejectionResponseDto
         {
