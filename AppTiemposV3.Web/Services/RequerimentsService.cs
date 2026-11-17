@@ -56,7 +56,7 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
 
         if (pagination.Ordenar == "")
         {
-            pagination.Ordenar = "ReqID";
+            pagination.Ordenar = "CreatedAt";
         }
 
         if (pagination.Ordenar == "Conjunto de Cambios")

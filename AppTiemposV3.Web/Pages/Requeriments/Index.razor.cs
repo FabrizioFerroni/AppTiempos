@@ -43,7 +43,7 @@ public partial class Index : ComponentBase,  IDisposable
     private int pagina = 1;
     private int registrosPorPagina = 5;
     private string ordenar = "";
-    private bool ascending = true;
+    private bool ascending = false;
     private string? search { get; set; } = string.Empty;
     
     private bool IsSelectClosed = true;
