@@ -188,6 +188,8 @@
                             <div class="space-y-4">
                                 @foreach (RequerimentResponseDto? req in Requeriments)
                                 {
+                                    filesUploaded = req.RequerimentsAttachments.Count;
+                                    
                                     <div id="@req.Id" class="flex items-start justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700  transition-colors">
                                         <div class="flex-1 space-y-2">
                                             <div class="flex items-center gap-2">
@@ -207,6 +209,17 @@
                                                 <span class="text-xs text-gray-500 dark:text-gray-400 pt-2">
                                                     Tipo: @req.Category.Name.ToUpperInvariant()
                                                 </span>
+                                                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 pt-2">
+                                                    <span>
+                                                        Etapa: @req.Etapa.ToString().ToUpperInvariant()
+                                                    </span>
+
+                                                    <span>-</span>
+
+                                                    <span>
+                                                        Etapa (Ult. Actividad): @req.EtapaActual.ToString().ToUpperInvariant()
+                                                    </span>
+                                                </div>
                                                 <span class="text-xs text-gray-500 dark:text-gray-400 pt-2">
                                                     Cliente: @req.Cliente.ToUpperInvariant()
                                                 </span>
