@@ -27,5 +27,7 @@ namespace AppTiemposV3.SharedClases.Contracts
         Task<DataResponse<Guid>> GetIdByReqId(string reqId);
 
         Task<DataResponse<Guid?>> FindIdByReqId(string reqId);
+
+        Task<DataResponse<bool>> HaveActivityInValidateAndFinishState(Guid requerimentId);
     }
 }

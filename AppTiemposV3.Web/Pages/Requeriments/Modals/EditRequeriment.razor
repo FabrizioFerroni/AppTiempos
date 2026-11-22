@@ -1,5 +1,6 @@
 @using AppTiemposV3.SharedClases.Constants
 @using AppTiemposV3.SharedClases.Enums
+@using AppTiemposV3.SharedClases.DTOs.Requeriments;
 @using Microsoft.AspNetCore.Components.Authorization
 
 @* Modal editar requerimiento *@
@@ -321,3 +322,17 @@
 
 <button type="button" @ref="showModalRef" class="hidden" id=@($"showModalEdit-{Id}") command="show-modal" commandfor=@($"edit-{Id}")></button>
 <button type="button" @ref="closeModalRef" class="hidden" id=@($"closeModalEdit-{Id}") command="close" commandfor="@($"edit-{Id}")"></button>    
+
+<AlertModal T="UpdateRequerimentDto"
+            Id="modal-alert-validate"
+            IdElement="@IdAlert"
+            Title="Atención"
+            CssColorButtonOk=@ColorService.GetButtonClassess()
+            TitleBtn="Sí"
+            TitleCancelarBtn="No"
+            Subtitle="Estás queriendo finalizar un requerimiento que no tiene ninguna activididad cargada en etapa Validación y estado finalizado. ¿Estás seguro de finalizar el requerimiento?"
+            Item="@requerimentUpDto"
+            OnConfirm="HandleConfirm"
+            OnCancel="HandleCancel" />
+
+<button type="button" @ref="showModalRef2" class="hidden" id=@($"showModalLAlert-{IdAlert}") command="show-modal" commandfor=@($"alert-{IdAlert}")></button>

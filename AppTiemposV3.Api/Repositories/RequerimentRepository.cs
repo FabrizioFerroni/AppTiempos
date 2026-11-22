@@ -8,6 +8,10 @@ using AppTiemposV3.SharedClases.DTOs.Requeriments;
 using AppTiemposV3.SharedClases.Enums;
 using AppTiemposV3.SharedClases.Exceptions;
 using AppTiemposV3.SharedClases.Utilidades.Interfaces;
+using static AppTiemposV3.Api.Helpers.DatabaseHelper;
+using static AppTiemposV3.Api.Helpers.Helpers;
+using static AppTiemposV3.Api.Helpers.MetadataHelper;
+using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Identity;
@@ -15,10 +19,6 @@ using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
 using System.Net;
 using System.Text;
-using static AppTiemposV3.Api.Helpers.DatabaseHelper;
-using static AppTiemposV3.Api.Helpers.Helpers;
-using static AppTiemposV3.Api.Helpers.MetadataHelper;
-using static AppTiemposV3.SharedClases.DTOs.ServiceResponse;
 
 
 namespace AppTiemposV3.Api.Repositories
@@ -261,8 +261,15 @@ namespace AppTiemposV3.Api.Repositories
                 }
             }
 
-            return await _genericContract.GetAllPaginatedAsync<RequerimentsEntity, RequerimentResponseDto>(pagination,
+            Pageable<List<RequerimentResponseDto>>? response =  await _genericContract.GetAllPaginatedAsync<RequerimentsEntity, RequerimentResponseDto>(pagination,
                 buscarPor, _userId);
+
+            foreach(RequerimentResponseDto resReq in response.Content)
+            {
+                resReq.Etapa = await GetEtapaActivity(resReq.Id);
+            }
+
+            return response;
         }
 
         /// <summary>
@@ -339,12 +346,7 @@ namespace AppTiemposV3.Api.Repositories
             RequerimentsEntity oldReq = await GetRequerimentByIdAsync(id, user.Id);
 
             if (await RequerimentExists(dto.ReqID!, user.Id, id))
-                throw new BadRequestException("El requerimiento con ese ReqId ya existe para tu usuario"); //TODO: ver esto
-
-            if (dto.Estado == Estados.Finalizado && req.EtapaActual != Etapas.Validacion)
-            {
-                throw new BadRequestException("No se puede finalizar el requerimiento sin antes tener un estado de validación.");
-            }
+                throw new BadRequestException("El requerimiento con ese ReqId ya existe para tu usuario"); 
 
             _iMapper.Map(dto, req);
 
@@ -374,6 +376,24 @@ namespace AppTiemposV3.Api.Repositories
             }
 
             return new GeneralResponse(true, "Se actualizo con exito el req");
+        }
+
+
+        public async Task<DataResponse<bool>> HaveActivityInValidateAndFinishState(Guid requerimentId)
+        {
+            UserEntity user = await GetUserByIdAsync(_userId);
+
+            RequerimentsEntity req = await GetRequerimentByIdAsync(requerimentId, user.Id);
+
+            bool isValidatedAndFinished = await _dbCxt.Activities.AnyAsync(act => 
+                act.RequerimentId == req.Id && 
+                act.Etapa == Etapas.Validacion && 
+                act.StatusMessage != null && 
+                act.StatusMessage.ToLower() == "completed" && 
+                act.IsDeleted == false
+            );
+
+            return new DataResponse<bool>(true, isValidatedAndFinished, HttpStatusCode.OK);
         }
 
         /// <summary>

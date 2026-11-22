@@ -175,4 +175,15 @@ public class RequerimentsService : IRequerimentContract<RequerimentResponseDto>
 
         return res ?? new DataResponse<Guid?>(false, null, HttpStatusCode.InternalServerError);
     }
+
+    public async Task<DataResponse<bool>> HaveActivityInValidateAndFinishState(Guid requerimentId)
+    {
+        DataResponse<bool>? requeriment = await _httpClient.GetFromJsonAsync<DataResponse<bool>>($"{BaseUrl}/requeriments/validate/{requerimentId}", options);
+
+        if (requeriment is null)
+            return new DataResponse<bool>(true, false, HttpStatusCode.OK);
+
+        return requeriment;
+    }
+
 }

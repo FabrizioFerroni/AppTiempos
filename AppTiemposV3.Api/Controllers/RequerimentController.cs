@@ -81,6 +81,16 @@ public class RequerimentController : ControllerBase
         return Ok(res);
     }
 
+    [HttpGet("validate/{id}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(500)]
+    public async Task<IActionResult> HaveActivityInValidateAndFinishState(Guid id)
+    {
+        DataResponse<bool> res = await _requerimentContract.HaveActivityInValidateAndFinishState(id);
+        return Ok(res);
+    }
+
     [HttpPost]
     [ProducesResponseType(201)]
     [ProducesResponseType(400)]
