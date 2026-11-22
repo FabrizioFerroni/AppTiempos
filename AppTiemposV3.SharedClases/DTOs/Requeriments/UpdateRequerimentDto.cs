@@ -25,14 +25,6 @@ namespace AppTiemposV3.SharedClases.DTOs.Requeriments
 
             CambioInput = "";
         }
-
-        /*public string? ConjuntoCambiosText
-        {
-            get => ConjuntoCambios == null ? null : string.Join(",", ConjuntoCambios);
-            set => ConjuntoCambios = string.IsNullOrWhiteSpace(value)
-                ? null
-                : value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        }*/
         
         public void AddCambio(string value)
         {

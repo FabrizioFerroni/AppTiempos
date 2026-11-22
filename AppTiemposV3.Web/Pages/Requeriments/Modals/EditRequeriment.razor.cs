@@ -27,6 +27,7 @@ public partial class EditRequeriment : ComponentBase
 
     //#region parametros configurables
     [Parameter] public Guid Id { get; set; }
+    [Parameter] public Guid IdAlert { get; set; }
     [Parameter] public EventCallback<SavedEventArgs> OnSaved { get; set; }
     //#endregion
 
@@ -34,6 +35,7 @@ public partial class EditRequeriment : ComponentBase
     private bool isSuccess = false;
     private string IdModalStr = Generate(LowercaseLettersAndDigits, 10);
     private bool isErrorNReq = false;
+    private ElementReference showModalRef2;
     private MarkupString messageErrorNReq = new MarkupString("");
     private MarkupString? messageSuccess = new MarkupString("");
     private string Titulo { get; set; } = string.Empty;
@@ -42,7 +44,7 @@ public partial class EditRequeriment : ComponentBase
     private string _cssConjuntosCambios = "flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 py-2 text-[hsl(var(--base))] ring-offset-[hsl(var(--background))] file:border-0 file:bg-[hsl(var(--transparent))] file:text-sm file:font-medium file:text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm font-medium bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400";
     private Dictionary<string, (string Mensaje, bool EsExitoso)> mensajes = new();
 
-    private UpdateRequerimentDto requerimentUpDto = new()
+    UpdateRequerimentDto requerimentUpDto = new()
     {
         Id = Guid.Empty,
         ReqID = null,
@@ -54,6 +56,8 @@ public partial class EditRequeriment : ComponentBase
     private ElementReference showModalRef;
     private ElementReference closeModalRef;
     private RequerimentResponseDto? _originalRequerimentData;
+
+    private DataResponse<RequerimentResponseDto>? requeriment;
 
     private Areas _areaUsuario = Areas.None;
 
@@ -168,8 +172,7 @@ public partial class EditRequeriment : ComponentBase
         StateHasChanged();
         try
         {
-            DataResponse<RequerimentResponseDto>? requeriment =
-                await RequerimentsService.GetRequerimentporId(id);
+            requeriment = await RequerimentsService.GetRequerimentporId(id);
 
             if (requeriment?.Data != null)
             {
@@ -255,6 +258,7 @@ public partial class EditRequeriment : ComponentBase
         }
     }
 
+
     private async Task SendEditRequeriment()
     {
         IsLoading = true;
@@ -263,27 +267,43 @@ public partial class EditRequeriment : ComponentBase
 
         try
         {
-            GeneralResponse? response = await RequerimentsService!.UpdateRequeriment(requerimentUpDto.Id, requerimentUpDto);
-
-            if (response?.Flag == true)
+            if (requeriment?.Data.EtapaActual != Etapas.Validacion && requerimentUpDto.Estado == Estados.Finalizado)
             {
-                IsLoading = false;
+                DataResponse<bool> isValidated = await RequerimentsService.HaveActivityInValidateAndFinishState(requeriment!.Data.Id);
 
-                await JS!.InvokeVoidAsync("modalHelpers.clickElement", closeModalRef);
-
-                SavedEventArgs? args = new SavedEventArgs
+                if (!isValidated.Data)
                 {
-                    Message = response.Message,
-                    Success = response.Flag
-                };
-                await Limpiar();
-                await OnSaved.InvokeAsync(args);
+                    await JS!.InvokeVoidAsync("modalHelpers.clickElement", showModalRef2);
+                    return;
+                }
             }
-            else
-            {
-                isErrorNReq = true;
-                messageErrorNReq = (MarkupString)(response?.Message?.Replace("\n", "<br />") ?? "Error desconocido");
-            }
+
+            await EjecutarActualizacionAsync(requerimentUpDto);
+        }
+        catch (Exception ex)
+        {
+            isErrorNReq = true;
+            messageErrorNReq = new MarkupString(ex.Message);
+        }
+    }
+
+    private void HandleCancel(bool rsp)
+    {
+        IsLoading = rsp;
+        StateHasChanged();
+    }
+
+    private async Task HandleConfirm(UpdateRequerimentDto? dto)
+    {
+        if (dto is null) return;
+
+        IsLoading = true;
+        isErrorNReq = false;
+        StateHasChanged();
+
+        try
+        {
+            await EjecutarActualizacionAsync(dto);
         }
         catch (Exception ex)
         {
@@ -297,6 +317,29 @@ public partial class EditRequeriment : ComponentBase
         }
     }
 
+    private async Task EjecutarActualizacionAsync(UpdateRequerimentDto dto)
+    {
+        GeneralResponse? response = await RequerimentsService!.UpdateRequeriment(dto.Id, dto);
+
+        if (response?.Flag == true)
+        {
+            await JS!.InvokeVoidAsync("modalHelpers.clickElement", closeModalRef);
+
+            SavedEventArgs args = new()
+            {
+                Message = response.Message,
+                Success = response.Flag
+            };
+
+            await Limpiar();
+            await OnSaved.InvokeAsync(args);
+        }
+        else
+        {
+            isErrorNReq = true;
+            messageErrorNReq = (MarkupString)(response?.Message?.Replace("\n", "<br />") ?? "Error desconocido");
+        }
+    }
 
     private async Task SafeRunAsync(Func<Task> action)
     {
